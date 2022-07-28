@@ -12,26 +12,26 @@
  ***/
 
 #include <iostream>
-#include <casa/OS/Path.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/MVTime.h>
-#include <measures/Measures.h>
-#include <measures/Measures/MCBaseline.h>
-#include <measures/Measures/MCDoppler.h>
-#include <measures/Measures/MCEarthMagnetic.h>
-#include <measures/Measures/MCEpoch.h>
-#include <measures/Measures/MCFrequency.h>
-#include <measures/Measures/MCPosition.h>
-#include <measures/Measures/MCRadialVelocity.h>
-#include <measures/Measures/MCuvw.h>
-#include <measures/Measures/MCDirection.h>
-#include <measures/Measures/MeasComet.h>
-#include <measures/Measures/MeasTable.h>
-#include <measures/Measures/MeasureHolder.h>
-#include <measures/Measures/MeasIERS.h>
+#include <casacore/casa/OS/Path.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/measures/Measures.h>
+#include <casacore/measures/Measures/MCBaseline.h>
+#include <casacore/measures/Measures/MCDoppler.h>
+#include <casacore/measures/Measures/MCEarthMagnetic.h>
+#include <casacore/measures/Measures/MCEpoch.h>
+#include <casacore/measures/Measures/MCFrequency.h>
+#include <casacore/measures/Measures/MCPosition.h>
+#include <casacore/measures/Measures/MCRadialVelocity.h>
+#include <casacore/measures/Measures/MCuvw.h>
+#include <casacore/measures/Measures/MCDirection.h>
+#include <casacore/measures/Measures/MeasComet.h>
+#include <casacore/measures/Measures/MeasTable.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MeasIERS.h>
 #include <measures_cmpt.h>
 
 using namespace std;
@@ -460,7 +460,8 @@ measures::comettopo()
   } catch (AipsError(x)) {
     *itsLog << LogIO::SEVERE << "Exception Reports: " << x.getMesg() << LogIO::POST;
   }
-  return recordFromQuantity(Quantum<Vector<Double> >(retval,unit));
+  Vector<Double> const retvalV(retval);
+  return recordFromQuantity(Quantum<Vector<Double> >(retvalV,unit));
 }
 
 // Get the distance of the current comet
@@ -1486,7 +1487,7 @@ measures::baseline(const std::string& rf, const ::casac::variant& v0, const ::ca
   return retval;
 }
 
-#include <casa/Containers/RecordFieldId.h>
+#include <casacore/casa/Containers/RecordFieldId.h>
 
 // make a baseline from position
 ::casac::record*
@@ -2666,7 +2667,7 @@ measures::posangle (const casacore::MDirection& md1, const casacore::MDirection&
 ::casac::record*
 measures::posangle(const ::casac::record& m1, const ::casac::record& m2)
 {
-  std::vector<double> retval(1);
+  Vector<double> retval(1);
   String unit("deg");
   retval[0]=0;
   String error;
@@ -2726,7 +2727,7 @@ measures::posangle(const ::casac::record& m1, const ::casac::record& m2)
 ::casac::record*
 measures::separation(const ::casac::record& m1, const ::casac::record& m2)
 {
-  std::vector<double> retval(1);
+  Vector<double> retval(1);
   String unit("deg");
   retval[0]=0;
   String error;
@@ -2810,7 +2811,7 @@ measures::addxvalue(const ::casac::record& a)
       val.asMeasure().getData()->getXRecordValue();
     uInt len = res.size();
     if (len > 0) {
-      std::vector<double> arg0(len);
+      Vector<double> arg0(len);
       for (uInt i=0 ; i < len; i++) {
 	arg0[i]=res[i].getValue();
       } //no support for array of quantity

@@ -34,6 +34,7 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     casampi_imported = False
     import importlib
@@ -278,20 +279,69 @@ class TestHelpers:
         """ Exists """
         return os.path.exists(imname)
 
-    def get_peak_res(self, summ):
-        """Get Peak Res"""
-        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
-        peakres = None
-        if is_CASA6:
-            if 'summaryminor' in summ:
-                reslist = summ['summaryminor'][1,:]
-                peakres = reslist[ len(reslist)-1 ]
+    def _get_summary_minor_keys(self, sm):
+        chans = list( sm.keys() )
+        stokes = list( sm[chans[0]].keys() )
+        ncycles = len(sm[chans[0]][stokes[0]]['iterDone'])
+        return chans, stokes, ncycles
 
+    def _get_chanstoke_withiters_cycle0(self, summ):
+        """Finds the first possible channel/polarity index in the returned "summaryminor" from tclean that has a value."""
+        if 'summaryminor' in summ:
+            sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
+            chans, stokes, ncycles = self._get_summary_minor_keys(sm)
+            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (chans[0], stokes[0])
+            prev_chan = None
+            for chan in chans:
+                for stoke in stokes:
+                    tmp_iterdone = sm[chan][stoke]['iterDone'][0]
+                    if uss and (prev_chan != None):
+                        # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                        # get the number of iterations done for just this channel
+                        prev_iterdone = sm[prev_chan][stoke]['iterDone'][0]
+                        if (prev_iterdone <= tmp_iterdone):
+                            tmp_iterdone -= prev_iterdone
+                    if (tmp_iterdone > 0):
+                        return (chan, stoke)
+                prev_chan = chan
+            return ret
         else:
-            if summ.has_key('summaryminor'):
-                reslist = summ['summaryminor'][1,:]
-                peakres = reslist[ len(reslist)-1 ]
-                
+            return None
+
+    def _get_chanstoke_withiters_cycleN(self, summ):
+        """Finds the last possible index in the returned "summaryminor" from tclean that has a value.
+        We do this to maintain the same value as was previously returned, so that we don't need to update all the values in the tests.
+        It could be that in the future we just want to return the index [chan/pol with the largest peakres, last cycle]."""
+        if 'summaryminor' in summ:
+            sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
+            chans, stokes, ncycles = self._get_summary_minor_keys(sm)
+            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (chans[0], stokes[0], 0) # 0: cycle 0
+            prev_chan = None
+            for chan in chans:
+                for stoke in stokes:
+                    for cycle in range(ncycles):
+                        tmp_iterdone = sm[chan][stoke]['iterDone'][cycle]
+                        if uss and (prev_chan != None):
+                            # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                            # get the number of iterations done for just this channel
+                            prev_iterdone = sm[prev_chan][stoke]['iterDone'][cycle]
+                            if (prev_iterdone <= tmp_iterdone):
+                                tmp_iterdone -= prev_iterdone
+                        if (tmp_iterdone > 0):
+                            ret = (chan, stoke, cycle)
+                prev_chan = chan
+            return ret
+        else:
+            return None
+
+    def get_peak_res(self, summ):
+        """Get the peak residual, for one major cycle, for the last channel that actually did iterations"""
+        peakres = None
+        if 'summaryminor' in summ:
+            idx = self._get_chanstoke_withiters_cycleN(summ)
+            peakres = summ['summaryminor'][0][idx[0]][idx[1]]['peakRes'][idx[2]]
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
@@ -311,17 +361,12 @@ class TestHelpers:
         return out,peakres
 
     def get_mod_flux(self, summ):
+        """Get the modflux + startmodflux, for one major cycle, for the last channel that actually did iterations"""
         """Get Mod Flux"""
-        # AW: This can be reduced down for readability but putting in a fix for CAS-13182
         modflux = None
-        if is_CASA6:
-            if 'summaryminor' in summ:
-                modlist = summ['summaryminor'][2,:]
-                modflux = modlist[ len(modlist)-1 ]
-        else:
-            if summ.has_key('summaryminor'):
-                modlist = summ['summaryminor'][2,:]
-                modflux = modlist[ len(modlist)-1 ]
+        if 'summaryminor' in summ:
+            idx = self._get_chanstoke_withiters_cycleN(summ)
+            modflux = summ['summaryminor'][0][idx[0]][idx[1]]['modelFlux'][idx[2]]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
@@ -339,6 +384,14 @@ class TestHelpers:
                 out=False
                 return out,modflux
         return out,modflux
+
+    def get_first_cycle_thresh(self, summ):
+        """Get the threshold, for the first minor cycle, for the first channel that actually did iterations"""
+        cycleThresh = None
+        if 'summaryminor' in summ:
+            idx = self._get_chanstoke_withiters_cycle0(summ)
+            cycleThresh = summ['summaryminor'][0][idx[0]][idx[1]]['cycleThresh'][0]
+        return cycleThresh
 
     def check_chanvals(self,msname,vallist, epsilon = 0.05): # list of tuples of (channumber, relation, value) e.g. (10,">",1.0)
         testname = "check_chanvals"
@@ -1051,7 +1104,7 @@ class TestHelpers:
                     out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
                     pstr = pstr + message
                 if firstcyclethresh != None:
-                    out, message = TestHelpers().check_val(val=ret['summaryminor'][3][0], correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_first_cycle_thresh(ret), correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
                     pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
@@ -1123,38 +1176,19 @@ class TestHelpers:
                         retNmajordone = max(ret[inode][int(inode.strip('node'))]['nmajordone'],retNmajordone)
                     mergedret['nmajordone']=retNmajordone
                 if parlist.count('peakres'):
-                    #retPeakres = 0
-                    #for inode in nodenames:
-                        #tempreslist = ret[inode][int(inode.strip('node'))]['summaryminor'][1,:]
-                        #if len(tempreslist)>0:
-                        #    tempresval = tempreslist[len(tempreslist)-1]
-                        #else:
-                        #    tempresval=0.0
-                        #retPeakres = max(tempresval,retPeakres)
-                    #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
                     if 'summaryminor' not in mergedret:
                         for inode in nodenames:
                             nodeid = int(inode.strip('node'))
-                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                            if len(ret[inode][nodeid]['summaryminor'])!=0:
                                 lastnode = inode
                                 lastid = nodeid
                            
                         mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
                 if parlist.count('modflux'):
-                    #retModflux = 0
-                    #for inode in nodenames:
-                    #    tempmodlist = ret[inode][int(inode.strip('node'))]['summaryminor'][2,:]
-                    #    print "tempmodlist for ",inode,"=",tempmodlist
-                    #    if len(tempmodlist)>0:
-                    #         tempmodval=tempmodlist[len(tempmodlist)-1]
-                    #    else:
-                    #         tempmodval=0.0
-                    #    retModflux += tempmodval
-                    #mergedret['modflux']=retModflux
                     if 'summaryminor' not in mergedret:
                         for inode in nodenames:
                             nodeid = int(inode.strip('node'))
-                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                            if len(ret[inode][nodeid]['summaryminor'])!=0:
                                 lastnode = inode
                                 lastid = nodeid
                            

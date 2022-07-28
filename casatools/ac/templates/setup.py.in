@@ -101,12 +101,14 @@ build_config_file = "build.json"
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
+parser.add_argument('--tests', help="Test name prefix(es) to search for. For use with 'test'. Default '--tests=test_'.", default='test_', dest='TESTS')
 parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('--relwithdebinfo', help='Release build with debug and optimization flags', action='store_true')
 parser.add_argument('--stripsyms', help='Strip debug info out of the executable files from --relwithdebinfo. Used with release builds.', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
+_tests_ = args.TESTS
 _debug_build_ = args.debug
 _rel_with_deb_info_ = args.relwithdebinfo
 _strip_syms_ = args.stripsyms
@@ -115,6 +117,9 @@ print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 print("_strip_syms_: " + str(_strip_syms_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
+argv_to_remove = list(filter(lambda x: x.startswith("--tests="), sys.argv))
+for v in argv_to_remove:
+    sys.argv.remove(v)
 if "--version" in sys.argv:
     sys.argv.remove("--version")
 if "--debug" in sys.argv:
@@ -128,7 +133,7 @@ if "--stripsyms" in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.66.jar'
+xml_jar_file = 'xml-casa-assembly-1.68.jar'
 xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
 xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
 
@@ -1417,11 +1422,10 @@ class casa_build_ext(build_ext):
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
 
-            if isexe("scripts/mod-closure") and not os.path.isfile(os.path.join("build",".created.closure")):
+            if isexe("scripts/mod-closure"):
                 print("generating module closure...")
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
-                open(os.path.join("build",".created.closure"),'a').close( )
                 if isexe("scripts/find-glibc-private"):
                     if Proc(["scripts/find-glibc-private", "--delete", module_path]) != 0:
                         sys.exit("\tGLIBC_PRIVATE cleanup failed...")
@@ -1453,7 +1457,8 @@ class casa_test(Command):
         self.__lib_dir = os.path.abspath("build/%s" % distutils_dir_name('lib'))
         self.__env = os.environ.copy( )
         if 'PYTHONPATH' in self.__env:
-            self.__env['PYTHONPATH'] = ("%s:%s" % (self.__env['PYTHONPATH'],self.__lib_dir))
+            existing_paths = ":".join(list(map(os.path.abspath,self.__env['PYTHONPATH'].split(':'))))
+            self.__env['PYTHONPATH'] = "%s:%s" % (self.__lib_dir,existing_paths)
         else:
             self.__env['PYTHONPATH'] = self.__lib_dir
         self.__regression_dir = "build/%s" % distutils_dir_name('regression')
@@ -1513,9 +1518,11 @@ class casa_test(Command):
 
     def __collect_tests(self, testdir):
         tests = [ ]
+        prefixes = _tests_.split(",")
         for dir, subdirs, files in os.walk(testdir):
             for f in files:
-                if f.endswith(".py") and f.startswith("test_"):
+                matching_prefixes = list(filter(lambda x: f.startswith(x), prefixes))
+                if f.endswith(".py") and len(matching_prefixes) > 0:
                     workingdir = "%s/%s" % (self.__test_dir,f[:-3])
                     mkpath(workingdir)
                     tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
@@ -1822,9 +1829,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     with open("makefile", "a") as mk:
         for (mysrc, myflags) in zip(src, cflags):
             dflags = sep.join(myflags + duse_grpc + grpc_dirs)
-            myinc = includes
-            if mysrc == SOURCE_BINDING:
-                myinc += " -I" + python_inc
+            myinc = includes + f' -I{python_inc}'
             for s in mysrc:
                 b = os.path.splitext(s)[0]
                 objfile = obj_name.format(base=b)
@@ -2309,10 +2314,8 @@ class create_makefile(Command):
         with open("makefile", "a") as mk:
             for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
                 base = os.path.splitext(s)[0]
-                myinc = includes
+                myinc = includes + f' -I{python_inc}'
                 toolname = base.split(os.sep)[-2]
-                if s in WRAP_CPP:
-                    myinc += " -I" + python_inc
                 # for tn in tool_deps[toolname]:
                 mylibs = set([toolname] + g_tools[toolname] if toolname in g_tools else [])
                 dependencies = set()

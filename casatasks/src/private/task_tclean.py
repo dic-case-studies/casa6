@@ -115,6 +115,8 @@ def tclean(
     scales,#=[],
     nterms,#=1,
     smallscalebias,#=0.0
+    fusedthreshold,
+    largestscale,
 
     ### restoration options
     restoration,
@@ -415,7 +417,8 @@ def tclean(
             if(specmode=='mfs' and ('stand' in gridder)):
                 casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
 
-        imager.checkPB()
+        if gridder in ['mosaic','awproject']:
+            imager.checkPB()
 
         if niter >=0 : 
 

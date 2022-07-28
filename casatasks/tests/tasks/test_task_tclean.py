@@ -128,7 +128,11 @@ from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelIma
 from casatasks import impbcor, split, concat
 #from casaplotms import plotms
 
+
+
 from casatestutils.imagerhelpers import TestHelpers
+
+
 
 _ia = image( )
 _vp = vpmanager( )
@@ -253,6 +257,85 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='multiscale',scales=[0,20,40,100],interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[100,100,0,0])])
           self.assertTrue(self.check_final(pstr=report))
+          
+     ## Add tests for CAS-940 here, for asp using sim_data_VLA_jet.ms which contains 5 chans.
+     @unittest.skipIf(sys.platform == "darwin", "test_onefield_asp is disabled on macOS due to intermittent failures.")
+     def test_onefield_asp(self):
+          """ [onefield] Test_Onefield_asp : mfs with asp minor cycle """
+          #import pdb
+          #pdb.set_trace()
+          self.prepData('sim_data_VLA_jet.ms')
+          #self.msfile=ctsys.resolve('sim_data_VLA_jet.ms')
+
+          #############################################################################
+          ## Truth values : Pixel values taken from the true image (from the simulation that made the sim_data_VLA_jet.ms dataset)
+          ##                        smoothed to an angular resolution of 94.3asec x 81.5asec, pa=-89 for channel 0 
+          ##                        smoothed to an angular resolution of 52asec x 45asec, pa=-89 for channel 4 
+          #############################################################################
+          ## Tolerance : 12% relative error from the truth.
+          ##                     - This includes reconstruction uncertainty, and is an absolute tolerance.
+          ##                     - The current ASP implementation uses a library that gives difference convergence profiles, depending on 
+          ##                        how the code is built. This threshold also includes current variability between local vs bamboo builds (as of Feb 2022). 
+          #############################################################################
+
+          ## Point source (core) : Flux = 1.0 Jy/bm at [256,209,0,0])   --> This should be the same in all channels. A flat-spectrum point source.
+          pt_true = 1.0    
+          pt_loc_0=[256,209,0,0]    # Channel 0
+          pt_loc_4=[256,209,0,4]    # Channel 4
+          ## Extended source (lobe) : Flux : 5.1 Jy/bm at [275,330,0,0], 1.0 Jy/bm at [275,330,0,4]  --> Steep spectrum.... it changes with channel.
+          ext_true_0 = 5.2  
+          ext_true_4 = 1.0
+          ext_loc_0=[275,330,0,0]
+          ext_loc_4=[275,330,0,4]
+
+          ## case 1: default settings
+          ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',gain=0.8,interactive=0,parallel=self.parallel)
+          #report1=self.th.checkall(ret=ret1, peakres=0.3803, modflux=145.524, imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'], imgval=[(self.img+'1.psf',1.0,[256,256,0,0])])
+          report1=self.th.checkall(ret=ret1, 
+                                   imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'], 
+                                   imgval=[(self.img+'1.psf',1.0,[256,256,0,0]),
+                                           (self.img+'1.image',pt_true,pt_loc_0),
+                                           (self.img+'1.image',pt_true,pt_loc_4),
+                                           (self.img+'1.image',ext_true_0,ext_loc_0),
+                                           (self.img+'1.image',ext_true_4,ext_loc_4) ], epsilon=0.12)
+
+          ## case 2: using fusedthreshold to trigger the switch to hogbom
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',fusedthreshold=0.05,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+#          report2=self.th.checkall(ret=ret2, peakres=0.8205, modflux=203.016, imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image',self.img+'2.model'], imgval=[(self.img+'2.psf',1.0,[256,256,0,0])])
+          report2=self.th.checkall(ret=ret1, 
+                                   imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image',self.img+'2.model'], 
+                                   imgval=[(self.img+'2.psf',1.0,[256,256,0,0]),
+                                           (self.img+'2.image',pt_true,pt_loc_0),
+                                           (self.img+'2.image',pt_true,pt_loc_4),
+                                           (self.img+'2.image',ext_true_0,ext_loc_0),
+                                           (self.img+'2.image',ext_true_4,ext_loc_4) ], epsilon=0.12)
+
+          ## case 3: using the largestscale limit
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',largestscale=10,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+#          report3=self.th.checkall(ret=ret3, peakres=0.5804, modflux=107.407, imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image',self.img+'3.model'], imgval=[(self.img+'3.psf',1.0,[256,256,0,0])])
+          report3=self.th.checkall(ret=ret1, 
+                                   imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image',self.img+'3.model'], 
+                                   imgval=[(self.img+'3.psf',1.0,[256,256,0,0]),
+                                           (self.img+'3.image',pt_true,pt_loc_0),
+                                           (self.img+'3.image',pt_true,pt_loc_4),
+                                           (self.img+'3.image',ext_true_0,ext_loc_0),
+                                           (self.img+'3.image',ext_true_4,ext_loc_4) ], epsilon=0.12)
+         
+
+          ## case 4: using both the fusedthreshold and largestscale
+          ret4 = tclean(vis=self.msfile,imagename=self.img+'4',imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',fusedthreshold=0.05,largestscale=10,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+#          report4=self.th.checkall(ret=ret4, peakres=0.5804, modflux=107.407, imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image',self.img+'4.model'], imgval=[(self.img+'4.psf',1.0,[256,256,0,0])])
+          report4=self.th.checkall(ret=ret1, 
+                                   imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image',self.img+'4.model'], 
+                                   imgval=[(self.img+'4.psf',1.0,[256,256,0,0]),
+                                           (self.img+'4.image',pt_true,pt_loc_0),
+                                           (self.img+'4.image',pt_true,pt_loc_4),
+                                           (self.img+'4.image',ext_true_0,ext_loc_0),
+                                           (self.img+'4.image',ext_true_4,ext_loc_4) ], epsilon=0.12)
+
+          
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
+          
 
      def test_onefield_mtmfs(self):
           """ [onefield] Test_Onefield_mtmfs : mt-mfs with minor cycle iterations """
@@ -292,7 +375,7 @@ class test_onefield(testref_base):
 
           # briggs r=2
           ret4 = tclean(vis=self.msfile,imagename=self.img+'4',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=2, interactive=0,parallel=self.parallel)     
-          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imgval=[(self.img+'4.psf',1.0,[50,50,0,0]),(self.img+'4.sumwt',3430533.5,[0,0,0,0])])
+          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imgval=[(self.img+'4.psf',1.0,[50,50,0,0]),(self.img+'4.sumwt',641971.5625,[0,0,0,0])])
 
           # radial
           ret5 = tclean(vis=self.msfile,imagename=self.img+'5',imsize=100,cell='8.0arcsec',niter=10,weighting='radial', interactive=0,parallel=self.parallel)     
@@ -304,7 +387,7 @@ class test_onefield(testref_base):
 
           # briggs r=0.5(default) with mtmfs (to test SIImageStoreMultiTerm)
           ret7 = tclean(vis=self.msfile,imagename=self.img+'7',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs', weighting='briggs', robust=0.5, interactive=0,parallel=self.parallel)     
-          report7=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'7.psf.tt0', self.img+'7.residual.tt0', self.img+'7.image.tt0', self.img+'7.model.tt0'], imgval=[(self.img+'7.psf.tt0',1.0,[50,50,0,0]),(self.img+'7.psf.tt1',0.0898,[50,50,0,0]),(self.img+'7.sumwt.tt0',1532169.875,[0,0,0,0]),(self.img+'7.sumwt.tt1',137693.875,[0,0,0,0])])
+          report7=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'7.psf.tt0', self.img+'7.residual.tt0', self.img+'7.image.tt0', self.img+'7.model.tt0'], imgval=[(self.img+'7.psf.tt0',1.0,[50,50,0,0]),(self.img+'7.psf.tt1',0.0898,[50,50,0,0]),(self.img+'7.sumwt.tt0',286721.875,[0,0,0,0]),(self.img+'7.sumwt.tt1',25767.1796875,[0,0,0,0])])
 
 
           # beamareas: uniform < briggs-r=-2 < briggs r=0.5 < briggs r=+2 < natural, ...
@@ -560,8 +643,8 @@ class test_onefield(testref_base):
                                      peakres=0.409, modflux=0.764, iterdone=10, nmajordone=2,
                                      imgexist=checkims, 
                                      imgval=[(self.img+'.alpha',-2.0,[50,50,0,0]),
-                                            (self.img+'.sumwt.tt0', 94050.05,[0,0,0,0]) ,
-                                            (self.img+'.sumwt.tt1', 0.006198,[0,0,0,0]) ], 
+                                            (self.img+'.sumwt.tt0', 17600,[0,0,0,0]) ,
+                                            (self.img+'.sumwt.tt1', 0.0037891,[0,0,0,0]) ], 
                                      reffreq= [(self.img+'.image.tt0',1489984775.68)] )
           
           self.assertTrue(self.check_final(report))
@@ -821,13 +904,17 @@ class test_iterbot(testref_base):
 
           ret={}
           if self.parallel:
-            # peakres and modflux is determined from node1 
+            # peakres and modflux is determined from node1
             ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'peakres', 'modflux'])
           else:
-            ret=retpar 
-          report=self.th.checkall(ret=ret, peakres=1.73, modflux=0.407,iterdone=12,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual'])
+            ret=retpar
 
-          self.assertTrue(self.check_final(report))
+          report=self.th.checkall(ret=ret,iterdone=12,nmajordone=2,
+                                  imgexist=[self.img+'.psf', self.img+'.residual'],
+                                  imgval=[ (self.img+'.model', 1.73, [50,50,0,7]),    ## Channel id 7 has a line, with flux above the stopping threshold. It should have something.
+                                           (self.img+'.model', 0, [50,50,0,3])     ]) ## Channel id 3 has continuum, with flux below the stopping threshood. It should have zero in the model.
+
+          self.assertTrue(self.check_final(report)) 
 
 
      def test_iterbot_cube_3(self): # test for returned summary/plot for no iteration case 
@@ -2412,6 +2499,46 @@ class test_cube(testref_base):
           self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imnat+'.image', operator.lt))
           self.assertTrue(self.th.check_beam_compare(imbriggs_2+'.image', imbriggs0+'.image', operator.lt))
           self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imbriggs_3+'.image', operator.lt))
+    
+     # unit test cases for CAS-13660
+     def test_cube_weighting_taper(self):
+          """[cube] test_cube_weighting_taper: """
+          self.prepData('refim_point_withline.ms')
+          delmod(self.msfile)
+          im_uniform=self.img+"_uniform_notaper"
+          im_uniform_taper=self.img+"_uniform_with_taper"
+          im_natural_taper=self.img+"_natural_with_taper"
+          im_briggs_2_taper=self.img+"_briggs_with_taper"
+          ret_uniform = tclean(vis=self.msfile,imagename=im_uniform,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', restoringbeam='common', parallel=self.parallel)
+          ret_uniform_taper = tclean(vis=self.msfile,imagename=im_uniform_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', uvtaper=['50arcsec'], restoringbeam='common', parallel=self.parallel)
+          ret_natural_taper = tclean(vis=self.msfile,imagename=im_natural_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='natural', uvtaper=['500arcsec'], restoringbeam='common', parallel=self.parallel)
+          ret_briggs_2_taper=tclean(vis=self.msfile,imagename=im_briggs_2_taper,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', uvtaper=['50arcsec'], robust=-2.0, restoringbeam='common', parallel=self.parallel)
+
+          self.assertTrue(os.path.exists(im_uniform+'.image') and os.path.exists(im_uniform_taper+'.image') and os.path.exists(im_natural_taper+'.image') and  os.path.exists(im_briggs_2_taper+'.image') )
+          self.assertTrue(self.th.check_beam_compare(im_uniform+'.image', im_uniform_taper+'.image', operator.lt))
+
+          beamresult_uniform = imhead(im_uniform + '.image', mode='summary')['restoringbeam']
+          beamresult_uniform_taper = imhead(im_uniform_taper + '.image', mode='summary')['restoringbeam']
+          beamresult_natural_taper = imhead(im_natural_taper + '.image', mode='summary')['restoringbeam']
+          beamresult_briggs_2_taper = imhead(im_briggs_2_taper + '.image', mode='summary')['restoringbeam']
+
+          _, report1 = self.th.check_val(beamresult_uniform['major']['value'], 70.00, valname = 'Restoring beam major:', exact = False)
+          _, report2 = self.th.check_val(beamresult_uniform['minor']['value'], 51.07, valname='Restoring beam minor:', exact=False)
+          _, report3 = self.th.check_val(beamresult_uniform['positionangle']['value'], -83.78, valname='Restoring beam positionangle:', exact=False)
+          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 75.52, valname='Restoring beam major:',exact=False)
+          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 61.63, valname='Restoring beam minor:',exact=False)
+          _, report6 = self.th.check_val(beamresult_uniform_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
+          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 457.07, valname='Restoring beam major:',exact=False)
+          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 448.07, valname='Restoring beam minor:',exact=False)
+          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.54,valname='Restoring beam positionangle:', exact=False)
+          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 75.52,valname='Restoring beam major:', exact=False)
+          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 61.63,valname='Restoring beam minor:', exact=False)
+          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
+
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
+
+
+          
 #     def test_cube_D3(self):
 #          """ EMPTY : [cube] Test_Cube_D3 : specmode cubesrc - Doppler correct to a SOURCE ephemeris"""
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
@@ -5824,6 +5951,27 @@ class test_errors_failures(testref_base):
                             veltype='radio', outframe='LSRK',
                             parallel=self.parallel)
 
+###########################################################
+###########################################################
+###########################################################
+class test_gclean(testref_base):
+     """ gclean(...) is a class used by the vis team.
+     These tests are here to ensure that any changes to tclean don't break gclean.
+     """
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "glcean doesn't work with mpi")
+     def test_gclean_threeiter(self):
+          """test_gclean_threeiter: test the the gclean generator runs for at least three iterations"""
+          from casatasks.private.imagerhelpers._gclean import gclean
+          self.prepData('refim_point.ms')
+          cnt = 0
+          for rec in gclean( vis='refim_point.ms', imagename=self.img, imsize=100, cell='8.0arcsec',
+                             specmode='cube', interpolation='nearest', nchan=1, start='1.0GHz', width='0.2GHz',
+                             pblimit=-1e-05, deconvolver='hogbom', niter=500, cyclefactor=3, scales=[0, 3, 10] ):
+               cnt += 1
+               if cnt == 3:
+                    break
+          # as long as we've gotten this far, then the test has passed
+          pass
 
 if __name__ == '__main__':
      unittest.main()

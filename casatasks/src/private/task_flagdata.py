@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import time
 import os
 import sys
@@ -6,47 +5,16 @@ import copy
 import pprint
 import numpy as np
 
-# get is_CASA6 and is_python3
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from . import flaghelper as fh
-    from .mstools import write_history
-    from .parallel.parallel_task_helper import ParallelTaskHelper
-    from .parallel.parallel_data_helper import ParallelDataHelper
-    # this should be replaced when CASA really moves to Python 2.7
-    from collections import OrderedDict
-    from casatasks import casalog
-    from casatools import ms, agentflagger, quanta, table
+from . import flaghelper as fh
+from .mstools import write_history
+from .parallel.parallel_task_helper import ParallelTaskHelper
+from .parallel.parallel_data_helper import ParallelDataHelper
+# this should be replaced when CASA really moves to Python 2.7
+from collections import OrderedDict
+from casatasks import casalog
+from casatools import ms, agentflagger, quanta, table
 
-    localqa = quanta()
-else:
-    from taskinit import casalog, qa
-    from taskinit import mstool as ms
-    from taskinit import aftool as agentflagger
-    from taskinit import tbtool as table
-    from mstools import write_history
-    import flaghelper as fh
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from parallel.parallel_data_helper import ParallelDataHelper
-    # this should be replaced when CASA really moves to Python 2.7
-    from OrderedDictionary import OrderedDict
-
-    # not really local
-    localqa = qa
-
-# common function to use to get dictionary item and keys iterators
-if is_python3:
-    def lociteritems(adict):
-        return adict.items()
-
-    def lociterkeys(adict):
-        return adict.keys()
-else:
-    def lociteritems(adict):
-        return adict.iteritems()
-
-    def lociterkeys(adict):
-        return adict.iterkeys()
+localqa = quanta()
 
 debug = False
 
@@ -599,7 +567,7 @@ def flagdata(vis,
 
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
-            for k,v in lociteritems(seldic):
+            for k,v in seldic.items():
                 if v == '':
                     tempdict.pop(k)
 
@@ -774,11 +742,9 @@ def flagdata(vis,
         if mode != 'summary' and action == 'apply':
             try:
                 param_names = flagdata.__code__.co_varnames[:flagdata.__code__.co_argcount]
-                if is_python3:
-                    vars = locals( )
-                    param_vals = [vars[p] for p in param_names]
-                else:
-                    param_vals = [eval(p) for p in param_names]
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+
                 retval &= write_history(mslocal, vis, 'flagdata', param_names,
                                         param_vals, casalog)
 
@@ -814,7 +780,7 @@ def flagdata(vis,
                # the number of reports left in dictionary
                counter = 0
                summary_reports = OrderedDict()
-               for k in lociterkeys(ordered_summary_list):
+               for k in ordered_summary_list.keys():
                    repname = "report"+str(counter)
                    summary_reports[repname] = ordered_summary_list[k]
                    counter += 1

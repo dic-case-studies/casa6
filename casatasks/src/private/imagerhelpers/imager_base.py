@@ -11,12 +11,14 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table, image
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     ctsys_hostinfo = ctsys.hostinfo
     _tb = table()
     _ia = image()
 else:
     from taskinit import *
+    from imagerhelpers.summary_minor import SummaryMinor
 
     synthesisimager = casac.synthesisimager
     synthesisdeconvolver = casac.synthesisdeconvolver
@@ -190,6 +192,10 @@ class PySynthesisImager:
 
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
+        if ('stopcode' in summ):
+            summ['stopDescription'] = self.getStopDescription(summ['stopcode'])
+        if ('summaryminor' in summ):
+            summ['summaryminor'] = SummaryMinor.convertMatrix(summ['summaryminor'])
         #self.plotReport( summ, fignum )
         return summ
 
@@ -242,6 +248,12 @@ class PySynthesisImager:
 
 #############################################
 
+    def getStopDescription(self, stopflag):
+        stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
+        if (stopflag > 0):
+            return stopreasons[stopflag-1]
+        return None
+
     def hasConverged(self):
         # Merge peak-res info from all fields to decide iteration parameters
          time0=time.time()
@@ -255,14 +267,9 @@ class PySynthesisImager:
 #         self.runInteractiveGUI2()
 
          # Check with the iteration controller about convergence.
-         # casalog.post("check convergence")
          stopflag = self.IBtool.cleanComplete()
-         # casalog.post('STOPFLAG {}'.format(stopflag))
-         # casalog.post('Converged : ', stopflag)
          if( stopflag>0 ):
-             #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
-             stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
-             casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
+             casalog.post("Reached global stopping criterion : " + self.getStopDescription(stopflag), "INFO")
 
              # revert the current automask to the previous one
              #if self.iterpars['interactive']:
@@ -571,7 +578,7 @@ class PySynthesisImager:
 
                 # casalog.post('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 retval= retval or exrec['iterdone'] > 0
-                self.IBtool.mergeexecrecord( exrec )
+                self.IBtool.mergeexecrecord( exrec, immod )
                 if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)

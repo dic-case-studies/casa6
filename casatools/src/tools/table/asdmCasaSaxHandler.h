@@ -8,15 +8,15 @@
  */
 
 #include <xercesc/sax2/DefaultHandler.hpp>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/DataType.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/DataType.h>
 #include <vector>
 ///
-#include <tables/Tables/TableDesc.h>
-#include <tables/Tables/Table.h>
-#include <tables/Tables/ScalarColumn.h>
-#include <tables/Tables/ArrayColumn.h>
-#include <casa/Arrays/Array.h>
+#include <casacore/tables/Tables/TableDesc.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ArrayColumn.h>
+#include <casacore/casa/Arrays/Array.h>
 
 
 

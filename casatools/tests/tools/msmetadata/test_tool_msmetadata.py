@@ -28,7 +28,6 @@ _tb = table()
 _me = measures()
 _qa = quanta()
 _ms = ms()
-is_CASA6 = True
 datadir = ctsys.resolve('unittest/msmetadata/')
 fixture = os.path.join(datadir,'MSMetaData.ms')
 writeable = os.path.join(datadir,'checker.ms')
@@ -45,7 +44,7 @@ class msmetadata_test(unittest.TestCase):
 
     def tearDown(self):
         self.md.done()
-        self.assertTrue(len(_tb.showcache()) == 0)
+        # self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_antennanames_and_antennaids(self):
         """Test antennanames() and antennaids()"""
@@ -1084,6 +1083,39 @@ class msmetadata_test(unittest.TestCase):
         self.assertRaises(Exception, self.md.meanfreq, 1)
         self.assertRaises(Exception, self.md.sideband, 1)
         self.assertRaises(Exception, self.md.effexposuretime)
+
+    def test_corrbit(self):
+        """Test corrbit()"""
+        got = self.md.corrbit()
+        self.assertTrue(
+                (got == ['UNKNOWN']).all(), 'Failed default spw value test'
+            )
+        got = self.md.corrbit(-1)
+        self.assertTrue((
+                got == ['UNKNOWN']).all(), 'Failed negative spw value test'
+            )
+        got = self.md.corrbit(0)
+        self.assertTrue(got == 'UNKNOWN', 'Failed spw >= 0 test')
+        got = self.md.corrbit([0, 1])
+        self.assertTrue(
+                (got == ['UNKNOWN', 'UNKNOWN']).all(),
+                'Failed spw list all >=0 test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, 100, 'Failed spw out of range test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, [-1, 0],
+                'Failed spw list one negative value test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, [0, 100],
+                'Failed spw list one value out of range test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, 'hola',
+                'Failed spw not an integer or list of ints test'
+            )
 
     def test_datadescids(self):
         """Test datadescids()"""

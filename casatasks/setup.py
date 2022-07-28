@@ -60,9 +60,9 @@ import os
 try:
     import casatools
     from casatools.config import build as tools_config
-except:
-    print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in PYTHONPATH")
-    os._exit(1)
+except ImportError as exc:
+    print(f'Exception found when importing casatools: {type(exc).__name__} {exc}')
+    sys.exit(1)
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
@@ -271,6 +271,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdpolaverage.xml',
               'xml/sdsidebandsplit.xml',
               'xml/plotprofilemap.xml',
+              'xml/imbaseline.xml',
 ]
 
 if pyversion < 3:

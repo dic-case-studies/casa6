@@ -32,24 +32,24 @@
 
 #include <msmetadata_forward.h>
 
-#include <casa/Containers/Record.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/QLogical.h>
-#include <casa/Quanta/QVector.h>
-#include <measures/Measures/MeasureHolder.h>
-#include <measures/Measures/MDirection.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <ms/MSOper/MSMetaData.h>
-#include <ms/MSOper/MSKeys.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/QLogical.h>
+#include <casacore/casa/Quanta/QVector.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/ms/MSOper/MSMetaData.h>
+#include <casacore/ms/MSOper/MSKeys.h>
 
 #include <msvis/MSVis/MSChecker.h>
 
 #include <algorithm>
 #include <regex>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #define _ORIGIN *_log << LogOrigin("msmetadata_cmpt.cc", __func__, __LINE__);
 // common method scaffold
@@ -682,6 +682,42 @@ bool msmetadata::close() {
     return false;
 }
 
+variant* msmetadata::corrbit(const variant& spw) {
+    _FUNC(
+        const auto myType = spw.type();
+        if (myType == variant::INT) {
+            auto intSpw = spw.toInt();
+            if (intSpw >= 0) {
+                _checkSpwId(intSpw, false);
+                auto mymap = _msmd->getCorrBits();
+                return new variant(string(mymap[intSpw]));
+            }
+            else {
+                auto mymap = _msmd->getCorrBits();
+                return new variant(_vectorStringToStdVectorString(mymap));
+            }
+        }
+        else if (myType == variant::INTVEC) {
+            auto vecSpw = spw.toIntVec();
+            for (const auto& s : vecSpw) {
+                _checkSpwId(s, true);
+            }
+            auto mymap = _msmd->getCorrBits();
+            vector<String> res;
+            for (const auto& s : vecSpw) {
+                res.push_back(mymap[s]);
+            }
+            return new variant(_vectorStringToStdVectorString(res));
+        }
+        else {
+            ThrowCc(
+                "Parameter spw must either be an integer or a list of integers"
+            );
+        }
+    )
+    return nullptr;
+}
+
 variant* msmetadata::corrprodsforpol(long polid) {
     _FUNC(
         _checkPolId(polid, true);
@@ -691,7 +727,7 @@ variant* msmetadata::corrprodsforpol(long polid) {
             vector<ssize_t>(prods.shape().begin(),prods.shape().end())
         );
     )
-    return NULL;
+    return nullptr;
 }
 
 vector<long> msmetadata::corrtypesforpol(long polid) {
@@ -2304,8 +2340,8 @@ void msmetadata::_checkSpwId(int id, bool throwIfNegative) const {
         id >= (int)_msmd->nSpw(true) || (throwIfNegative && id < 0),
         "Spectral window ID " + String::toString(id)
         + " out of range, must be "
-        + (throwIfNegative ? "nonnegative and " : "") + "less than "
-        + String::toString((int)_msmd->nSpw(true))
+        + (throwIfNegative ? "nonnegative and " : "") + "less than or equal to "
+        + String::toString((int)_msmd->nSpw(true) - 1)
     );
 }
 

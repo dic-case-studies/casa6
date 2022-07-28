@@ -1,18 +1,19 @@
+from collections import Counter
 import datetime
 import os
 import shutil
-from collections import Counter
 
 from casatasks import casalog
 from casatools import ms as mstool
 from casatools import singledishms
+
 from . import sdutil
 from .mstools import write_history
 
 ms = mstool()
 
 
-@sdutil.sdtask_decorator
+@sdutil.callable_sdtask_decorator
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,
@@ -36,6 +37,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if isinstance(fftthresh, str):
             fftthresh = fftthresh.lower()
 
+        if (spw == ''):
+            spw = '*'
+
         if not os.path.exists(infile):
             raise ValueError("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
@@ -43,14 +47,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if (not overwrite) and dosubtract and os.path.exists(outfile):
             raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
-
-        if (maskmode == 'interact'):
-            raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (blfunc == 'variable') and not os.path.exists(blparam):
             raise ValueError("input file '%s' does not exists" % blparam)
-
-        if (spw == ''):
-            spw = '*'
 
         if (blmode == 'fit'):
             temp_outfile = _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan,
@@ -88,7 +86,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
 
 blformat_item = ['csv', 'text', 'table']
-blformat_ext = ['csv', 'txt',  'bltable']
+blformat_ext = ['csv', 'txt', 'bltable']
 
 mesg_invalid_wavenumber = 'wrong value given for addwn/rejwn'
 
@@ -107,7 +105,8 @@ def remove_data(filename):
 
 
 def is_empty(blformat):
-    """
+    """Check if blformat is empty.
+
     returns True if blformat is None, '', [] and
     a string list containing only '' (i.e., ['', '', ..., ''])
     """
@@ -184,7 +183,7 @@ def has_duplicate_nonnull_element_ex(lst, base):
 
 
 def normalise_bloutput(infile, blformat, bloutput, overwrite):
-    return [get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite) \
+    return [get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite)
             for item in zip(blformat_item, blformat_ext)]
 
 
@@ -224,7 +223,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
 
 def get_temporary_file_name(basename):
     name = basename + '_sdbaseline_pid' + str(os.getpid()) + '_' \
-           + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+        + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
     return name
 
 
@@ -245,74 +244,88 @@ def parse_wavenumber_param(wn):
         __check_positive_or_zero(wn)
         return str(wn)
     elif isinstance(wn, str):
-        if '.' in wn:                            # case of float value as string
+        if '.' in wn:
+            # case of float value as string
             raise ValueError(mesg_invalid_wavenumber)
-        elif ',' in wn:                          # cases 'a,b,c,...'
+        elif ',' in wn:
+            # cases 'a,b,c,...'
             val0 = wn.split(',')
             __check_positive_or_zero(val0)
             val = []
-            for v in val0: val.append(int(v))
+            for v in val0:
+                val.append(int(v))
             val.sort()
             res = list(set(val))  # uniq
-        elif '-' in wn:                          # case 'a-b' : return [a,a+1,...,b-1,b]
+        elif '-' in wn:
+            # case 'a-b' : return [a,a+1,...,b-1,b]
             val = wn.split('-')
             __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
-        elif '~' in wn:                          # case 'a~b' : return [a,a+1,...,b-1,b]
+            res = [i for i in range(val[0], val[1] + 1)]
+        elif '~' in wn:
+            # case 'a~b' : return [a,a+1,...,b-1,b]
             val = wn.split('~')
             __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
-        elif wn[:2] == '<=' or wn[:2] == '=<':   # cases '<=a','=<a' : return [0,1,...,a-1,a]
+            res = [i for i in range(val[0], val[1] + 1)]
+        elif wn[:2] == '<=' or wn[:2] == '=<':
+            # cases '<=a','=<a' : return [0,1,...,a-1,a]
             val = wn[2:]
             __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
-        elif wn[-2:] == '>=' or wn[-2:] == '=>': # cases 'a>=','a=>' : return [0,1,...,a-1,a]
+            res = [i for i in range(int(val) + 1)]
+        elif wn[-2:] == '>=' or wn[-2:] == '=>':
+            # cases 'a>=','a=>' : return [0,1,...,a-1,a]
             val = wn[:-2]
             __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
-        elif wn[0] == '<':                       # case '<a' :         return [0,1,...,a-2,a-1]
+            res = [i for i in range(int(val) + 1)]
+        elif wn[0] == '<':
+            # case '<a' :         return [0,1,...,a-2,a-1]
             val = wn[1:]
             __check_positive_or_zero(val, False)
             res = [i for i in range(int(val))]
-        elif wn[-1] == '>':                      # case 'a>' :         return [0,1,...,a-2,a-1]
+        elif wn[-1] == '>':
+            # case 'a>' :         return [0,1,...,a-2,a-1]
             val = wn[:-1]
             __check_positive_or_zero(val, False)
             res = [i for i in range(int(val))]
-        elif wn[:2] == '>=' or wn[:2] == '=>':   # cases '>=a','=>a' : return [a,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a,a+1,...,a_nyq]
-                                                 #                     (CAS-3759)
+        elif wn[:2] == '>=' or wn[:2] == '=>':
+            # cases '>=a','=>a' : return [a,-999], which is
+            #                     then interpreted in C++
+            #                     side as [a,a+1,...,a_nyq]
+            #                     (CAS-3759)
             val = wn[2:]
             __check_positive_or_zero(val)
             res = [int(val), -999]
-        elif wn[-2:] == '<=' or wn[-2:] == '=<': # cases 'a<=','a=<' : return [a,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a,a+1,...,a_nyq]
-                                                 #                     (CAS-3759)
+        elif wn[-2:] == '<=' or wn[-2:] == '=<':
+            # cases 'a<=','a=<' : return [a,-999], which is
+            #                     then interpreted in C++
+            #                     side as [a,a+1,...,a_nyq]
+            #                     (CAS-3759)
             val = wn[:-2]
             __check_positive_or_zero(val)
             res = [int(val), -999]
-        elif wn[0] == '>':                       # case '>a' :         return [a+1,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a+1,a+2,...,a_nyq]
-                                                 #                     (CAS-3759)
+        elif wn[0] == '>':
+            # case '>a' :         return [a+1,-999], which is
+            #                     then interpreted in C++
+            #                     side as [a+1,a+2,...,a_nyq]
+            #                     (CAS-3759)
             val0 = wn[1:]
-            val = int(val0)+1
+            val = int(val0) + 1
             __check_positive_or_zero(val)
             res = [val, -999]
-        elif wn[-1] == '<':                      # case 'a<' :         return [a+1,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a+1,a+2,...,a_nyq]
-                                                 #                     (CAS-3759)
+        elif wn[-1] == '<':
+            # case 'a<' :         return [a+1,-999], which is
+            #                     then interpreted in C++
+            #                     side as [a+1,a+2,...,a_nyq]
+            #                     (CAS-3759)
             val0 = wn[:-1]
-            val = int(val0)+1
+            val = int(val0) + 1
             __check_positive_or_zero(val)
             res = [val, -999]
-        else:                                    # case 'a'
+        else:
+            # case 'a'
             __check_positive_or_zero(wn)
             res = [int(wn)]
 
@@ -327,13 +340,13 @@ def __get_strlist(param):
 
 
 def check_fftthresh(fftthresh):
-    """
+    """Validate fftthresh value.
+
     The fftthresh must be one of the following:
     (1) positive value (float, integer or string)
     (2) 'top' + positive integer value
     (3) positive float value + 'sigma'
     """
-
     has_invalid_type = False
     val_not_positive = False
 
@@ -354,7 +367,7 @@ def check_fftthresh(fftthresh):
             else:
                 if (float(fftthresh) <= 0.0):
                     val_not_positive = True
-        except:
+        except Exception:
             raise ValueError('fftthresh has a wrong format.')
     else:
         has_invalid_type = True
@@ -434,7 +447,7 @@ def restore_sorted_table_keyword(infile, sorttab_info):
 
 
 def _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
-             reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
+              reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
     if not os.path.exists(bltable):
         raise ValueError("file specified in bltable '%s' does not exist." % bltable)
 
@@ -465,10 +478,10 @@ def _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, int
 
 
 def _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
-           reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
-           bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
-           rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
-           outfile, overwrite):
+            reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
+            bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
+            rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
+            outfile, overwrite):
 
     temp_outfile = ''
 
@@ -525,7 +538,7 @@ def _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, inten
                                               addwn=addwn,
                                               rejwn=rejwn,
                                               clip_threshold_sigma=clipthresh,
-                                              num_fitting_max=clipniter+1,
+                                              num_fitting_max=clipniter + 1,
                                               blparam=blparam,
                                               verbose=verbose,
                                               updateweight=updateweight,
