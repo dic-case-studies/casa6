@@ -12,11 +12,13 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisdeconvolver, iterbotsink, ctsys, table
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     ctsys_hostinfo = ctsys.hostinfo
     _tb = table() # TODO is this necessary?
 else:
     from taskinit import *
+    from imagerhelpers.summary_minor import SummaryMinor
 
     synthesisdeconvolver = casac.synthesisdeconvolver
     # make it look like the CASA6 version even though it's using the CASA5 named tool not present in CASA6
@@ -112,7 +114,8 @@ class PyDeconvolver:
 #############################################
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
-        # self.plotReport( summ, fignum ) should be called explicitly for deconvolver
+        if ('summaryminor' in summ):
+            summ['summaryminor'] = SummaryMinor.convertMatrix(summ['summaryminor'])
         return summ
 
 #############################################
