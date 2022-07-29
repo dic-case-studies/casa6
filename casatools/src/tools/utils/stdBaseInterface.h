@@ -5,7 +5,7 @@
 //for a task or method.
 //
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <vector>
 #include <string>
 #include <map>

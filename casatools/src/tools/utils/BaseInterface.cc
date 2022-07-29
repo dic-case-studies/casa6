@@ -5,7 +5,7 @@
 #include <readline/history.h>
 
 #include <tools/utils/BaseInterface.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/Containers/Record.h>
 
 
 //extern "C" char **rl_completion_matches __P((const char *, rl_compentry_func_t *));
