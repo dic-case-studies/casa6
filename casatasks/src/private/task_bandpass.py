@@ -143,5 +143,6 @@ def bandpass(vis=None,caltable=None,
                 mycb.solve()
 
         finally:
+                results_dict = mycb.returndict()
                 mycb.close()
-
+                return results_dict
