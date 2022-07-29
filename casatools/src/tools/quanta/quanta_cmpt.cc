@@ -15,22 +15,22 @@
 #include <iomanip>
 #include <quanta_cmpt.h>
 
-#include <casa/BasicSL/String.h>
-#include <casa/Quanta/QC.h>
-#include <casa/Quanta/UnitMap.h>
-#include <casa/Utilities/MUString.h>
-#include <casa/stdmap.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/UnitName.h>
-#include <casa/Containers/Record.h>
-#include <casa/Quanta/MVTime.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/QMath.h>
-#include <casa/Quanta/MVDoppler.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Quanta/MVFrequency.h>
-#include <casa/Quanta/QLogical.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Quanta/QC.h>
+#include <casacore/casa/Quanta/UnitMap.h>
+#include <casacore/casa/Utilities/MUString.h>
+#include <casacore/casa/stdmap.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/UnitName.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/QMath.h>
+#include <casacore/casa/Quanta/MVDoppler.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Quanta/MVFrequency.h>
+#include <casacore/casa/Quanta/QLogical.h>
 
 using namespace std;
 using namespace casacore;

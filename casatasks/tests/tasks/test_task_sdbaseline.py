@@ -27,8 +27,10 @@ import csv
 import filecmp
 import glob
 import os
+import re
 import shutil
 import unittest
+from io import StringIO
 
 import numpy as np
 from casatasks import casalog, sdbaseline
@@ -2102,7 +2104,7 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
         remove_single_file_dir(self.infile)
         remove_files_dirs(self.outroot)
 
-    @unittest.skip("Not currently part of the the test suite")
+    @unittest.skip("Not currently part of the test suite")
     def test200(self):
         """test200: Test the task works with multi IF data"""
         infile = self.infile
@@ -2632,8 +2634,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     04: test data selection
     05: test clipping
     06: duplicated fitting parameter in blparam file (the last one is adopted)
+    10: check if baseline function names are correctly output in text file
+    11: check if the numbers of baseline coefficients are correctly output in text/csv
     NOT IMPLEMENTED YET
-    * test dosubtract = False
     * line finder
     * edge flagging
     """
@@ -2649,6 +2652,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
     def tearDown(self):
         remove_files_dirs(os.path.splitext(self.infile)[0])
+        remove_single_file_dir(self.paramfile)
         remove_single_file_dir(self.outfile)
 
     def _refetch_files(self, files, from_dir=None):
@@ -2723,13 +2727,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable01(self):
         """Test blfunc='variable' with skipping rows by comment ('#') (rows should be flagged)"""
         infile = 'analytic_variable.ms'
@@ -2737,13 +2734,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, flag_spec=[(0, 0)],
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable02(self):
         """Test blfunc='variable' with non-existent lines in blparam file
@@ -2754,13 +2744,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, flag_spec=[(0, 0), (1, 1)],
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable03(self):
         """Test blfunc='variable' with mask selection"""
@@ -2773,13 +2756,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._run_test(infile, self.refstat0, mask=mask,
                        blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable04(self):
         """Test blfunc='variable' with data selection (spw='1')"""
         infile = 'analytic_variable.ms'
@@ -2787,13 +2763,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, spw='1',
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable05(self):
         """Test blfunc='variable' with clipping"""
@@ -2806,13 +2775,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._run_test(infile, self.refstat0, atol=1.e-5,
                        mask=mask, blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable06(self):
         """Test blfunc='variable' with duplicated fitting parameters (the last one is adopted)"""
         infile = 'analytic_variable.ms'
@@ -2820,12 +2782,123 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
+    def _extract_blfunc_params(self, paramfile):
+        blparams = {'func': [], 'pname': [], 'pvalue': []}
+        isref = (paramfile == self.paramfile)
+
+        if isref:  # Extract baseline parameters from reference file in csv format
+            ref_data = np.genfromtxt(paramfile,
+                                     delimiter=',',
+                                     names=True,
+                                     usecols=('ROW', 'POL', 'BL_TYPE', 'ORDER', 'N_PIECE'),
+                                     dtype=None,
+                                     encoding='utf-8')
+
+            sorted_refdata = np.sort(ref_data, order=['ROW', 'POL'])
+
+            bltype, order, npiece = [sorted_refdata[col] for col in ['BL_TYPE', 'ORDER', 'N_PIECE']]
+
+            blparams['func'] = bltype.tolist()
+            blparams['pname'] = ['npiece' if t == 'cspline' else 'order' for t in bltype]
+
+            is_cspline = (bltype == 'cspline')
+            not_cspline = np.logical_not(is_cspline)
+            blparams['pvalue'] = np.select([is_cspline, not_cspline], [npiece, order]).tolist()
+
+        else:  # Extract baseline parameters from ad-hoc 'free-format' text file
+            blparams_pattern = '^Baseline parameters  Function = (?P<func>[a-z]+)  '\
+                               '(?P<pname>[a-z]+) = (?P<pvalue>[0-9]+)'
+
+            with open(paramfile, 'r') as f:
+                blparams_rows = re.findall(blparams_pattern, f.read(), re.MULTILINE)
+
+            blparams_csv = '\n'.join([','.join(row) for row in blparams_rows])
+
+            blparams_data = np.genfromtxt(StringIO(blparams_csv),
+                                          delimiter=',',
+                                          dtype=[('func', '<U10'),
+                                                 ('pname', '<U10'),
+                                                 ('pvalue', 'i4')])
+
+            for key in blparams.keys():
+                blparams[key] = blparams_data[key].tolist()
+
+        return blparams
+
+    def testVariable10(self):
+        """Check if baseline function names are correctly output in text file"""
+        self.infile = 'analytic_variable.ms'
+        self.paramfile = 'analytic_variable_blparam.txt'
+        self._refetch_files([self.infile, self.paramfile], self.datapath)
+        blformat = 'text'
+        bloutput = self.infile + '_blparam.txt'
+
+        sdbaseline(infile=self.infile,
+                   datacolumn='float_data',
+                   blformat=blformat,
+                   bloutput=bloutput,
+                   dosubtract=False,
+                   blfunc='variable',
+                   blparam=self.paramfile)
+
+        blparams_answer = self._extract_blfunc_params(self.paramfile)
+        blparams_result = self._extract_blfunc_params(bloutput)
+        self.assertDictEqual(blparams_answer, blparams_result,
+                             msg='baseline parameter output in text file is wrong.')
+
+    def _get_num_coeff(self, paramfile):
+        ncoeffs = []
+        isref = (paramfile == self.paramfile)
+
+        if isref:
+            blparams = self._extract_blfunc_params(paramfile)
+            offsets = [1 if t == 'order' else 3 for t in blparams['pname']]
+            ncoeffs = [v + o for v, o in zip(blparams['pvalue'], offsets)]
+        else:
+            iscsv = (os.path.splitext(paramfile)[1][1:] == 'csv')
+            delimiter = ',' if iscsv else None
+            with open(paramfile, 'r') as f:
+                for line in f.readlines():
+                    elems = line.rstrip('\n').split(delimiter)
+                    if iscsv:
+                        ncoeff = len(elems) - 10
+                    else:  # txt
+                        if len(elems) < 1:
+                            continue
+                        if elems[0] != 'p0':
+                            continue
+
+                        ncoeff = sum(e.startswith('p') for e in elems)
+
+                    ncoeffs.append(ncoeff)
+
+        return ncoeffs
+
+    def testVariable11(self):
+        """Check if the numbers of baseline coefficients are correctly output in text/csv"""
+        self.infile = 'analytic_variable.ms'
+        self.paramfile = 'analytic_variable_blparam.txt'
+        self._refetch_files([self.infile, self.paramfile], self.datapath)
+
+        blformat = ['text', 'csv']
+        blformat_ext = ['txt', 'csv']
+        bloutput = []
+        for ext in blformat_ext:
+            bloutput.append(self.infile + '_blparam.' + ext)
+
+        sdbaseline(infile=self.infile,
+                   datacolumn='float_data',
+                   blformat=blformat,
+                   bloutput=bloutput,
+                   dosubtract=False,
+                   blfunc='variable',
+                   blparam=self.paramfile)
+
+        ncoeff_ref = self._get_num_coeff(self.paramfile)
+        for blfile in bloutput:
+            ext = os.path.splitext(blfile)[1][1:]
+            self.assertEqual(ncoeff_ref, self._get_num_coeff(blfile),
+                             msg=f'number of baseline coefficients in {ext} file is wrong.')
 
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
@@ -2981,9 +3054,11 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
             bloutput = []
             idxs = [int(v) for v in str(bin(i))[2:].zfill(len(blformat))]
             for j in range(len(idxs)):
-                elem = '' if idxs[j] == 0 else self.blout_nondefaults[blformat[j]]
+                elem = '' if (idxs[j] == 0) or (blformat[j] == '') \
+                       else self.blout_nondefaults[blformat[j]]
                 bloutput.append(elem)
-            bloutputs.append(bloutput)
+            if bloutput not in bloutputs:
+                bloutputs.append(bloutput)
 
         if len(blformat) == 1:
             bloutputs.append('')
@@ -3059,15 +3134,18 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 
     def test010(self):
         """single bloutput cases"""
-        self._run_test(['text', ['text']])
-        self._run_test(['csv', ['csv']])
+        # self._run_test(['text', ['text']])  # tentatively skipped for CAS-13673
+        # self._run_test(['csv', ['csv']])  # tentatively skipped for CAS-13674
         self._run_test(['table', ['table']])
 
     def test011(self):
         """single bloutput cases (blformat with empty elements)"""
-        self._run_test([['', 'csv'], ['text', '']])
-        self._run_test([['', '', 'table'], ['', 'text', ''], ['csv', '', '']])
+        # self._run_test([['', 'csv'], ['text', '']])  # tentatively skipped for CAS-13673
+        self._run_test([['', '', 'table']])
+        # self._run_test([['', 'text', '']])  # tentatively skipped for CAS-13673
+        # self._run_test([['csv', '', '']])  # tentatively skipped for CAS-13674
 
+    @unittest.skip("Not currently part of the test suite")
     def test020(self):
         """double bloutput cases"""
         self._run_test([['table', 'text']])
@@ -3077,10 +3155,12 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         self._run_test([['text', 'csv']])
         self._run_test([['csv', 'text']])
 
+    @unittest.skip("Not currently part of the test suite")
     def test021(self):
         """double bloutput cases (blformat with an empty element)"""
         self._run_test([['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']])
 
+    @unittest.skip("Not currently part of the test suite")
     def test030(self):
         """triple bloutput cases"""
         self._run_test([['table', 'text', 'csv']])
