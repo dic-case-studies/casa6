@@ -1,8 +1,8 @@
 ##########################################################################
-# test_task_uvcontsub2021.py
+# test_task_uvcontsub.py
 #
-# Copyright (C) 2021 European Southern Obervatory, ALMA partnership
-# Copyright (C) 2021 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2021-2022 European Southern Obervatory, ALMA partnership
+# Copyright (C) 2021-2022 Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -17,7 +17,7 @@
 # Test initially added in CAS-13631
 #
 # Based on the requirements listed in casadocs found here:
-# https://casadocs.readthedocs.io/en/latest/api/tt/casatasks.manipulation.uvcontsub2021.html
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatasks.manipulation.uvcontsub.html
 # And the documents found in the "Development"/"Visibility Manipulation" folder of the CASA
 # google drive:
 # https://drive.google.com/drive/u/1/folders/1ttYI8Xcgfa-e1Dk0f8kzrv1bz7fIqylm
@@ -31,7 +31,7 @@ import shutil
 import unittest
 
 from casatools import table, ctsys
-from casatasks import uvcontsub2021
+from casatasks import uvcontsub
 ctsys_resolve = ctsys.resolve
 
 datadir = os.path.join('unittest', 'uvcontsub')
@@ -56,7 +56,7 @@ ms_mixed_pols = 'split_ddid_mixedpol_CAS-12283.ms'
 datapath_mixed_pols = ctsys.resolve(os.path.join(datadir, ms_mixed_pols))
 
 
-class uvcontsub2021_test_base(unittest.TestCase):
+class uvcontsub_test_base(unittest.TestCase):
     """
     Base class to share utility functions between the test classes below.
     """
@@ -151,7 +151,7 @@ class uvcontsub2021_test_base(unittest.TestCase):
     def _check_rows(self, vis, col_name, expected_rows, expected_val=None):
         """
         Meant to check rows of a column from an output MS produced by
-        uvcontsub2021. Uses unittest asserts to verify conditions.
+        uvcontsub. Uses unittest asserts to verify conditions.
 
         :param vis: MS to check
         :param col_name: name of column to check (MODEL_DATA, FIELD, etc.)
@@ -244,9 +244,9 @@ class uvcontsub2021_test_base(unittest.TestCase):
                         )
 
 
-class uvcontsub2021_test(uvcontsub2021_test_base):
+class uvcontsub_test(uvcontsub_test_base):
     """
-    Main verification test for uvcontsub2021
+    Main verification test for uvcontsub
     """
 
     @classmethod
@@ -280,7 +280,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         is created and has a data column
         """
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output)
+        res = uvcontsub(vis=ms_simple, outputvis=self.output)
         self._check_task_return(res, fields=[0])
         self.assertTrue(os.path.exists(self.output))
         self._check_rows(self.output, 'DATA', 340)
@@ -288,54 +288,54 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         # check also no-overwrite of existing MS
         with self.assertRaises(ValueError):
-            uvcontsub2021(vis=ms_simple, outputvis=self.output)
+            uvcontsub(vis=ms_simple, outputvis=self.output)
 
     def test_select_field(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='2')
         self._check_task_return(res, fields=[2])
         self._check_rows(self.output, 'FIELD_ID', 120, 2)
 
     def test_select_spw(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, spw='1')
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
     def test_select_spw_mismatching_fitspec(self):
         """ Check spw selection works when fitspec gives mismatching IDs (not selected)"""
         # As if the user got confused with old uvcontsub w/ combinespw, and expected spw 1->0
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1', fitspec='0')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, spw='1', fitspec='0')
         self._check_task_return(res)
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
     def test_select_scan(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, scan='2')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, scan='2')
         self._check_task_return(res, fields=[1])
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_intent(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, intent='*AMPLI*')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, intent='*AMPLI*')
         self._check_task_return(res, fields=[1])  # fields 0,2 excluded by intent selection
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_array(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, array='0')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, array='0')
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'ARRAY_ID', 1080, 0)
 
     def test_select_observation(self):
         """ Check field selection works"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, observation='0')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, observation='0')
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'OBSERVATION_ID', 1080, 0)
 
@@ -344,23 +344,23 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         depending oninput MS"""
 
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='CORRECTED')
+            res = uvcontsub(vis=ms_simple, outputvis=self.output, datacolumn='CORRECTED')
 
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='MODEL')
+            res = uvcontsub(vis=ms_simple, outputvis=self.output, datacolumn='MODEL')
 
         with self.assertRaises(AssertionError):
-            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
+            res = uvcontsub(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
 
         # 'datacolumn' test using DATA:
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
         # 'datacolumn' test using CORRECTED:
         shutil.rmtree(self.output)
-        res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED')
+        res = uvcontsub(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
         self._check_data_stats(ms_corr, (1419.16761+3.06690944e-06j),
@@ -373,7 +373,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitspec_empty(self):
         """Check that fitspec works. When empty, fit all channels in all SPWs"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspec='')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitspec='')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -382,7 +382,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that fitspec works. When selecting some SPWs, fit all channels
         in those SPWs"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspec='0')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitspec='0')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j),
@@ -391,7 +391,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitspec_spw_one_chan(self):
         """Check fitspec when giving one spw with 1 channel (perfect fit if order 0)"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', fitspec='1')
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='0', fitspec='1')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
@@ -402,11 +402,11 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check fitspec when giving in a dict one spw with 1 channel (perfect fit if
         order 0)"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0',
-                            fitspec={'0':
-                                     {'1': {'chan': '',
-                                            'fitorder': 0}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='0',
+                        fitspec={'0':
+                                 {'1': {'chan': '',
+                                        'fitorder': 0}}
+                        })
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
@@ -416,11 +416,11 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check fitspec when giving in a dict one spw with 1 channel (perfect fit if
         order 0)"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0',
-                            fitspec={'0':
-                                     {'1': {'chan': '',
-                                            'fitorder': 1}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='0',
+                        fitspec={'0':
+                                 {'1': {'chan': '',
+                                        'fitorder': 1}}
+                        })
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
@@ -430,17 +430,17 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """ Check spw selection works when fitspec (as dict) gives mismatching IDs 
         (not selected)"""
         # As if the user got confused with old uvcontsub w/ combinespw, and expected spw 1->0
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', spw='1',
-                            fitspec={'0':
-                                     {'0': {'chan': '2~127',
-                                            'fitorder': 0}},
-                                     '1':
-                                     {'0': {'chan': '0~40',
-                                            'fitorder': 1}},
-                                     '3':
-                                     {'0': {'chan': '1~33;56~119',
-                                            'fitorder': 1}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='0', spw='1',
+                        fitspec={'0':
+                                 {'0': {'chan': '2~127',
+                                        'fitorder': 0}},
+                                 '1':
+                                 {'0': {'chan': '0~40',
+                                        'fitorder': 1}},
+                                 '3':
+                                 {'0': {'chan': '1~33;56~119',
+                                        'fitorder': 1}}
+                        })
         self._check_task_return(res)
         self._check_rows(self.output, 'DATA_DESC_ID', 450, 1)
         self._check_data_stats(self.output, (0.939443643+2.88438311e-07j),
@@ -451,7 +451,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that fitspec works. When selecting some channels in some SPWs,
         fit those channels in those SPWs (like example 2 from task page)"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspec='0:5~19')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitspec='0:5~19')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-18.5249996-7.05000019j),
@@ -462,14 +462,14 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that fitspec works. Different spw:chan strings for different fields
         (like example 4 from task page)"""
 
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                            fitspec={
-                                '0': {'0': {'chan': '100~500;600~910;1215~1678;1810~1903',
-                                            'fitorder': 0}},
-                                '1': 'NONE',
-                                '2': {'0': {'chan': '100~1903',
-                                            'fitorder': 0}}
-                                })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                        fitspec={
+                            '0': {'0': {'chan': '100~500;600~910;1215~1678;1810~1903',
+                                        'fitorder': 0}},
+                            '1': 'NONE',
+                            '2': {'0': {'chan': '100~1903',
+                                        'fitorder': 0}}
+                        })
         self._check_task_return(res, fields=[0, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
@@ -480,13 +480,13 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         but giving list of fields for a same fitspec"""
 
         # Give some fields grouped
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                            fitspec={
-                                '0, 1': {'0': {'chan': '100~500;600~900;1200~1900',
-                                               'fitorder': 0}},
-                                '2': {'0': {'chan': '100~1903',
-                                            'fitorder': 0}}
-                                })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                        fitspec={
+                            '0, 1': {'0': {'chan': '100~500;600~900;1200~1900',
+                                           'fitorder': 0}},
+                            '2': {'0': {'chan': '100~1903',
+                                        'fitorder': 0}}
+                        })
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         expected_vals = [(-0.0125788084-5.98476360e-06j), 0j,
@@ -495,14 +495,14 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         # Giving the fields one at a time should be equivalent
         shutil.rmtree(self.output)
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                            fitspec={'0': {'0': {'chan': '100~500;600~900;1200~1900',
-                                                 'fitorder': 0}},
-                                     '1': {'0': {'chan': '100~500;600~900;1200~1900',
-                                                 'fitorder': 0}},
-                                     '2': {'0': {'chan': '100~1903',
-                                                 'fitorder': 0}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                        fitspec={'0': {'0': {'chan': '100~500;600~900;1200~1900',
+                                             'fitorder': 0}},
+                                 '1': {'0': {'chan': '100~500;600~900;1200~1900',
+                                             'fitorder': 0}},
+                                 '2': {'0': {'chan': '100~1903',
+                                             'fitorder': 0}}
+                        })
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, *expected_vals)
@@ -510,16 +510,16 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitspec_multifield_multispw_diff_fitorder(self):
         """Check different fitorder values for different fields and spws, in
         addition to different spw:chan strings"""
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                            fitspec={'0': {'0': {'chan':
-                                                 '100~500;600~910;1215~1678;1810~1903',
-                                                 'fitorder': 1},
-                                           '1': {'chan': '0',
-                                                 'fitorder': 2}},
-                                     '1': 'NONE',
-                                     '2': {'0': {'chan': '100~1903',
-                                                 'fitorder': 2}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                        fitspec={'0': {'0': {'chan':
+                                             '100~500;600~910;1215~1678;1810~1903',
+                                             'fitorder': 1},
+                                       '1': {'chan': '0',
+                                             'fitorder': 2}},
+                                 '1': 'NONE',
+                                 '2': {'0': {'chan': '100~1903',
+                                             'fitorder': 2}}
+                        })
         self._check_task_return(res, fields=[0, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, (0.0361723897-2.72414129e-06j), 0j,
@@ -528,12 +528,12 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitspec_multifield_fields_sel(self):
         """Check the use of field selection (multiple) and fitspec (multiple/ per field
         list) together"""
-        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1,2',
-                            fitspec={'1': {'0': {'chan': '100~500;600~900',
-                                                 'fitorder': 0}},
-                                     '2': {'0': {'chan': '100~1903',
-                                                 'fitorder': 0}}
-                                     })
+        res = uvcontsub(vis=ms_alma, outputvis=self.output, field='1,2',
+                        fitspec={'1': {'0': {'chan': '100~500;600~900',
+                                             'fitorder': 0}},
+                                 '2': {'0': {'chan': '100~1903',
+                                             'fitorder': 0}}
+                        })
         self._check_task_return(res, fields=[1, 2])
         self._check_rows(self.output, 'DATA', 480)
         self._check_data_stats(self.output, (-0.0165902558-1.55947462e-05j),
@@ -543,27 +543,27 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that wrong fitspec lists produce an exception"""
 
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'99': {'0': {'chan':
-                                                      '100~500;600~910;1215~1678;1810~1903',
-                                                      'fitorder': 3}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'99': {'0': {'chan':
+                                                  '100~500;600~910;1215~1678;1810~1903',
+                                                  'fitorder': 3}}
+                            })
             self._check_task_return(res)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'-2': {'0': {'chan': '100~500',
-                                                      'fitorder': 3}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'-2': {'0': {'chan': '100~500',
+                                                  'fitorder': 3}}
+                            })
             self._check_task_return(res)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'4': {'0,1': {'chan': '',
-                                                       'fitorder': 1}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'4': {'0,1': {'chan': '',
+                                                   'fitorder': 1}}
+                            })
             self._check_task_return(res)
 
     def test_fitspec_multifield_wrong_format(self):
@@ -572,85 +572,85 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         with self.assertRaises(RuntimeError):
             # Wrong structure - missing chan
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1': 'NONE',
-                                         '2': {'0': {'fitorder': 0}},
-                                         '3': {'0': {'chan': '100~1901',
-                                                     'fitorder': 0}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1': 'NONE',
+                                     '2': {'0': {'fitorder': 0}},
+                                     '3': {'0': {'chan': '100~1901',
+                                                 'fitorder': 0}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Wrong structure - missing fitorder
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1': 'NONE',
-                                         '2': {'0': {'chan': '2~988'}},
-                                         '3': {'0': {'chan': '100~1903',
-                                                     'fitorder': 0}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1': 'NONE',
+                                     '2': {'0': {'chan': '2~988'}},
+                                     '3': {'0': {'chan': '100~1903',
+                                                 'fitorder': 0}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Wrong SPW
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1': 'NONE',
-                                         '3': {'0': {'chan': '100~1902',
-                                                     'fitorder': 1},
-                                               'wrong_spw': {'chan': '100~834',
-                                                             'fitorder': 0}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1': 'NONE',
+                                     '3': {'0': {'chan': '100~1902',
+                                                 'fitorder': 1},
+                                           'wrong_spw': {'chan': '100~834',
+                                                         'fitorder': 0}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Wrong field
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1': 'NONE',
-                                         'bla_fail': {'0': {'chan': '',
-                                                            'fitorder': 2}},
-                                         '3': {'0': {'chan': '100~1903',
-                                                     'fitorder': 1}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1': 'NONE',
+                                     'bla_fail': {'0': {'chan': '',
+                                                        'fitorder': 2}},
+                                     '3': {'0': {'chan': '100~1903',
+                                                 'fitorder': 1}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Repeated indices in SPW
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1': 'NONE',
-                                         '2': {'0': {'chan':
-                                                     '100~500;600~910;1215~1678;1810~1903',
-                                                     'fitorder': 1},
-                                               '0,1': {'chan': '100~1890',
-                                                       'fitorder': 0}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1': 'NONE',
+                                     '2': {'0': {'chan':
+                                                 '100~500;600~910;1215~1678;1810~1903',
+                                                 'fitorder': 1},
+                                           '0,1': {'chan': '100~1890',
+                                                   'fitorder': 0}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Repeated indices in field
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1,2': 'NONE',
-                                         '2': {'0': {'chan':
-                                                     '100~500;600~910;1215~1678;1810~1903',
-                                                     'fitorder': 1}}
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1,2': 'NONE',
+                                     '2': {'0': {'chan':
+                                                 '100~500;600~910;1215~1678;1810~1903',
+                                                 'fitorder': 1}}
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
             # Wrong string in field subdict (instead of NONE)
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspec={'1,2': 'bogus'
-                                         })
+            res = uvcontsub(vis=ms_alma, outputvis=self.output,
+                            fitspec={'1,2': 'bogus'
+                            })
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
@@ -659,16 +659,16 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         fields, and each field to a different output MS (like example 3 from
         task page)"""
 
-        res_f1 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1',
-                               fitspec='0:100~500;600~910;1215~1678;1810~1903')
+        res_f1 = uvcontsub(vis=ms_alma, outputvis=self.output, field='1',
+                           fitspec='0:100~500;600~910;1215~1678;1810~1903')
         self._check_task_return(res_f1, fields=[1])
         self._check_rows(self.output, 'DATA', 360)
         self._check_data_stats(self.output, (-0.013026415-2.0328553e-05j),
                                0j, (-0.633247495+0j), (2.01062560+0j))
 
         shutil.rmtree(self.output)
-        res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
-                               fitspec='0:100~1303')
+        res_f2 = uvcontsub(vis=ms_alma, outputvis=self.output, field='2',
+                           fitspec='0:100~1303')
         self._check_task_return(res_f2, fields=[2])
         self._check_rows(self.output, 'DATA', 120)
         self._check_data_stats(self.output, (-0.0140258259+5.83529241e-06j),
@@ -677,7 +677,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitspec_spws_sel(self):
         """Check the use of spw selection and fitspec together"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspec='0')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, spw='0', fitspec='0')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -687,13 +687,13 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         is produced"""
 
         with self.assertRaises(RuntimeError):
-            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='3', fitspec='0')
+            res = uvcontsub(vis=ms_simple, outputvis=self.output, spw='3', fitspec='0')
             self._check_task_return(res)
 
     def test_fitmethod_gsl(self):
         """Check that methods work - gsl"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -701,7 +701,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitmethod_casacore(self):
         """Check that methods work - casacore"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -709,8 +709,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitorder1(self):
         """ Check different fit orders (0, 1, 2) work (like example 1 from task page)"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
-                            fitspec='0:2~20')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitorder=1,
+                        fitspec='0:2~20')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-8.56096448-3.18684196j),
@@ -720,8 +720,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_fitorder2(self):
         """ Check different fit orders (0, 1, 2) work"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
-                            fitspec='0:2~20')
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitorder=2,
+                        fitspec='0:2~20')
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (8.891941398+3.44454119j),
@@ -734,10 +734,10 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         """
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
-                            fitspec={'0': {'0': {'chan': '2~20',
-                                                 'fitorder': 1}}
-                                     })
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitorder=1,
+                        fitspec={'0': {'0': {'chan': '2~20',
+                                             'fitorder': 1}}
+                        })
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-8.56096448-3.18684196j),
@@ -750,10 +750,10 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         """
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
-                            fitspec={'0': {'0': {'chan': '2~20',
-                                                 'fitorder': 2}}
-                                     })
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, fitorder=2,
+                        fitspec={'0': {'0': {'chan': '2~20',
+                                             'fitorder': 2}}
+                        })
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (8.891941398+3.44454119j),
@@ -766,8 +766,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         # Uses ms_mixed_pols: many SPWs (and with mixed pols), but 1 field
 
         # A: fit using order 0,1,2,3, without per field/spw fitspec
-        res_order_0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=0,
-                                    fitspec='3')
+        res_order_0 = uvcontsub(vis=ms_mixed_pols, outputvis=self.output, fitorder=0,
+                                fitspec='3')
         self._check_task_return(res_order_0, fields=[0])
         stats_field_0_spw_3_order_0 = (
             (-0.000772132455+0.000219751841j), (-0.000659341924-0.0187813938j),
@@ -775,8 +775,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
         shutil.rmtree(self.output)
 
-        res_order_1 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=1,
-                                    fitspec='2:100~500')
+        res_order_1 = uvcontsub(vis=ms_mixed_pols, outputvis=self.output, fitorder=1,
+                                fitspec='2:100~500')
         self._check_task_return(res_order_1, fields=[0])
         stats_field_0_spw_2_order_1 = (
             (-0.00390083172-0.00195605258j), (0.00536000915-0.0672568083j),
@@ -784,8 +784,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
         shutil.rmtree(self.output)
 
-        res_order_2 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=2,
-                                    fitspec='63:2~50;55~60')
+        res_order_2 = uvcontsub(vis=ms_mixed_pols, outputvis=self.output, fitorder=2,
+                                fitspec='63:2~50;55~60')
         self._check_task_return(res_order_2, fields=[0])
         stats_field_0_spw_63_order_2 = (
             (-0.00150726591+0.00118314047j), (0.00288047199+0.00183670223j),
@@ -793,8 +793,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
         shutil.rmtree(self.output)
 
-        res_order_3 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=3,
-                                    fitspec='4:50~503;600~850;900~1002')
+        res_order_3 = uvcontsub(vis=ms_mixed_pols, outputvis=self.output, fitorder=3,
+                                fitspec='4:50~503;600~850;900~1002')
         self._check_task_return(res_order_3, fields=[0])
         stats_field_0_spw_4_order_3 = (
             (-0.00245836405+0.00548351408j), (0.00843574991+1.61623479j),
@@ -803,27 +803,27 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         shutil.rmtree(self.output)
 
         # B: cross-check A against per field/spw fitspec with corresponding fit orders
-        res_order0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output,
-                                   fitspec={
-                                       '0': {'1': {'chan': '0',
-                                                   'fitorder': 0},
-                                             '2': {# 2 pol, 512 chan
-                                                   'chan': '100~500',
-                                                   'fitorder': 1},
-                                             '3': {# 4 pol, 64 chan
-                                                   'chan': '',
-                                                   'fitorder': 0},
-                                             '4': {# 2 pol, 1024 chan
-                                                   'chan': '50~503;600~850;900~1002',
-                                                   'fitorder': 3},
-                                             '5': {# 2 pol, 512 chan
-                                                   'chan': '100~495',
-                                                   'fitorder': 0},
-                                             '63': {# 4 pol, 64 chan
-                                                    'chan': '2~50;55~60',
-                                                    'fitorder': 2}
-                                             },
-                                       })
+        res_order0 = uvcontsub(vis=ms_mixed_pols, outputvis=self.output,
+                               fitspec={
+                                   '0': {'1': {'chan': '0',
+                                               'fitorder': 0},
+                                         '2': {# 2 pol, 512 chan
+                                             'chan': '100~500',
+                                             'fitorder': 1},
+                                         '3': {# 4 pol, 64 chan
+                                             'chan': '',
+                                             'fitorder': 0},
+                                         '4': {# 2 pol, 1024 chan
+                                             'chan': '50~503;600~850;900~1002',
+                                             'fitorder': 3},
+                                         '5': {# 2 pol, 512 chan
+                                             'chan': '100~495',
+                                             'fitorder': 0},
+                                         '63': {# 4 pol, 64 chan
+                                             'chan': '2~50;55~60',
+                                             'fitorder': 2}
+                                   },
+                               })
         self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
         self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
         self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
@@ -833,7 +833,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """ Check the model column is added to the output MS and its values match
         (like example 5 from task page)"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
+        res = uvcontsub(vis=ms_simple, outputvis=self.output, writemodel=True)
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_rows(self.output, 'MODEL_DATA', 340)
@@ -850,8 +850,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_writemodel_from_corrected(self):
         """ Check the model column, like test_writemodel, but taking input from
         CORRECTED_DATA"""
-        res = uvcontsub2021(vis=ms_papersky, outputvis=self.output, datacolumn='CORRECTED',
-                            writemodel=True)
+        res = uvcontsub(vis=ms_papersky, outputvis=self.output, datacolumn='CORRECTED',
+                        writemodel=True)
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 6318)
         self._check_rows(self.output, 'MODEL_DATA', 6318)
@@ -878,8 +878,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_writemodel_from_corrected_all_flagged(self):
         """ Check the model column, like test_writemodel, but taking input from
         CORRECTED_DATA, with all data points flagged (fit doesn't iterate, model=0) """
-        res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED',
-                            writemodel=True)
+        res = uvcontsub(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED',
+                        writemodel=True)
         # perhaps TODO: check all chisq == inf, and all count == 1
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
@@ -904,7 +904,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_mixed_pols(self):
         """ Check normal functioning with an MS with mixed polarizations in its (many)
         SPWs"""
-        res = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output)
+        res = uvcontsub(vis=ms_mixed_pols, outputvis=self.output)
 
         # Check all SPWs have been taken.
         def count_entries(d):
@@ -916,7 +916,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                0j, (-66.9297485+55.1413803j), (57.7461967+16.6702766j))
 
 
-class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
+class uvcontsub_numerical_sim_test(uvcontsub_test_base):
     """
     Tests of numerical behavior based on simulated datasets. To be refined - CAS-13632
     """
@@ -1079,7 +1079,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
         without noise. In these MSs, avg/min/max chi_sq values are the same,
         and both polarizations are also the same.
 
-        :param res: result dictionary from uvcontsub2021
+        :param res: result dictionary from uvcontsub
         :param chi_sq_thresholds: thresholds to compare (resuls should be same or
                                   better==smaller chi_sq)
 
@@ -1100,7 +1100,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
         Compare and enforce assert on chi_squared thresholds, for MSs
         with noise. For simplicity uses only average chi_sq per polarization.
 
-        :param res: result dictionary from uvcontsub2021
+        :param res: result dictionary from uvcontsub
         :param chi_sq_thresholds: thresholds on avg chi_sq to compare (resuls should
                                   be same or better==smaller chi_sq)
         """
@@ -1119,8 +1119,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
     def test_sim_specline_nonoise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
-                            fitorder=0, fitspec=self.fitspec)
+        res = uvcontsub(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
+                        fitorder=0, fitspec=self.fitspec)
         self._check_task_return(res, fields=[0])
 
         # Expected cont form simulations. Added to visibilities as a polynomial on channels
@@ -1139,8 +1139,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
     def test_sim_specline_noise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        res = uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output,
-                            fitorder=0, fitspec=self.fitspec)
+        res = uvcontsub(vis=self.ms_cont_noise_order_0, outputvis=self.output,
+                        fitorder=0, fitspec=self.fitspec)
         self._check_task_return(res, fields=[0])
 
         exp_cont = self.exp_cont_order_0
@@ -1157,8 +1157,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
     def test_sim_specline_nonoise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1"""
-        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
-                            fitorder=1, fitspec=self.fitspec)
+        res = uvcontsub(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
+                        fitorder=1, fitspec=self.fitspec)
         self._check_task_return(res, fields=[0])
 
         # Values added to visibilities as a polynomial on channels
@@ -1176,8 +1176,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
     def test_sim_specline_noise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
-        res = uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output,
-                            fitorder=1, fitspec=self.fitspec)
+        res = uvcontsub(vis=self.ms_cont_noise_order_1, outputvis=self.output,
+                        fitorder=1, fitspec=self.fitspec)
         self._check_task_return(res, fields=[0])
 
         exp_cont = self.exp_cont_order_1
@@ -1194,8 +1194,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
 
 def suite():
-    return [uvcontsub2021_test,
-            uvcontsub2021_numerical_verification_test]
+    return [uvcontsub_test,
+            uvcontsub_numerical_verification_test]
 
 
 if __name__ == '__main__':

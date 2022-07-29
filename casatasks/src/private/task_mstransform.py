@@ -289,8 +289,8 @@ def mstransform(
         if douvcontsub:
             casalog.post('Parse uvcontsub parameters')
             casalog.post("The parameter douvcontsub of mstransform is deprecated and will "
-                         "be removed in an upcoming release. The task uvcontsub2021 can be "
-                         "used as an alternative.", "WARN")
+                         "be removed in an upcoming release. The task uvcontsub can be used "
+                         "as an alternative.", "WARN")
             config['uvcontsub'] = True
             uvcontsub_config = {}
             uvcontsub_config['fitspw'] = fitspw

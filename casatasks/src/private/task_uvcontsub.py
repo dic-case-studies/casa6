@@ -4,14 +4,18 @@ from casatasks import casalog
 from .mstools import write_history
 
 
-def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
-                  scan=None, intent=None, array=None, observation=None,
-                  datacolumn=None, fitspec=None, fitmethod=None, fitorder=None,
-                  writemodel=None):
+def uvcontsub(vis=None, outputvis=None, field=None, spw=None,
+              scan=None, intent=None, array=None, observation=None,
+              datacolumn=None, fitspec=None, fitmethod=None, fitorder=None,
+              writemodel=None):
 
     """Continuum subtraction in the uv plane"""
 
-    casalog.origin('uvcontsub2021')
+    casalog.origin('uvcontsub')
+
+    casalog.post('The task uvcontsub has been updated. It does not yet support combining '
+                 'spws for fitting. If you need this functionality please use '
+                 'uvcontsub_old.')
 
     result = {}
     mtlocal = mstransformer()
@@ -70,10 +74,10 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
     # Write history to output MS only. Input MS is read only
     try:
         mslocal = ms()
-        param_names = uvcontsub2021.__code__.co_varnames[:uvcontsub2021.__code__.co_argcount]
+        param_names = uvcontsub.__code__.co_varnames[:uvcontsub.__code__.co_argcount]
         loc_vars = locals()
         param_vals = [loc_vars[p] for p in param_names]
-        write_history(mslocal, outputvis, 'uvcontsub2021', param_names,
+        write_history(mslocal, outputvis, 'uvcontsub', param_names,
                       param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'{}\' updating HISTORY".format(instance), 'WARN')
