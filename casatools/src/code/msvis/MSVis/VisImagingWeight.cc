@@ -620,6 +620,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
             rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
 
+ 
+
       }
       else{
             os << "Filtering for Gaussian of shape: "
@@ -632,13 +634,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             Double fact = C::pi;
             rbmaj_p = fact*square(bmaj.get("rad").getValue());
             rbmin_p = fact*square(bmin.get("rad").getValue());
+          }
+       Double rbpa  = MVAngle(bpa).get("rad").getValue();
+       cospa_p = sin(rbpa);
+       sinpa_p = cos(rbpa);
 
-            Double rbpa  = MVAngle(bpa).get("rad").getValue();
-            cospa_p = sin(rbpa);
-            sinpa_p = cos(rbpa);
-            doFilter_p=true;
-
-        }
+       os << "Filtering for Gaussian of shape after convention: maj"
+          << rbmaj_p << " min "
+          << rbmin_p<<  " pa "
+          << rbpa << " " << LogIO::POST;
+       
+       doFilter_p=true;
     }
     else {
       os << "Unknown filtering " << type << LogIO::EXCEPTION;

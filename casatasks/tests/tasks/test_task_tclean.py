@@ -2570,7 +2570,7 @@ class test_cube(testref_base):
      # unit test cases for CAS-13260
      def test_cube_weighting_taper_cas13260(self):
           """[cube] test_cube_weighting_taper_cas13260: """
-          self.prepData('refim_point_withline.ms')
+          self.prepData('refim_point_linRL.ms')
           delmod(self.msfile)
           im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
           im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
@@ -2582,7 +2582,7 @@ class test_cube(testref_base):
                                                        cell='8.0arcsec',
                                                        specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
                                                        interactive=0,
-                                                       weighting='natural', uvtaper=['91.5karcsec'],
+                                                       weighting='natural', uvtaper=['91.5klambda'],
                                                        restoringbeam='common',
                                                        parallel=self.parallel)
           ret_natural_taper_1_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_1_arcsec, imsize=100,
