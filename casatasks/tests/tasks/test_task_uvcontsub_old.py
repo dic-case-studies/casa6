@@ -1,5 +1,5 @@
 #########################################################################
-# test_task_uvcontsub.py
+# test_task_uvcontsub_old.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.uvcontsub.html
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.uvcontsub_old.html
 #
 #
 ##########################################################################
@@ -28,7 +28,7 @@ import shutil
 import unittest
 
 from casatools import ctsys, table
-from casatasks import uvcontsub
+from casatasks import uvcontsub_old
 from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
 tb = table( )
@@ -36,10 +36,10 @@ tb = table( )
 ctsys_resolve = ctsys.resolve
 
 '''
-Unit tests for task uvcontsub.
+Unit tests for task uvcontsub_old.
 
 Features tested:
-  1. uvcontsub will use DATA if CORRECTED_DATA is absent.
+  1. uvcontsub_old will use DATA if CORRECTED_DATA is absent.
   2. It gets the right answer for a known line + 0th order continuum.
   3. It gets the right answer for a known line + 4th order continuum.
   4. It gets the right answer for a known line + 0th order continuum,
@@ -92,7 +92,7 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
 
 class UVContsubUnitTestBase(unittest.TestCase):
     """
-    uvcontsub unittest base class (refactored)
+    uvcontsub_old unittest base class (refactored)
     """  
     def initialize(self,inpms):
         """
@@ -164,12 +164,12 @@ class zeroth(UVContsubUnitTestBase):
         record = {}
         pnrows = {}
         try:
-            print("\nRunning uvcontsub")
-            uvcontsub(self.inpms, fitspw='0:0~5;18~23',
-                      fitorder=0, want_cont=True
+            print("\nRunning uvcontsub_old")
+            uvcontsub_old(self.inpms, fitspw='0:0~5;18~23',
+                          fitorder=0, want_cont=True
             )
         except Exception:
-            print("Error running uvcontsub")
+            print("Error running uvcontsub_old")
             raise
 
 
@@ -219,12 +219,12 @@ class fourth(UVContsubUnitTestBase):
         infitorder=4                    # fitorder
         record = {}
         try:
-            print("\nRunning uvcontsub")
-            uvcontsub(self.inpms, fitspw='0:0~5;18~23',
-                      fitorder=infitorder, want_cont=True
+            print("\nRunning uvcontsub_old")
+            uvcontsub_old(self.inpms, fitspw='0:0~5;18~23',
+                          fitorder=infitorder, want_cont=True
             )
         except Exception:
-            print("Error running uvcontsub")
+            print("Error running uvcontsub_old")
             raise
 
 
@@ -309,13 +309,13 @@ class combspw(UVContsubUnitTestBase):
         for infitorder in fitorders:
             record[infitorder]={}
             try:
-                print("\nRunning uvcontsub")
-                uvcontsub(self.inpms, fitspw='1~10:5~122,15~22:5~122',
-                          spw='6~14', combine='spw',
-                          fitorder=infitorder, want_cont=False
+                print("\nRunning uvcontsub_old")
+                uvcontsub_old(self.inpms, fitspw='1~10:5~122,15~22:5~122',
+                              spw='6~14', combine='spw',
+                              fitorder=infitorder, want_cont=False
                 )
             except Exception:
-                print("Error running uvcontsub")
+                print("Error running uvcontsub_old")
                 raise
 
             specms = self.inpms + '.contsub'
@@ -348,13 +348,13 @@ class excludechans(UVContsubUnitTestBase):
         record = {}
         pnrows = {}
         try:
-            print("\nRunning uvcontsub")
+            print("\nRunning uvcontsub_old")
            
-            uvcontsub(self.inpms, fitspw='0:6~17', #'0:0~5;18~23'
-                      excludechans=True, fitorder=0,
-                      want_cont=True)
+            uvcontsub_old(self.inpms, fitspw='0:6~17', #'0:0~5;18~23'
+                          excludechans=True, fitorder=0,
+                          want_cont=True)
         except Exception:
-            print("Error running uvcontsub")
+            print("Error running uvcontsub_old")
             raise
 
 
@@ -403,11 +403,11 @@ class excludechans2(UVContsubUnitTestBase):
         record = {}
         infitspw = '1:0~5;10~15;123~127,3:0~5;11~15;123~127,2:0~5;10~15;123~127'
         try:
-            print("\nRunning uvcontsub")
-            uvcontsub(self.inpms, fitspw=infitspw,
-                      spw='1~3', want_cont=False, excludechans=True)
+            print("\nRunning uvcontsub_old")
+            uvcontsub_old(self.inpms, fitspw=infitspw,
+                          spw='1~3', want_cont=False, excludechans=True)
         except Exception:
-            print("Error running uvcontsub")
+            print("Error running uvcontsub_old")
             raise
 
         specms = self.inpms + '.contsub'
@@ -440,14 +440,14 @@ class freqrangeselection(UVContsubUnitTestBase):
         record = {}
         pnrows = {}
         try:
-            print("\nRunning uvcontsub")
+            print("\nRunning uvcontsub_old")
 
-            uvcontsub(self.inpms,
-                      fitspw='*:1412665073.7687755~1412787144.0812755Hz;1413104526.8937755~1413226597.2062755Hz',
-                      fitorder=0,
-                      want_cont=True)
+            uvcontsub_old(self.inpms,
+                          fitspw='*:1412665073.7687755~1412787144.0812755Hz;1413104526.8937755~1413226597.2062755Hz',
+                          fitorder=0,
+                          want_cont=True)
         except Exception:
-            print("Error running uvcontsub")
+            print("Error running uvcontsub_old")
             raise
 
 

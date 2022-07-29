@@ -38,10 +38,10 @@ else:
     # this also uses the global ms object
     _ms = ms
 
-def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, want_cont):
+def uvcontsub_old(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, want_cont):
     
     if ParallelDataHelper.isMMSAndNotServer(vis):
-        helper = ParallelTaskHelper('uvcontsub', locals())
+        helper = ParallelTaskHelper('uvcontsub_old', locals())
         helper._consolidateOutput = False
         retVar = helper.go()
 
@@ -112,13 +112,16 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                                    (auxfile,str(instance)))
         
         # Restore origin (otherwise gcwrap shows virtualconcat)
-        casalog.origin('uvcontsub')
+        casalog.origin('uvcontsub_old')
 
         return
     
     # Run normal code
     try:
-        casalog.origin('uvcontsub')
+        casalog.origin('uvcontsub_old')
+
+        casalog.post('This task is deprecated and will be removed in an upcoming release.',
+                     'WARN')
 
         # Get these checks done and out of the way.
         # This one is redundant - it is already checked at the XML level.
@@ -234,14 +237,14 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         # It is less confusing if we write the history now that the "root" MS
         # is made, but before cb adds its messages.
         #
-        param_names = uvcontsub.__code__.co_varnames[:uvcontsub.__code__.co_argcount]
+        param_names = uvcontsub_old.__code__.co_varnames[:uvcontsub_old.__code__.co_argcount]
         if is_python3:
             vars = locals( )
             param_vals = [vars[p] for p in param_names]
         else:
             param_vals = [eval(p) for p in param_names]
             
-        write_history(myms, csvis, 'uvcontsub', param_names, param_vals,
+        write_history(myms, csvis, 'uvcontsub_old', param_names, param_vals,
                       casalog)
 
         if (type(csvis) == str) and os.path.isdir(csvis):
