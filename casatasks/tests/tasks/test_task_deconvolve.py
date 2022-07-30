@@ -967,7 +967,7 @@ class test_onefield(testref_base):
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "ASP deconvolver currently has issues when running with MPI. To be unskipped in CAS-13874.")
     @unittest.skipIf(sys.platform == "darwin", "test_onefield_asp is disabled on macOS due to intermittent failures. To be fixed in CAS-13791.")
     def test_onefield_asp(self):
-        """ [onefield] test_onefield_mtmfs """
+        """ [onefield] test_onefield_asp """
         ######################################################################################
         # Test mt-mfs with minor cycle iterations . Should produce the same results as tclean.
         ######################################################################################
@@ -1070,7 +1070,7 @@ class test_iterbot(testref_base):
         ######################################################################################
         self.ibsetup()
         results = deconvolve(imagename=self.img, threshold='2mJy', niter=2000, interactive=0)
-        report = th.checkall(ret=results['retrec'], stopcode=2, iterdone=1082, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+        report = th.checkall(ret=results['retrec'], stopcode=2, iterdone=1080, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
         self.checkfinal(report)
 
@@ -1082,7 +1082,7 @@ class test_iterbot(testref_base):
         ######################################################################################
         self.ibsetup()
         results = deconvolve(imagename=self.img, threshold=2e-3, niter=2000, interactive=0)
-        report = th.checkall(ret=results['retrec'], stopcode=2, iterdone=1082, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+        report = th.checkall(ret=results['retrec'], stopcode=2, iterdone=1080, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
         self.checkfinal(report)
 
@@ -1948,17 +1948,18 @@ class test_multirun(testref_base):
         # Note: We need to use a non-default value of gain so that clark doesn't exit due to its internal itsMaxNumberMajorCycles before completing our niter goal.
         ######################################################################################
         peakres, modflux, imgval = 1.009e-2, 1.287, 0.891 # don't actually care much what these values are
+        epsilon = 0.005 if not self.parallel else 0.01
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clark','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
         results1 = deconvolve(imagename=self.img, deconvolver='clark', niter=400, threshold='1mJy', gain=0.03, interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',imgval,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args=tca)
         results2 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
         results3 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',imgval,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
@@ -1993,17 +1994,18 @@ class test_multirun(testref_base):
         # Test running multiscale twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
         peakres, modflux, imgval = 0.246, 1.271, 3.827e-2 # don't actually care much what these values are
+        epsilon = 0.005 if not self.parallel else 0.01
         tca={'imsize':100,'cell':'8.0arcsec','deconvolver':'multiscale','scales':[10,20,40,100]}
         self.prepData('refim_twochan.ms', tclean_args=tca)
         results1 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=400, threshold='1mJy', interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',imgval,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args=tca)
         results2 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
         results3 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',imgval,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
@@ -2066,7 +2068,7 @@ class test_multirun(testref_base):
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "ASP deconvolver currently has issues when running with MPI. To be unskipped in CAS-13874.")
     @unittest.skipIf(sys.platform == "darwin", "test_onefield_asp is disabled on macOS due to intermittent failures. To be fixed in CAS-13791.")
     def test_multirun_aspasp(self):
-        """ [onefield] test_onefield_mtmfs """
+        """ [multirun] test_multirun_aspasp """
         ######################################################################################
         # Test running asp twice in a row and show that it gets the same value as one run with twice the iterations.
         ######################################################################################
