@@ -139,10 +139,12 @@ def deconvolve(
     ####### Deconvolution parameters
     deconvolver,#='hogbom',
     scales,#=[],
-    nterms,#=1,
+    # TODO in CAS-13570: uncomment once test_multirun_mtmfs3x passes
+    # nterms,#=1,
     smallscalebias,#=0.0
-    fusedthreshold,#=0.0
-    largestscale,#=-1
+    # TODO in CAS-13570: uncomment once asp is working
+    # fusedthreshold,#=0.0
+    # largestscale,#=-1
 
     ### restoration options
     restoration,#=True,
@@ -192,6 +194,13 @@ def deconvolve(
         inp['loopgain']    = inp.pop('gain')
         inp['scalebias']   = inp.pop('smallscalebias')
 
+        # TODO in CAS-13570: fix asp description and allow asp value once asp is working
+        if deconvolver.lower() == "asp":
+            raise RuntimeError("The "+deconvolver+" deconvolver currently has incorrect end-of-minor-cycle residual calculations and is therefore disabled. Please choose a different deconvolver.")
+        # TODO in CAS-13570: fix mtmfs description and allow mtmfs value once test_multirun_mtmfs3x passes
+        if deconvolver.lower() == "mtmfs":
+            raise RuntimeError("The "+deconvolver+" deconvolver currently has issues with the deconvolve task and is therefore disabled. Please choose a different deconvolver.")
+
         #####################################################
         #### Construct ImagerParameters
         #####################################################
@@ -201,9 +210,6 @@ def deconvolve(
         check_requiredmask_exists(usemask, mask)
         check_requiredimgs_exist(imagename, inp)
         check_starmodel_model_collisions(startmodel, imagename, deconvolver)
-
-        if deconvolver.lower() == "asp":
-            casalog.post("Warning! The asp deconvolver is currently expirimental for tclean, and extremely expirimental for deconvolve! Please proceed with caution!", "WARNING")
         
         # make a list of parameters with defaults from tclean
         if is_python3:

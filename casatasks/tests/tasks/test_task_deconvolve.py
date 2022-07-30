@@ -288,19 +288,25 @@
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_mtmfsmtmfs
 #
-#53. Deconvolve ASP + ASP: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#53. Deconvolve MTMFS + MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve three times in a row.
+#imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',scales:[10,20,40]
+#first run to get expected value: niter=6
+#second/third/fourth runs to get the actual value: niter=2
+#testname: test_multirun_mtmfs3x
+#
+#54. Deconvolve ASP + ASP: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:512, cell:'12.0arcsec', deconvolver:'asp', niter:100
 #first run to get expected value: niter=400
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_aspasp
 #
-#54. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
+#55. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
 #Note: we only test for task completion, don't know what the value should be at the end. (TODO needs validation)
 #imsize:200, cell:'8.0arcsec', deconvolver:'multiscale', scales:[0,20,40,100],niter=10
 #imsize:200, cell:'8.0arcsec', deconvolver:'hogbom', niter=10
 #testname: test_multirun_multiscalehog
 #
-#55. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
+#56. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=False, niter=10
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=True, niter=0
 #testname: test_multirun_norestore_restore
@@ -308,185 +314,185 @@
 #
 #
 #'img' value input checking using the hogbom deconvolver
-#56. Missing Table: tst.residual is always required
+#57. Missing Table: tst.residual is always required
 #rm 'tst.residual', niter=10
 #testname: test_imgval_missingimgs_residual
 #
-#57. Missing Table: tst.psf is always required
+#58. Missing Table: tst.psf is always required
 #rm 'tst.psf', niter=10
 #testname: test_imgval_missingimgs_psf
 #
-#58. Missing Table: tst.model is used to continue deconvolution, but is not required.
+#59. Missing Table: tst.model is used to continue deconvolution, but is not required.
 #rm 'tst.model', niter=10
 #testname: test_imgval_missingimgs_model
 #
-#59. Missing Table: tst.sumwt is never required
+#60. Missing Table: tst.sumwt is never required
 #rm 'tst.sumwt', niter=10
 #testname: test_imgval_missingimgs_sumwt
 #
-#60. Reorder Image Axes: tst.residual must have the axes as is given in tclean
+#61. Reorder Image Axes: tst.residual must have the axes as is given in tclean
 #imtrans("tst.residual", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_residual
 #
-#61. Reorder Image Axes: tst.psf must have the axes as is given in tclean
+#62. Reorder Image Axes: tst.psf must have the axes as is given in tclean
 #imtrans("tst.psf", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_psf
 #
-#62. Reorder Image Axes: tst.model must have the axes as is given in tclean
+#63. Reorder Image Axes: tst.model must have the axes as is given in tclean
 #imtrans("tst.model", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_model
 #
-#63. Reorder Image Axes: tst.pb must have the axes as is given in tclean
+#64. Reorder Image Axes: tst.pb must have the axes as is given in tclean
 #imtrans("tst.pb", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_axesmismatch_pb
 #
-#64. Rebin To Smaller Image: everything else must have the same shape as tst.residual
+#65. Rebin To Smaller Image: everything else must have the same shape as tst.residual
 #imrebin("tst.residual", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_residual
 #
-#65. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
+#66. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
 #imrebin("tst.psf", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_psf
 #
-#66. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
+#67. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
 #imrebin("tst.model", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_model
 #
-#67. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
+#68. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
 #imrebin("tst.pb", factor=[50,50]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_shapemismatch_pb
 #
-#68. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#69. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_imgval_startmodel_empty
 #
-#69. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#70. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_imgval_startmodel_dne
 #
-#70. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
+#71. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_model_exists
 #
-#71. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
+#72. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_basic_copy
 #
-#72. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#73. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model', imtrans(order="3012")
 #testname:test_imgval_startmodel_axesmismatch
 #
-#73. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
+#74. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
 #set_crval0(51), niter=10
 #testname:test_imgval_startmodel_csysmismatch
 #
-#74. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
+#75. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
 #imrebin(factor=[2,2]), niter=10
 #testname:test_imgval_startmodel_shapemismatch
 #
 #
 #
 #'img' value input checking using the mtmfs deconvolver
-#75. Missing Table: tst.residual.tt1 is always required
+#76. Missing Table: tst.residual.tt1 is always required
 #rm 'tst.residual.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_residual
 #
-#76. Missing Table: tst.psf.tt1 is always required
+#77. Missing Table: tst.psf.tt1 is always required
 #rm 'tst.psf.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_psf
 #
-#77. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
+#78. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
 #rm 'tst.model.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_model
 #
-#78. Missing Table: tst.sumwt.tt1 is never required
+#79. Missing Table: tst.sumwt.tt1 is never required
 #rm 'tst.sumwt.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_sumwt
 #
-#79. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
+#80. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
 #imtrans("tst.residual.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_residual
 #
-#80. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
+#81. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
 #imtrans("tst.psf.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_psf
 #
-#81. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
+#82. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
 #imtrans("tst.model.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_model
 #
-#82. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
+#83. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
 #imtrans("tst.pb.tt1", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_axesmismatch_pb
 #
-#83. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
+#84. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
 #imrebin("tst.residual.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_residual
 #
-#84. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
+#85. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.psf.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_psf
 #
-#85. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
+#86. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.model.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_model
 #
-#86. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
+#87. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.pb.tt1", factor=[2,2]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_shapemismatch_pb
 #
-#87. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#88. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_mtmfsimgval_startmodel_empty
 #
-#88. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#89. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_mtmfsimgval_startmodel_dne
 #
-#89. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
+#90. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_model_exists
 #
-#90. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
+#91. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_basic_copy
 #
-#91. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#92. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model.tt1', imtrans(order="3012")
 #testname:test_mtmfsimgval_startmodel_axesmismatch
 #
-#92. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
+#93. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
 #set_crval0(51), niter=10
 #testname:test_mtmfsimgval_startmodel_csysmismatch
 #
-#93. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
+#94. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
 #imrebin(factor=[2,2]), niter=10
 #testname:test_mtmfsimgval_startmodel_shapemismatch
 #
 #
 #
 #Multiple deconvolves update the .residual
-#94. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
+#95. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':hogbom, 'niter':10
 #testname: test_residual_update_hogbom
 #
-#95. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
+#96. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clark does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10
 #testname: test_residual_update_clark
 #
-#96. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
+#97. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clarkstokes does this correctly.
 #'vis':'refim_point_linRL.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10, 'stokes':'I'
 #testname: test_residual_update_clarkstokes
 #
-#97. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
+#98. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':multiscale, 'niter':10
 #testname: test_residual_update_multiscale
 #
-#98. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
+#99. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':mtmfs, 'niter':10
 #testname: test_residual_update_mtmfs
@@ -495,20 +501,20 @@
 #
 #Control .image image restoration
 #Most deconvolvers do restoration the same with (mtmfs being the exception). These tests show that hogbom deconvolve restores correctly.
-#99. Deconvolve but don't restore: should not create a .image image
+#100. Deconvolve but don't restore: should not create a .image image
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #testname: test_restoration_none
 #
-#100. Deconvolve and restore, and compare results with those from a tclean run
+#101. Deconvolve and restore, and compare results with those from a tclean run
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=True
 #testname: test_restoration_basic(self):
 #
-#101. Deconvolve and don't restore, then restore and compare results with those from a tclean run
+#102. Deconvolve and don't restore, then restore and compare results with those from a tclean run
 #run 1: 'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #run 2: 'niter':0, restoration=True
 #testname: test_restoration_onlyrestore(self):
 #
-#102. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
+#103. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
 #This test is here mainly to verify that "restoringbeam" is picked up by Deconvolve.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoringbeam='100.0arcsec'
 #testname: test_restoration_bigbeam(self):
@@ -516,146 +522,146 @@
 #
 #
 #N Iter Params tests: verify that we perform the same number of iterations as tclean for the same iteration parameters
-#103. Deconvolve should execute 14 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+#104. Deconvolve should execute 14 iterations for gain=0.2, just like the first major-minor cycle of tclean.
 #gain: 0.2
 #testname: test_niterparms_gain_1
 #
-#104. Deconvolve should execute 9 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+#105. Deconvolve should execute 9 iterations for gain=0.3, just like the first major-minor cycle of tclean.
 #gain: 0.3
 #testname: test_niterparms_gain_2
 #
-#105. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
+#106. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
 #threshold: 0.22
 #testname: test_niterparms_threshold_1
 #
-#106. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
+#107. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
 #threshold: 0.18
 #testname: test_niterparms_threshold_2
 #
-#107. Deconvolve should execute 112 iterations for threshold=0.01, just like the first major-minor cycle of tclean(minspffraction=0.001).
+#108. Deconvolve should execute 112 iterations for threshold=0.01, just like the first major-minor cycle of tclean(minspffraction=0.001).
 #threshold: 0.001
 #testname: test_niterparms_threshold_3
 #
-#108. Deconvolve should execute 300 iterations for threshold=0, just like the first major-minor cycle of tclean.
+#109. Deconvolve should execute 300 iterations for threshold=0, just like the first major-minor cycle of tclean.
 #gain: 0.15
 #testname: test_niterparms_unset
 #
-#109. Deconvolve should execute 60 iterations for nsigma=3, just like the first major-minor cycle of tclean.
+#110. Deconvolve should execute 60 iterations for nsigma=3, just like the first major-minor cycle of tclean.
 #nsigma: 3
 #testname: test_niterparms_nsigma_1
 #
-#110. Deconvolve should execute 79 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+#111. Deconvolve should execute 79 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
 #nsigma: 1.5
 #testname: test_niterparms_nsigma_2
 #
 #
 #
 #Minimum images tests: verify that the minimal set of images (.residual and .psf) can be used with each of the other parameters
-#111. Test non-default value for deconvolver_clark with only the .residual and .psf present
+#112. Test non-default value for deconvolver_clark with only the .residual and .psf present
 #deconvolver:"clark"
 #testname: test_minimages_deconvolver_clark
 #
-#112. Test non-default value for deconvolver_multiscale with only the .residual and .psf present
+#113. Test non-default value for deconvolver_multiscale with only the .residual and .psf present
 #deconvolver:"multiscale", scales:[5,10,50]
 #testname: test_minimages_deconvolver_multiscale
 #
-#113. Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
+#114. Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
 #'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
 #testname: test_minimages_deconvolver_mtmfs
 #
-#114. Test non-default value for smallscalebias with only the .residual and .psf present
+#115. Test non-default value for smallscalebias with only the .residual and .psf present
 #deconvolver:"clark", smallscalebias:1.0
 #testname: test_minimages_smallscalebias
 #
-#115. Test non-default value for restoration with only the .residual and .psf present
+#116. Test non-default value for restoration with only the .residual and .psf present
 #restoration:False
 #testname: test_minimages_restoration
 #
-#116. Test non-default value for restoringbeam with only the .residual and .psf present
+#117. Test non-default value for restoringbeam with only the .residual and .psf present
 #restoringbeam:'5.0arcsec'
 #testname: test_minimages_restoringbeam
 #
-#117. Test non-default value for niter with only the .residual and .psf present
+#118. Test non-default value for niter with only the .residual and .psf present
 #niter:10
 #testname: test_minimages_niter
 #
-#118. Test non-default value for gain with only the .residual and .psf present
+#119. Test non-default value for gain with only the .residual and .psf present
 #gain:0.5
 #testname: test_minimages_gain
 #
-#119. Test non-default value for threshold with only the .residual and .psf present
+#120. Test non-default value for threshold with only the .residual and .psf present
 #threshold:"1Jy"
 #testname: test_minimages_threshold
 #
-#120. Test non-default value for nsigma with only the .residual, .psf, and .pb present
+#121. Test non-default value for nsigma with only the .residual, .psf, and .pb present
 #nsigma:1.5
 #testname: test_minimages_nsigma
 #
-#121. Test non-default value for nsigma with only the .residual and .psf present
+#122. Test non-default value for nsigma with only the .residual and .psf present
 #nsigma:1.5
 #testname: test_minimages_nsigma_nopb
 #
-#122. Test non-default value for mtmfs+nsigma with only the .residual, .psf, and .pb present
+#123. Test non-default value for mtmfs+nsigma with only the .residual, .psf, and .pb present
 #nsigma:1.5
 #testname: test_minimages_nsigma_mtmfs
 #
-#123. Test non-default value for mtmfs+nsigma with only the .residual and .psf present
+#124. Test non-default value for mtmfs+nsigma with only the .residual and .psf present
 #nsigma:1.5
 #testname: test_minimages_nsigma_nopb_mtmfs
 #
-#124. Test non-default value for interactive with only the .residual and .psf present
+#125. Test non-default value for interactive with only the .residual and .psf present
 #interactive:0
 #testname: test_minimages_interactive
 #
-#125. Test non-default value for fastnoise with only the .residual and .psf present
+#126. Test non-default value for fastnoise with only the .residual and .psf present
 #fastnoise:False
 #testname: test_minimages_fastnoise
 #
-#126. Test non-default value for usemask with only the .residual and .psf present
+#127. Test non-default value for usemask with only the .residual and .psf present
 #usemask:"pb"
 #testname: test_minimages_usemask
 #
-#127. Test non-default value for mask with only the .residual and .psf present
+#128. Test non-default value for mask with only the .residual and .psf present
 #mask:'circle[[40pix,40pix],10pix]'
 #testname: test_minimages_mask
 #
-#128. Test non-default value for sidelobethreshold with only the .residual and .psf present
+#129. Test non-default value for sidelobethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", sidelobethreshold:10.0
 #testname: test_minimages_sidelobethreshold
 #
-#129. Test non-default value for noisethreshold with only the .residual and .psf present
+#130. Test non-default value for noisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", noisethreshold:10.0
 #testname: test_minimages_noisethreshold
 #
-#130. Test non-default value for lownoisethreshold with only the .residual and .psf present
+#131. Test non-default value for lownoisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", lownoisethreshold:10.0
 #testname: test_minimages_lownoisethreshold
 #
-#131. Test non-default value for negativethreshold with only the .residual and .psf present
+#132. Test non-default value for negativethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", negativethreshold:0.5
 #testname: test_minimages_negativethreshold
 #
-#132. Test non-default value for smoothfactor with only the .residual and .psf present
+#133. Test non-default value for smoothfactor with only the .residual and .psf present
 #usemask:"auto-multithresh", smoothfactor:0.5
 #testname: test_minimages_smoothfactor
 #
-#133. Test non-default value for minbeamfrac with only the .residual and .psf present
+#134. Test non-default value for minbeamfrac with only the .residual and .psf present
 #usemask:"auto-multithresh", minbeamfrac:0.5
 #testname: test_minimages_minbeamfrac
 #
-#134. Test non-default value for cutthreshold with only the .residual and .psf present
+#135. Test non-default value for cutthreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", cutthreshold:0.5
 #testname: test_minimages_cutthreshold
 #
-#135. Test non-default value for growiterations with only the .residual and .psf present
+#136. Test non-default value for growiterations with only the .residual and .psf present
 #usemask:"auto-multithresh", growiterations:1
 #testname: test_minimages_growiterations
 #
-#136. Test non-default value for dogrowprune with only the .residual and .psf present
+#137. Test non-default value for dogrowprune with only the .residual and .psf present
 #usemask:"auto-multithresh", dogrowprune:False
 #testname: test_minimages_dogrowprune
 #
-#137. Test non-default value for verbose with only the .residual and .psf present
+#138. Test non-default value for verbose with only the .residual and .psf present
 #verbose:True
 #testname: test_minimages_verbose
 #
@@ -944,6 +950,7 @@ class test_onefield(testref_base):
         self.checkfinal(pstr=report)
 
     # Test 4
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_onefield_mtmfs(self):
         """ [onefield] test_onefield_mtmfs """
         ######################################################################################
@@ -1107,6 +1114,7 @@ class test_stokes(testref_base):
         self.checkfinal(report)
 
     # Test 12
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_stokes_mtmfs_IQUV(self):
         """ [stokes] test_stokes_mtmfs_IQUV """
         ######################################################################################
@@ -2001,6 +2009,7 @@ class test_multirun(testref_base):
         self.checkfinal(report1 + report2 + report3)
 
     # Test 52
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_multirun_mtmfsmtmfs(self):
         """" [multirun] test_multirun_mtmfsmtmfs """
         ######################################################################################
@@ -2023,6 +2032,34 @@ class test_multirun(testref_base):
                                 imgval=[(self.img+'.model.tt0',imgval0,[50,50,0,0]), (self.img+'.model.tt1',imgval1,[50,50,0,0])] )
 
         self.checkfinal(report1 + report2 + report3)
+
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
+    def test_multirun_mtmfs3x(self):
+        """" [multirun] test_multirun_mtmfs3 """
+        ######################################################################################
+        # Test running mtmfs three times in a row and show that it gets the same value as one run with three times the iterations.
+        ######################################################################################
+        vis = '/export/home/riya/rurvashi/CASADATA/casatestdata/unittest/tclean/refim_eptwochan.ms'
+        scales=[10,20,40]
+
+        ## First, do tclean with 6 iterations. Same result, with or without cycleniter, but using it shows exact correspondence with deconvolve after the fix.
+        os.system('rm -rf try1*')
+        tclean(vis=vis, imagename='try1', cell='8.0arcsec', imsize=100, specmode='mfs', deconvolver='mtmfs', nterms=2, niter=6,gain=0.5,scales=scales,cycleniter=2)
+
+        ## Deconvolve in one go, with niter=6. Same as tclean.
+        os.system('rm -rf try2*')
+        tclean(vis=vis, imagename='try2', cell='8.0arcsec', imsize=100, specmode='mfs', deconvolver='mtmfs', nterms=2, niter=0,restoration=False,scales=scales)
+        deconvolve(imagename='try2', deconvolver='mtmfs', nterms=2, niter=6,gain=0.5,scales=scales)
+
+        ## Deconvolve in three steps.  Before CAS-13872, this clearly shows the problem.   After the change it matches the tclean (even with the cycleniter=2 peak residual values before/after major cycle).
+        os.system('rm -rf try3*')
+        tclean(vis=vis, imagename='try3', cell='8.0arcsec', imsize=100, specmode='mfs', deconvolver='mtmfs', nterms=2, niter=0,restoration=False,scales=scales)
+        deconvolve(imagename='try3', deconvolver='mtmfs', nterms=2, niter=2,gain=0.5,scales=scales)
+        deconvolve(imagename='try3', deconvolver='mtmfs', nterms=2, niter=2,gain=0.5,scales=scales)
+        deconvolve(imagename='try3', deconvolver='mtmfs', nterms=2, niter=2,gain=0.5,scales=scales)
+
+        # TODO implement metrics (up to this point this test has been getting developed via the logs)
+        self.fail("Need to implement metrics")
 
     # Test 53
     @unittest.skip("ASP deconvolver currently does not follow the same logic for deconvolve as it does for tclean by the most basic measure, iterdone. To be fixed in CAS-13570")
@@ -2533,6 +2570,7 @@ class test_mtmfsimgval(testref_base):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
     # Test 75
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_missingimgs_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_residual """
         ######################################################################################
@@ -2541,6 +2579,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_missingimgs(".residual")
 
     # Test 76
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_missingimgs_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_psf """
         ######################################################################################
@@ -2550,6 +2589,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_missingimgs(".psf")
 
     # Test 77
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_missingimgs_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_model """
         ######################################################################################
@@ -2563,6 +2603,7 @@ class test_mtmfsimgval(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
 
     # Test 78
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_missingimgs_sumwt(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_sumwt """
         ######################################################################################
@@ -2576,6 +2617,7 @@ class test_mtmfsimgval(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
 
     # Test 79
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_axesmismatch_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_residual """
         ######################################################################################
@@ -2584,6 +2626,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_axesmismatch(".residual")
 
     # Test 80
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_axesmismatch_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_psf """
         ######################################################################################
@@ -2592,6 +2635,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_axesmismatch(".psf")
 
     # Test 81
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_axesmismatch_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_model """
         ######################################################################################
@@ -2600,6 +2644,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_axesmismatch(".model")
 
     # Test 82
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_axesmismatch_pb(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_pb """
         ######################################################################################
@@ -2608,6 +2653,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_axesmismatch(".pb", ttn=".tt0", deconvolve_args={'usemask':'pb', 'pbmask':0.2})
 
     # Test 83
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_shapemismatch_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_residual """
         ######################################################################################
@@ -2616,6 +2662,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_shapemismatch(".residual")
 
     # Test 84
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_shapemismatch_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_psf """
         ######################################################################################
@@ -2624,6 +2671,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_shapemismatch(".psf")
 
     # Test 85
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_shapemismatch_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_model """
         ######################################################################################
@@ -2632,6 +2680,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_shapemismatch(".model")
 
     # Test 86
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_shapemismatch_pb(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_pb """
         ######################################################################################
@@ -2641,6 +2690,7 @@ class test_mtmfsimgval(testref_base):
     
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
     # Test 87
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_empty(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_empty """
@@ -2663,6 +2713,7 @@ class test_mtmfsimgval(testref_base):
         deconvolve(imagename=self.img, niter=10, startmodel=['', '', self.mname2, '', ''], deconvolver='mtmfs')
 
     # Test 88
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_startmodel_dne(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_dne """
         ######################################################################################
@@ -2674,6 +2725,7 @@ class test_mtmfsimgval(testref_base):
             deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model', deconvolver='mtmfs')
 
     # Test 89
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_startmodel_model_exists(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_model_exists """
         ######################################################################################
@@ -2689,6 +2741,7 @@ class test_mtmfsimgval(testref_base):
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
     # Test 90
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_basic_copy(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_basic_copy """
@@ -2705,6 +2758,7 @@ class test_mtmfsimgval(testref_base):
         self.assertTrue(os.path.exists(self.mname), "File {0} did not get copied!".format(self.mname))
 
     # Test 91
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_startmodel_axesmismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_axesmismatch """
         ######################################################################################
@@ -2721,6 +2775,7 @@ class test_mtmfsimgval(testref_base):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
 
     # Test 92
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_startmodel_csysmismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_csysmismatch """
         ######################################################################################
@@ -2747,6 +2802,7 @@ class test_mtmfsimgval(testref_base):
         self.assertAlmostEqual(regridpnt, oldpnt, "Image {0} did not get its csys.direction0.crval[0] value regridded properly from {1} to {2}! (actual value is {3})".format(self.mname2, newpnt, oldpnt, regridpnt))
 
     # Test 93
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_mtmfsimgval_startmodel_shapemismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_shapemismatch """
         ######################################################################################
@@ -2886,6 +2942,7 @@ class test_residual_update(testref_base):
         self.helper_residual_update('multiscale')
 
     # Test 98
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_residual_update_mtmfs(self):
         """ [residual_update] test_residual_update_mtmfs """
         ######################################################################################
@@ -3148,6 +3205,7 @@ class test_minimages(testref_base):
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
     # Test 113
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_minimages_deconvolver_mtmfs(self):
         """ [minimages] test_minimages_deconvolver_mtmfs """
         ######################################################################################
@@ -3241,6 +3299,7 @@ class test_minimages(testref_base):
             deconvolve(imagename=self.img, niter=10, nsigma=1.5)#=0.0
 
     # Test 122
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_minimages_nsigma_mtmfs(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
@@ -3253,6 +3312,7 @@ class test_minimages(testref_base):
         report=th.checkall(imgexist=[self.img+'.image.tt0'])
 
     # Test 123
+    @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_minimages_nsigma_nopb_mtmfs(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################

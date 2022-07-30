@@ -95,9 +95,12 @@
       <value type="string"/>
     </param>
 
+    <!-- TODO in CAS-13570: fix mtmfs description and allow mtmfs value once test_multirun_mtmfs3x passes -->
+    <!-- TODO in CAS-13570: fix asp description and allow asp value once asp is working -->
     <param type="string" name="deconvolver">
-      <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)</shortdescription>
-      <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)
+      <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mem,clarkstokes)</shortdescription>
+      <!-- <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)</shortdescription> -->
+      <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mem,clarkstokes)
 
                         Each of the following algorithms operate on residual images and psfs
                         from the gridder and produce output model and restored images.
@@ -139,19 +142,6 @@
                                   patch size per scale) from all residual images
                                 - Repeat from step 2
 
-                        mtmfs : Multi-term (Multi Scale) Multi-Frequency Synthesis [Rau and Cornwell, 2011]
-                                - Smooth each Taylor residual image to multiple scale sizes
-                                - Solve a NTxNT system of equations per scale size to compute
-                                  Taylor coefficients for components at all locations
-                                - Compute gradient chi-square and pick the Taylor coefficients
-                                  and scale size at the location with maximum reduction in
-                                  chi-square
-                                - Add multi-scale components to each Taylor-coefficient
-                                  model image
-                                - Subtract scaled,smoothed,shifted PSF (within a small patch size
-                                  per scale) from all smoothed Taylor residual images
-                                - Repeat from step 2
-
 
                         mem : Maximum Entropy Method [Cornwell and Evans, 1985]
                                 - Iteratively solve for values at all individual pixels via the
@@ -162,18 +152,13 @@
                                 (Note : This MEM implementation is not very robust.
                                              Improvements will be made in the future.)
 
-                        asp : Adaptive Scale Pixel algorithm [Bhatnagar and Cornwell, 2004]
-                                - Define a set of initial scales defined as 0, W, 2W 4W and 8W 
-                                 where W is a 2D Gaussian fitting width to the PSF 
-                                - Smooth the residual image by a Gaussian beam at initial scales
-                                - Search for the global peak (F) among these smoothed residual images
-                                - form an active Aspen set: amplitude(F), amplitude location(x,y)
-                                - Optimize the Aspen set by minimizing the objective function RI-Aspen*PSF, 
-                                 where RI is the residual image and * is the convulition operation. 
-                                - Compute the model image and update the residual image
-                                - Repeat from step 2
-                                       
-                                (Note : This is an experimental version of the ASP algorithm.)
+                        mtmfs : This deconvolver currently has incorrect end-of-minor-cycle residual
+                              calculations and is therefore disabled. Please choose a different
+                              deconvolver.
+
+                        asp : This deconvolver is not currently considered reliable when used with
+                              task deconvolve and is therefore disabled. Please choose a different
+                              deconvolver.
 
 
 
@@ -186,9 +171,9 @@
         <value>clark_exp</value>
         <value>clarkstokes_exp</value>
         <value>multiscale</value>
-        <value>mtmfs</value>
+        <!-- <value>mtmfs</value> -->
         <value>mem</value>
-        <value>asp</value>
+        <!-- <value>asp</value> -->
 
       </allowed>
     </param>
@@ -196,7 +181,6 @@
     <param type="any" name="scales" subparam="true">
       <shortdescription>List of scale sizes (in pixels) for multi-scale algorithms</shortdescription>
       <description>List of scale sizes (in pixels) for multi-scale and mtmfs algorithms.
-                        --&gt;  scales=[0,6,20]
                         This set of scale sizes should represent the sizes
                         (diameters in units of number of pixels)
                         of dominant features in the image being reconstructed.
@@ -217,7 +201,8 @@
       <value type="intVec"/>
     </param>
 
-    <param subparam="true" name="nterms" type="int">
+    <!-- TODO in CAS-13570: uncomment once test_multirun_mtmfs3x passes -->
+    <!-- <param subparam="true" name="nterms" type="int">
       <shortdescription>Number of Taylor coefficients in the spectral model</shortdescription>
       <description>Number of Taylor coefficients in the spectral model
 
@@ -264,7 +249,7 @@
 
       </description>
       <value type="int">2</value>
-    </param>
+    </param> -->
 
     <param type="double" name="smallscalebias" subparam="true">
       <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
@@ -282,7 +267,8 @@
       <value type="double">0.0</value>
     </param>
 
-    <param type="double" name="fusedthreshold" subparam="true">
+    <!-- TODO in CAS-13570: uncomment once asp is working -->
+    <!-- <param type="double" name="fusedthreshold" subparam="true">
      <shortdescription>Threshold for triggering Hogbom Clean </shortdescription>
      <description> Threshold for triggering Hogbom Clean (number in units of Jy)
 
@@ -303,9 +289,10 @@
 
       </description>
       <value type="double">0.0</value>
-    </param>
+    </param> -->
 
-    <param type="int" name="largestscale" subparam="true">
+    <!-- TODO in CAS-13570: uncomment once asp is working -->
+    <!-- <param type="int" name="largestscale" subparam="true">
      <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
      <description> Largest scale (in pixels) allowed for the initial guess for the Asp Clean deconvolver.
 
@@ -323,7 +310,7 @@
 
       </description>
       <value type="int">-1</value>
-    </param>
+    </param> -->
 
 
     <param type="bool" name="restoration">
@@ -749,15 +736,17 @@
           <default param="scales"><value type="intVec"/></default>
           <default param="smallscalebias"><value>0.0</value></default>
         </equals>
-        <equals type="string" value="mtmfs">
+        <!-- TODO in CAS-13570: uncomment once test_multirun_mtmfs3x passes -->
+        <!-- <equals type="string" value="mtmfs">
           <default param="scales"><value type="intVec"/></default>
           <default param="nterms"><value type="int">2</value></default>
           <default param="smallscalebias"><value>0.0</value></default>
-        </equals>
-        <equals type="string" value="asp">
+        </equals> -->
+        <!-- TODO in CAS-13570: uncomment once asp is working -->
+        <!-- <equals type="string" value="asp">
           <default param="fusedthreshold"><value>0.0</value></default>
           <default param="largestscale"><value>-1</value></default>
-        </equals>
+        </equals> -->
       </when>
 
       <when param="restoration">
