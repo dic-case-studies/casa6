@@ -1,61 +1,61 @@
 #include <image_cmpt.h>
 
 #include <iostream>
+#include <fstream>
 #include <sys/wait.h>
 #include <casacore/casa/IO/ArrayIO.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayUtil.h>
-#include <casa/Arrays/MaskedArray.h>
-#include <casa/BasicMath/Random.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/fstream.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogFilter.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/OS/Directory.h>
-#include <casa/OS/EnvVar.h>
-#include <casa/OS/HostInfo.h>
-#include <casa/OS/RegularFile.h>
-#include <casa/OS/SymLink.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Utilities/Assert.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayUtil.h>
+#include <casacore/casa/Arrays/MaskedArray.h>
+#include <casacore/casa/BasicMath/Random.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogFilter.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/casa/OS/EnvVar.h>
+#include <casacore/casa/OS/HostInfo.h>
+#include <casacore/casa/OS/RegularFile.h>
+#include <casacore/casa/OS/SymLink.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Utilities/Assert.h>
 
-#include <images/Images/ImageExpr.h>
-#include <images/Images/ImageExprParse.h>
-#include <images/Images/ImageFITSConverter.h>
-#include <images/Images/ImageInterface.h>
-#include <images/Images/ImageStatistics.h>
-#include <images/Images/ImageSummary.h>
-#include <images/Images/ImageUtilities.h>
-#include <images/Images/LELImageCoord.h>
-#include <images/Images/PagedImage.h>
-#include <images/Images/RebinImage.h>
-#include <images/Images/TempImage.h>
-#include <images/Regions/ImageRegion.h>
-#include <images/Regions/WCLELMask.h>
-#include <lattices/LatticeMath/Fit2D.h>
-#include <lattices/LatticeMath/LatticeFit.h>
-#include <lattices/LEL/LatticeExprNode.h>
-#include <lattices/Lattices/LatticeIterator.h>
-#include <lattices/LRegions/LatticeRegion.h>
-#include <lattices/LatticeMath/LatticeSlice1D.h>
-#include <lattices/Lattices/LatticeUtilities.h>
-#include <lattices/LRegions/LCBox.h>
-#include <lattices/LRegions/LCSlicer.h>
-#include <lattices/Lattices/MaskedLatticeIterator.h>
-#include <lattices/Lattices/PixelCurve1D.h>
-#include <lattices/LRegions/RegionType.h>
-#include <lattices/Lattices/TiledLineStepper.h>
-#include <measures/Measures/Stokes.h>
-#include <measures/Measures/MeasIERS.h>
-#include <scimath/Fitting/LinearFitSVD.h>
-#include <scimath/Functionals/Polynomial.h>
-#include <scimath/Mathematics/VectorKernel.h>
-#include <tables/LogTables/NewFile.h>
-#include <tables/Tables/TableUtil.h>
+#include <casacore/images/Images/ImageExpr.h>
+#include <casacore/images/Images/ImageExprParse.h>
+#include <casacore/images/Images/ImageFITSConverter.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/images/Images/ImageStatistics.h>
+#include <casacore/images/Images/ImageSummary.h>
+#include <casacore/images/Images/ImageUtilities.h>
+#include <casacore/images/Images/LELImageCoord.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/images/Images/RebinImage.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/images/Regions/WCLELMask.h>
+#include <casacore/lattices/LatticeMath/Fit2D.h>
+#include <casacore/lattices/LatticeMath/LatticeFit.h>
+#include <casacore/lattices/LEL/LatticeExprNode.h>
+#include <casacore/lattices/Lattices/LatticeIterator.h>
+#include <casacore/lattices/LRegions/LatticeRegion.h>
+#include <casacore/lattices/LatticeMath/LatticeSlice1D.h>
+#include <casacore/lattices/Lattices/LatticeUtilities.h>
+#include <casacore/lattices/LRegions/LCBox.h>
+#include <casacore/lattices/LRegions/LCSlicer.h>
+#include <casacore/lattices/Lattices/MaskedLatticeIterator.h>
+#include <casacore/lattices/Lattices/PixelCurve1D.h>
+#include <casacore/lattices/LRegions/RegionType.h>
+#include <casacore/lattices/Lattices/TiledLineStepper.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/MeasIERS.h>
+#include <casacore/scimath/Fitting/LinearFitSVD.h>
+#include <casacore/scimath/Functionals/Polynomial.h>
+#include <casacore/scimath/Mathematics/VectorKernel.h>
+#include <casacore/tables/LogTables/NewFile.h>
+#include <casacore/tables/Tables/TableUtil.h>
 
 #include <components/ComponentModels/GaussianDeconvolver.h>
 #include <components/ComponentModels/SkyCompRep.h>
@@ -105,7 +105,7 @@
 
 #include <stdcasa/version.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #include <memory>
 
@@ -245,6 +245,7 @@ bool image::addnoise(
     const variant& region, bool zeroIt, const vector<long>& seeds
 ) {
     try {
+        Vector<Double> const parsV(pars);
         _log << LogOrigin("image", __func__);
         if (_detached()) {
             return false;
@@ -268,25 +269,25 @@ bool image::addnoise(
         if (_imageF) {
             PixelValueManipulator<Float>::addNoise(
                 _imageF, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageC) {
             PixelValueManipulator<Complex>::addNoise(
                 _imageC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageD) {
             PixelValueManipulator<Double>::addNoise(
                 _imageD, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageDC) {
             PixelValueManipulator<DComplex>::addNoise(
                 _imageDC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else {
@@ -1193,7 +1194,7 @@ record* image::coordmeasures(
         casacore::Record theVel;
         Vector<Double> vpixel;
         if (!(pixel.size() == 1 && pixel[0] == -1)) {
-            vpixel = pixel;
+            vpixel = Vector<Double>(pixel);
         }
         unique_ptr<Record> retval;
         casacore::String error;
@@ -1986,7 +1987,7 @@ record* image::fitprofile(const string& box, const variant& region,
         ) {
             sigmaArray.reset(new Array<Float>());
             vector<double> sigmaVector = sigma.getDoubleVec();
-            Vector<Int> shape = sigma.arrayshape();
+            Vector<Int> shape(sigma.arrayshape());
             sigmaArray->resize(IPosition(shape));
             convertArray(
                 *sigmaArray,
@@ -2305,8 +2306,9 @@ bool image::fromcomplist(
         else {
             ThrowCc("Unsupported type for parameter cl");
         }
+        Vector<Int> const shapeV(shape);
         _imageF = ImageFactory::createComponentListImage(
-            outfile, *mycl, shape, *coordinates, overwrite, log, cache
+            outfile, *mycl, shapeV, *coordinates, overwrite, log, cache
         );
         vector<String> names {
             "outfile", "shape", "cl",
@@ -2427,6 +2429,7 @@ bool image::fromshape(
     const bool linear, const bool overwrite, const bool log, const string& type
 ) {
     try {
+        Vector<Int> const shapeV(shape);
         LogOrigin lor("image", __func__);
         _log << lor;
         _reset();
@@ -2442,25 +2445,25 @@ bool image::fromshape(
         );
         if (mytype == "f") {
             _imageF = ImageFactory::floatImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "c") {
             _imageC = ImageFactory::complexImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "d") {
             _imageD = ImageFactory::doubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "cd") {
             _imageDC = ImageFactory::complexDoubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
@@ -3080,19 +3083,19 @@ std::vector<std::string> image::history(bool list) {
         }
         if (_imageF) {
             ImageHistory<Float> hist(_imageF);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageC) {
             ImageHistory<Complex> hist(_imageC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageD) {
             ImageHistory<Double> hist(_imageD);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageDC) {
             ImageHistory<DComplex> hist(_imageDC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else {
             ThrowCc("Logic error");
@@ -4212,7 +4215,7 @@ image* image::pbcor(
         Array<Float> pbPixels;
         SPCIIF pb_ptr;
         if (pbimage.type() == variant::DOUBLEVEC) {
-            Vector<Int> shape = pbimage.arrayshape();
+            Vector<Int> shape(pbimage.arrayshape());
             pbPixels.resize(IPosition(shape));
             Vector<Double> localpix(pbimage.getDoubleVec());
             casacore::convertArray(pbPixels, localpix.reform(IPosition(shape)));
@@ -4421,7 +4424,7 @@ template<class T> void image::_putchunk(
     const bool list, const bool locking, const bool replicate
 ) {
     Array<T> pixelsArray;
-    Vector<Int> shape = pixels.arrayshape();
+    Vector<Int> shape(pixels.arrayshape());
     pixelsArray.resize(IPosition(shape));
     if (pixels.type() == variant::DOUBLEVEC) {
         std::vector<double> pixelVector = pixels.getDoubleVec();
@@ -4937,7 +4940,7 @@ image* image::regrid(
         String mask = _getMask(vmask);
         Vector<Int> axes;
         if (!((inaxes.size() == 1) && (inaxes[0] == -1))) {
-            axes = inaxes;
+            axes = Vector<Int>(inaxes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -6271,11 +6274,11 @@ template <class T> record* image::_toworld(
         pixel.resize(0);
     }
     else if (value.type() == variant::DOUBLEVEC) {
-        pixel = value.getDoubleVec();
+        pixel = Vector<Double>(value.getDoubleVec());
     }
     else if (value.type() == variant::INTVEC) {
         variant vcopy = value;
-        Vector<Int> ipixel = vcopy.asIntVec();
+        Vector<Int> ipixel(vcopy.asIntVec());
         Int n = ipixel.size();
         pixel.resize(n);
         for (int i = 0; i < n; ++i) {
@@ -6387,7 +6390,7 @@ bool image::twopointcorrelation(
         }
         Vector<Int> iAxes;
         if (!(axes.size() == 1 && axes[0] == -1)) {
-            iAxes = axes;
+            iAxes = Vector<Int>(axes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -6895,11 +6898,11 @@ vector<double> image::_toDoubleVec(const variant& v) {
     );
     vector<double> output;
     if (type == variant::INTVEC) {
-        Vector<long> x = v.toIntVec();
+        Vector<long> x(v.toIntVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     if (type == variant::DOUBLEVEC) {
-        Vector<Double> x = v.toDoubleVec();
+        Vector<Double> x(v.toDoubleVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     return output;

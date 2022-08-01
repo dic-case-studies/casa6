@@ -45,27 +45,27 @@
 #include <components/ComponentModels/PowerLogPoly.h>
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/TabularSpectrum.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Containers/Record.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/MUString.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/Unit.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/MVDirection.h>
-#include <casa/namespace.h>
-#include <casa/OS/Path.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/MUString.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/Unit.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/MVDirection.h>
+#include <casacore/casa/namespace.h>
+#include <casacore/casa/OS/Path.h>
 #include <components/ComponentModels/ComponentList.h>
 #include <components/ComponentModels/Flux.h>
 #include <components/ComponentModels/SkyComponent.h>
-#include <measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
 
 using namespace std;
 
@@ -229,8 +229,8 @@ componentlist::remove(const std::vector<long>& which, const bool /*log*/)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<int> intVec = _checkIndices(intwhich, "remove",
-                                              "No components removed");
+      const Vector<int> intVec(_checkIndices(intwhich, "remove",
+                                             "No components removed"));
       for(uInt c = 0; c < intVec.nelements(); c++)
         itsBin->add(itsList->component(intVec(c)));
       itsList->remove(intVec);
@@ -367,8 +367,8 @@ bool componentlist::isphysical(const std::vector<long>& which)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<Int> intVec = _checkIndices(intwhich, "is_physical",
-                                              "Not checking any components");
+      const Vector<Int> intVec(_checkIndices(intwhich, "is_physical",
+                                             "Not checking any components"));
       rstat = itsList->isPhysical(intVec);
     }
     else {
@@ -482,7 +482,7 @@ bool componentlist::addcomponent(
             "Could not interpret direction parameter" 
         );
         MVDirection newDir = theDir.getValue();
-        const Vector<Int> intVec = (
+        const Vector<Int> intVec(
             _checkIndices(
                 which, __FUNCTION__,
                 "Direction not changed on any components"
@@ -602,8 +602,8 @@ bool componentlist::select(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = _checkIndices(intwhich, "select",
-                                              "No components selected");
+      const Vector<Int> intVec(_checkIndices(intwhich, "select",
+                                             "No components selected"));
       itsList->select(intVec);
       rstat=true;
     }
@@ -627,8 +627,8 @@ bool componentlist::deselect(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = _checkIndices(intwhich, "deselect",
-                                              "No components deselected");
+      const Vector<Int> intVec(_checkIndices(intwhich, "deselect",
+                                             "No components deselected"));
       itsList->deselect(intVec);
        rstat=true;
     } else {
@@ -885,8 +885,8 @@ bool componentlist::setflux(
 				<< endl << "Flux not changed on any components"
 				<< LogIO::EXCEPTION;
 		}
-		const Vector<Int> intVec = _checkIndices(which, "setflux",
-				"Flux not changed on any components");
+		const Vector<Int> intVec(_checkIndices(which, "setflux",
+				"Flux not changed on any components"));
 		itsList->setFlux(intVec, newFlux);
 		rstat = true;
 
@@ -913,8 +913,8 @@ bool componentlist::convertfluxunit(const long which, const std::string& unit)
                 << LogIO::POST;
         return false;
       }
-      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit", 
-                                              "Flux not changed on any components");
+      const Vector<Int> intVec(_checkIndices(which, "convertfluxunit",
+                                             "Flux not changed on any components"));
       itsList->convertFluxUnit(intVec, fluxUnit);
       rstat = true;
     } else {
@@ -935,8 +935,8 @@ bool componentlist::convertfluxpol(const long which, const std::string& polariza
   bool rstat(false);
   try{
     if(itsList && itsBin){
-      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit",
-                                              "Flux not changed on any components");
+      const Vector<Int> intVec(_checkIndices(which, "convertfluxunit",
+                                             "Flux not changed on any components"));
       itsList->convertFluxPol(intVec,
                        (ComponentType::Polarisation)_checkFluxPol(polarization));
       rstat=true;
@@ -1486,7 +1486,8 @@ bool componentlist::setspectrum(
                 "for a spectrum='plp', index must be a list of numbers"
             );
             MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
-            spectrumPtr.reset(new PowerLogPoly(refFreq, index.toDoubleVec()));
+            Vector<Double> const indexV(index.toDoubleVec());
+            spectrumPtr.reset(new PowerLogPoly(refFreq, indexV));
         }
         else if (type.startsWith("C")) {
             spectrumPtr.reset(new ConstantSpectrum());

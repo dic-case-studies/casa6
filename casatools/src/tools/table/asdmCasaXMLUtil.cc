@@ -5,9 +5,9 @@
 #include <xercesc/sax2/DefaultHandler.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <iostream>
-#include <casa/Containers/Record.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Exceptions/Error.h>
 
 using namespace casacore;
 using namespace casa;
