@@ -48,10 +48,12 @@ After all of the dependencies have been installed and the source code for CASAta
 
 The data repository used to run CASAtasks tests is the same for CASAtools tests, therefore if you have already checked out [casatestdata](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatestdata/browse) you are all set to run CASAtasks tests. If not, refer to the instructions in the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools):
 
+A several of the tests use the casatestutils module. That is built independently from casatasks. 
+The path to a casatestutils build can be provided via PYTHONPATH prior to running the full suite of tests.
 
 Tests are actively being added, but you can run the existing tests with:
 ```
--bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py test
+-bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6:../casatestutils/build/lib ./setup.py test
 ```
 
 Again, **substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools) in the line above.
