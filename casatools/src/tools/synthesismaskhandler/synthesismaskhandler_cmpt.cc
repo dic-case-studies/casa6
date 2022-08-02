@@ -8,15 +8,15 @@
  ***/
 
 #include <iostream>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Logging/LogIO.h>
 
-#include <casa/OS/Directory.h>
-#include <images/Images/PagedImage.h>
-#include <coordinates/Coordinates/CoordinateUtil.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/coordinates/Coordinates/CoordinateUtil.h>
 
 #include <synthesis/ImagerObjects/SDMaskHandler.h>
 

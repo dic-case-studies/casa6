@@ -2,10 +2,10 @@
 #include <coordsys_cmpt.h>
 #undef NO_INITIALIZE_STATICS
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <casa/Utilities/CountedPtr.h>
+#include <casacore/casa/Utilities/CountedPtr.h>
 #include <imageanalysis/ImageTypedefs.h>
 #include <imageanalysis/ImageAnalysis/ImageDecimatorData.h>
-#include <measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/Stokes.h>
 #include <components/ComponentModels/ComponentType.h>
 
 #include <set>
