@@ -2545,23 +2545,23 @@ class test_cube(testref_base):
                                               valname='Restoring beam minor:', exact=False)
           _, report3 = self.th.check_val(beamresult_uniform['positionangle']['value'], -83.78,
                                               valname='Restoring beam positionangle:', exact=False)
-          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 75.52,
+          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 76.31,
                                               valname='Restoring beam major:', exact=False)
-          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 61.63,
+          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 63.06,
                                               valname='Restoring beam minor:', exact=False)
           _, report6 = self.th.check_val(beamresult_uniform_taper['positionangle']['value'], -83.61,
                                               valname='Restoring beam positionangle:', exact=False)
-          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 457.07,
+          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 488.31,
                                               valname='Restoring beam major:', exact=False)
-          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 448.07,
+          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 469.05,
                                               valname='Restoring beam minor:', exact=False)
-          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.54,
+          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.76,
                                               valname='Restoring beam positionangle:', exact=False)
-          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 75.52,
+          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 76.31,
                                                valname='Restoring beam major:', exact=False)
-          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 61.63,
+          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 63.06,
                                                valname='Restoring beam minor:', exact=False)
-          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.61,
+          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.77,
                                                valname='Restoring beam positionangle:', exact=False)
 
           self.assertTrue(self.check_final(
