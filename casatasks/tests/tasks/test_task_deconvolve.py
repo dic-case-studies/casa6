@@ -743,8 +743,14 @@ class testref_base(unittest.TestCase):
     def tearDownClass(cls):
         cls.staticDelData(cls.msfile, cls.img)
         # cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
+        cls.staticClearCacheDir()
+
+    @classmethod
+    def staticClearCacheDir(cls):
+        """ Clears values copied during staticCopyToCache """
         if cls.cachedir != "":
             os.system('rm -rf '+cls.cachedir)
+            cls.cachedir = ""
 
     def _setImgsrcField(self,msfile):
         """ Set the self.msfile and self.imgsrc values based off of the given msfile """
@@ -1924,21 +1930,26 @@ class test_multirun(testref_base):
         # Test running hogbom twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         # Note: There is a known off-by-one error for hogbom, where iterations aren't counted correctly (niter=10 really means niter=11). See CAS-13200.
         ######################################################################################
-        peakres, modflux, imgval = 4.77e-3, 1.314, 0.871 # don't actually care much what these values are
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=399, threshold='1mJy', interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=399, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0, restoration=False)
-        report2  = th.checkall(ret=results2['retrec'], iterdone=199, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=199, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+            results1 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=399, threshold='1mJy', interactive=0)
+            report1  = th.checkall(ret=results1['retrec'], iterdone=399, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+            peakres, modflux, imgval = th.get_peak_res(results1['retrec']), th.get_mod_flux(results1['retrec']), th.get_pix(self.img+'.model',[50,50,0,0])
 
-        self.checkfinal(report1 + report2 + report3)
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0, restoration=False)
+            report2  = th.checkall(ret=results2['retrec'], iterdone=199, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
+            results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0)
+            report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=199, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                   imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     # Test 49
     def test_multirun_clarkclark(self):
@@ -1947,22 +1958,26 @@ class test_multirun(testref_base):
         # Test running clark twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         # Note: We need to use a non-default value of gain so that clark doesn't exit due to its internal itsMaxNumberMajorCycles before completing our niter goal.
         ######################################################################################
-        peakres, modflux, imgval = 1.009e-2, 1.287, 0.891 # don't actually care much what these values are
-        epsilon = 0.005 if not self.parallel else 0.01
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clark','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='clark', niter=400, threshold='1mJy', gain=0.03, interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0, restoration=False)
-        report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+            results1 = deconvolve(imagename=self.img, deconvolver='clark', niter=400, threshold='1mJy', gain=0.03, interactive=0)
+            report1  = th.checkall(ret=results1['retrec'], iterdone=400, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+            peakres, modflux, imgval = th.get_peak_res(results1['retrec']), th.get_mod_flux(results1['retrec']), th.get_pix(self.img+'.model',[50,50,0,0])
 
-        self.checkfinal(report1 + report2 + report3)
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0, restoration=False)
+            report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
+            results3 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0)
+            report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                   imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     # Test 50
     def test_multirun_clarkstokesclarkstokes(self):
@@ -1971,21 +1986,26 @@ class test_multirun(testref_base):
         # Test running clarkstokes twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         # Note: We need to use a non-default value of gain so that clark doesn't exit due to its internal itsMaxNumberMajorCycles before completing our niter goal.
         ######################################################################################
-        peakres, modflux, imgval = 1.795e-2, 0.982, 0.982 # don't actually care much what these values are
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clarkstokes','stokes':'I','threshold':'1mJy'}
-        tca=self.prepData('refim_point_linRL.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=400, threshold='1mJy', gain=0.01, interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
-
         self.prepData('refim_point_linRL.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0, restoration=False)
-        report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.checkfinal(report1 + report2 + report3)
+            results1 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=400, threshold='1mJy', gain=0.01, interactive=0)
+            report1  = th.checkall(ret=results1['retrec'], iterdone=400, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+            peakres, modflux, imgval = th.get_peak_res(results1['retrec']), th.get_mod_flux(results1['retrec']), th.get_pix(self.img+'.model',[50,50,0,0])
+
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0, restoration=False)
+            report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
+            results3 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0)
+            report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                   imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     # Test 51
     def test_multirun_multiscalemultiscale(self):
@@ -1993,22 +2013,26 @@ class test_multirun(testref_base):
         ######################################################################################
         # Test running multiscale twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
-        peakres, modflux, imgval = 0.246, 1.271, 3.827e-2 # don't actually care much what these values are
-        epsilon = 0.005 if not self.parallel else 0.01
         tca={'imsize':100,'cell':'8.0arcsec','deconvolver':'multiscale','scales':[10,20,40,100]}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=400, threshold='1mJy', interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0, restoration=False)
-        report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=epsilon, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                               imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+            results1 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=400, threshold='1mJy', interactive=0)
+            report1  = th.checkall(ret=results1['retrec'], iterdone=400, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+            peakres, modflux, imgval = th.get_peak_res(results1['retrec']), th.get_mod_flux(results1['retrec']), th.get_pix(self.img+'.model',[50,50,0,0])
 
-        self.checkfinal(report1 + report2 + report3)
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0, restoration=False)
+            report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
+            results3 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0)
+            report3  = th.checkall(ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                   imgval=[(self.img+'.model',imgval,[50,50,0,0])])
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     # Test 52
     @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
@@ -2017,23 +2041,27 @@ class test_multirun(testref_base):
         ######################################################################################
         # Test running mtmfs twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
-        peakres, modflux, imgval0, imgval1 = 5.251e-2, 5.642, 5.646e-3, -3.460e-3 # don't actually care much what these values are
         tca={'imsize':100,'cell':'8.0arcsec','deconvolver':'mtmfs','scales':[10,20,40]}
         self.prepData('refim_eptwochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=400, threshold='1mJy', interactive=0)
-        report1  = th.checkall( ret=results1['retrec'], peakres=peakres, modflux=modflux, iterdone=400, epsilon=0.005,
-                                imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'],
-                                imgval=[(self.img+'.model.tt0',imgval0,[50,50,0,0]), (self.img+'.model.tt1',imgval1,[50,50,0,0])] )
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.prepData('refim_eptwochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0, restoration=False)
-        report2  = th.checkall( ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1'], imgexistnot=[self.img+'.image.tt0', self.img+'.image.tt1'] )
-        results3 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0)
-        report3  = th.checkall( ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200, epsilon=0.005,
-                                imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'],
-                                imgval=[(self.img+'.model.tt0',imgval0,[50,50,0,0]), (self.img+'.model.tt1',imgval1,[50,50,0,0])] )
+            results1 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=400, threshold='1mJy', interactive=0)
+            report1  = th.checkall( ret=results1['retrec'], iterdone=400, imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'])
+            peakres, modflux, imgval0, imgval1 = th.get_peak_res(results1['retrec']), th.get_mod_flux(results1['retrec']), th.get_pix(self.img+'.model.tt0',[50,50,0,0]), th.get_pix(self.img+'.model.tt1',[50,50,0,0])
 
-        self.checkfinal(report1 + report2 + report3)
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0, restoration=False)
+            report2  = th.checkall( ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1'], imgexistnot=[self.img+'.image.tt0', self.img+'.image.tt1'] )
+            results3 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0)
+            report3  = th.checkall( ret=results3['retrec'], peakres=peakres, modflux=modflux, iterdone=200,
+                                    imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'],
+                                    imgval=[(self.img+'.model.tt0',imgval0,[50,50,0,0]), (self.img+'.model.tt1',imgval1,[50,50,0,0])] )
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     @unittest.skip("MTMFS is skipped until test_multirun_mtmfs3x passes. To be fixed in CAS-13570.")
     def test_multirun_mtmfs3x(self):
@@ -2072,7 +2100,7 @@ class test_multirun(testref_base):
         ######################################################################################
         # Test running asp twice in a row and show that it gets the same value as one run with twice the iterations.
         ######################################################################################
-        # Adjust these values to get report1 to pass, then report3 should match
+        # Adjust these values to get report1 to pass, then report2 should match
         pt_true = 1.0
         pt_true_1major = 0.775508463382721
         pt_loc_4=[256,209,0,4]
@@ -2083,29 +2111,30 @@ class test_multirun(testref_base):
 
         tca = {'imsize':512, 'imagename':self.img+'1', 'cell':'12.0arcsec', 'specmode':'cube', 'interpolation':'nearest', 'nchan':5, 'start':'1.0GHz', 'width':'0.2GHz', 'pblimit':-1e-05, 'deconvolver':'asp'}
         self.prepData('sim_data_VLA_jet.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img+'1', niter=400, deconvolver='asp', gain=0.8, interactive=0)
-        report1  = th.checkall(ret=results1['retrec'], iterdone=400,
-                               imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'], 
-                               imgval=[(self.img+'1.psf',1.0,[256,256,0,0]),
-                                       (self.img+'1.image',pt_true,pt_true_1major),
-                                       (self.img+'1.image',pt_true,pt_loc_4),
-                                       (self.img+'1.image',ext_true_0,ext_loc_0),
-                                       (self.img+'1.image',ext_true_4_1major,ext_loc_4) ], epsilon=0.12)
+        try:
+            test_multirun.staticCopyToCache(self.msfile, self.img, 'tclean_output')
 
-        self.prepData('sim_data_VLA_jet.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img+'1', niter=200, deconvolver='asp', gain=0.8, interactive=0)
-        report2  = th.checkall(ret=results2['retrec'], iterdone=200,
-                               imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'])
-        results3 = deconvolve(imagename=self.img+'1', niter=200, deconvolver='asp', gain=0.8, interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], iterdone=200,
-                               imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'], 
-                               imgval=[(self.img+'1.psf',1.0,[256,256,0,0]),
-                                       (self.img+'1.image',pt_true,pt_true_1major),
-                                       (self.img+'1.image',pt_true,pt_loc_4),
-                                       (self.img+'1.image',ext_true_0,ext_loc_0),
-                                       (self.img+'1.image',ext_true_4_1major,ext_loc_4) ], epsilon=0.12)
+            results1 = deconvolve(imagename=self.img+'1', niter=400, deconvolver='asp', gain=0.8, interactive=0)
+            report1  = th.checkall(ret=results1['retrec'], iterdone=400,
+                                   imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'])
+            imgval0, imgval1, imgval2 = th.get_pix(self.img+'1.image', pt_loc_4), th.get_pix(self.img+'1.image', ext_loc_0), th.get_pix(self.img+'1.image', ext_loc_4)
 
-        self.checkfinal(report1 + report2 + report3)
+            self.delData(delinput=False)
+            test_multirun.staticCopyFromCache(self.msfile, self.img, 'tclean_output')
+            results2 = deconvolve(imagename=self.img+'1', niter=200, deconvolver='asp', gain=0.8, interactive=0)
+            report2  = th.checkall(ret=results2['retrec'], iterdone=200,
+                                   imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'])
+            results3 = deconvolve(imagename=self.img+'1', niter=200, deconvolver='asp', gain=0.8, interactive=0)
+            report3  = th.checkall(ret=results3['retrec'], iterdone=200,
+                                   imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image',self.img+'1.model'], 
+                                   imgval=[(self.img+'1.psf',1.0,[256,256,0,0]),
+                                           (self.img+'1.image',imgval0,pt_loc_4),
+                                           (self.img+'1.image',imgval1,ext_loc_0),
+                                           (self.img+'1.image',imgval2,ext_loc_4) ])
+
+            self.checkfinal(report1 + report2 + report3)
+        finally:
+            test_multirun.staticClearCacheDir()
 
     # Test 54
     def test_multirun_multiscalehog(self):
@@ -2993,7 +3022,7 @@ class test_restoration(testref_base):
         ######################################################################################
         self.rsetup()
         results = deconvolve(imagename=self.img, niter=10, restoration=True)
-        report = th.checkall(ret=results['retrec'], epsilon=0.005,
+        report = th.checkall(ret=results['retrec'],
                              imgval=[(self.img+'.image',1.060,[5,5,0,0])],
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
@@ -3006,11 +3035,11 @@ class test_restoration(testref_base):
         ######################################################################################
         self.rsetup()
         results = deconvolve(imagename=self.img, niter=10, restoration=False)
-        report = th.checkall(ret=results['retrec'], peakres=0.333, imgval=[(self.img+'.model',0.727,[5,5,0,0])], epsilon=0.005,
+        report = th.checkall(ret=results['retrec'], peakres=0.333, imgval=[(self.img+'.model',0.727,[5,5,0,0])],
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model'],
                              imgexistnot=[self.img+'.image'])
         results = deconvolve(imagename=self.img, niter=0, restoration=True)
-        report = th.checkall(ret=results['retrec'], peakres=0.333, imgval=[(self.img+'.model',0.727,[5,5,0,0])], epsilon=0.005,
+        report = th.checkall(ret=results['retrec'], peakres=0.333, imgval=[(self.img+'.model',0.727,[5,5,0,0])],
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
 
@@ -3022,7 +3051,7 @@ class test_restoration(testref_base):
         ######################################################################################
         self.rsetup()
         results = deconvolve(imagename=self.img, niter=10, restoration=True, restoringbeam='100.0arcsec')
-        report = th.checkall(ret=results['retrec'], epsilon=0.005,
+        report = th.checkall(ret=results['retrec'],
                              imgval=[(self.img+'.image',1.436,[5,5,0,0])],
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
