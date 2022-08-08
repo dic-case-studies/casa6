@@ -84,9 +84,9 @@ class sm_settrop_test(unittest.TestCase):
         
         timeDiff = time - time[0]
         
-        # get a value at 9 seconds and 11 and check the difference
-        index1 = numpy.where(timeDiff == 9)[0][0]
-        index2 = numpy.where(timeDiff == 10)[0][0]
+        # get a value at 9 seconds and 11 and check the difference diff is 0 and 2
+        index1 = numpy.where(timeDiff == 0)[0][0]
+        index2 = numpy.where(timeDiff == 2)[0][0]
         par1 = cpar[0,0,index1]
         par2 = cpar[0,0,index2]
         # get phase angles
@@ -95,7 +95,7 @@ class sm_settrop_test(unittest.TestCase):
         phaseDiff = phaseang2 = phaseang1
         
         # Test that there is no more large positive jump in phase angle
-        self.assertTrue(numpy.isclose(phaseDiff, -18.3011032), msg=phaseDiff)
+        self.assertTrue(numpy.isclose(phaseDiff, 1.7399771), msg=phaseDiff)
         # check that a corrected data col exists
         self.assertTrue(corDataExists)
         # if simint is lower than 0.1  get warning and value changed to 0.1
