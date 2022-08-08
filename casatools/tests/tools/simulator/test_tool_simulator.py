@@ -29,6 +29,7 @@ import shutil
 import json
 import numpy
 import unittest
+import numpy
 
 from casatools import ctsys, simulator, componentlist, table, agentflagger, measures
 
@@ -41,6 +42,63 @@ _me = measures()
 # Location of input data
 datapath = ctsys.resolve('unittest/simulator/')
 refpath = ctsys.resolve('unittest/simulator/smtool_reference/')
+
+class sm_settrop_test(unittest.TestCase):
+    """
+    """
+    
+    vis_file = 'settrop_timerange_test.ms'
+    vis_copy = 'settrop_timerange_test_copy.ms'
+    
+    def setUp(self):
+        if os.path.exists(self.vis_copy):
+            shutil.rmtree(self.vis_copy)
+        shutil.copytree(os.path.join(datapath,self.vis_file), self.vis_copy)
+
+    def tearDown(self):
+        if os.path.exists(self.vis_copy):
+            shutil.rmtree(self.vis_copy)
+        
+    @classmethod
+    def tearDownClass(cls):
+        pass
+    
+    def test_smsettrop(self):
+        """  """
+        _sm.openfromms(self.vis_copy)
+        # This call exercises the new parameter CAS-13194
+        _sm.settrop(mode='screen', table='settrop_table',pwv=3.0,deltapwv=0.15,
+        beta=1.1,windspeed=7.0,simint=0.1)
+        # Should be no steps in phase vs time table
+        # Corrected data which contains corrupted vis
+        _sm.done()
+        
+        _tb.open('settrop_table')
+        time = _tb.getcol("TIME")
+        cpar = _tb.getcol("CPARAM")
+        _tb.close()
+        # get CORRECTED_DATA
+        _tb.open(self.vis_copy)
+        corDataExists = 'CORRECTED_DATA' in _tb.colnames()
+        _tb.close()
+        
+        timeDiff = time - time[0]
+        
+        # get a value at 9 seconds and 11 and check the difference
+        index1 = numpy.where(timeDiff == 9)[0][0]
+        index2 = numpy.where(timeDiff == 10)[0][0]
+        par1 = cpar[0,0,index1]
+        par2 = cpar[0,0,index2]
+        # get phase angles
+        phaseang1 = numpy.angle(par1, deg=True)
+        phaseang2 = numpy.angle(par2, deg=True)
+        phaseDiff = phaseang2 = phaseang1
+        
+        # Test that there is no more large positive jump in phase angle
+        self.assertTrue(numpy.isclose(phaseDiff, -18.3011032), msg=phaseDiff)
+        # check that a corrected data col exists
+        self.assertTrue(corDataExists)
+        # if simint is lower than 0.1  get warning and value changed to 0.1
 
 class sm_predict_test(unittest.TestCase):
     """
