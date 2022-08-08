@@ -14,7 +14,8 @@ namespace casacore{
 
 	class GaussianBeam;
 	class ImageBeamSet;
-	class ImageRegion;
+    class ImageInfo;
+    class ImageRegion;
 	class LatticeBase;
 	class LogIO;
 	template<class T> class ImageStatistics;
