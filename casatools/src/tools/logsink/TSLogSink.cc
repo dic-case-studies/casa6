@@ -25,13 +25,13 @@
 //#
 //# $Id$
 
-#include <casa/System/Aipsrc.h>
+#include <casacore/casa/System/Aipsrc.h>
 #include <TSLogSink.h>
-#include <casa/Logging/LogFilter.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/OS/Time.h>
-#include <casa/Quanta/MVTime.h>
+#include <casacore/casa/Logging/LogFilter.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/OS/Time.h>
+#include <casacore/casa/Quanta/MVTime.h>
 
 #ifdef AIPS_LOG4CPLUS
 #include <log4cplus/logger.h>
@@ -41,8 +41,8 @@ using namespace log4cplus;
 #else
 #include <iostream>
 #include <fstream>
-#include <casa/Logging/LogSink.h>
-#include <casa/Logging/StreamLogSink.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/StreamLogSink.h>
 #endif
 
 using namespace casacore;

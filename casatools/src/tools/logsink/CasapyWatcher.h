@@ -27,7 +27,7 @@
 #ifndef CASAPYWATCHER_H_
 #define CASAPYWATCHER_H_
 
-#include <casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogMessage.h>
 
 #include <vector>
 

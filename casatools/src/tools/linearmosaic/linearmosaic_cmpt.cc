@@ -11,15 +11,15 @@
 
 #include <iostream>
 #include <linearmosaic_cmpt.h>
-#include <images/Images/PagedImage.h>
-#include <images/Images/TempImage.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/images/Images/TempImage.h>
 #include <synthesis/MeasurementEquations/LinearMosaic.h>
 #include <synthesis/MeasurementEquations/Imager.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Utilities/Assert.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Utilities/Assert.h>
 
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
 
 
 using namespace std;
