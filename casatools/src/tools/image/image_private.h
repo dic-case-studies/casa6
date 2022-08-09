@@ -108,6 +108,8 @@ template<class T> image* _convolve2d(
     bool targetres, const record& beam
 );
 
+const casacore::CoordinateSystem& _coordinates() const;
+
 template<class T> image* _decimate(
 	SPCIIT image, const string& outfile, int axis,
 	int factor, casa::ImageDecimatorData::Function f,
@@ -192,6 +194,8 @@ template<class T> SPIIT _imagecalc(
 	const string& outfile, const string& pixels,
 	bool overwrite, const string& imagemd
 );
+
+const casacore::ImageInfo& _imageInfo() const;
 
 static casacore::String _inputsString(
 	const std::vector<std::pair<casacore::String, casac::variant> >& inputs,

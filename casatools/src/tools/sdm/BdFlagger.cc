@@ -16,13 +16,13 @@ using namespace std;
 
 using namespace asdm;
 
-#include <tables/Tables/Table.h>
-#include <tables/Tables/ScalarColumn.h>
-#include <tables/Tables/ArrayColumn.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayUtil.h>
-#include <casa/Arrays/ArrayLogical.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ArrayColumn.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayUtil.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
 
 #include <alma/Enumerations/CAxisName.h>
 using namespace AxisNameMod;
@@ -62,8 +62,8 @@ static vector<char> logIndent;
 /*
 ** Two string streams used all over the applications in general to prepare messages sent to the logging facilities.
 */
-#include <casa/Logging/StreamLogSink.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/StreamLogSink.h>
+#include <casacore/casa/Logging/LogSink.h>
 #include <sdm_cmpt.h>
 
 namespace casac {

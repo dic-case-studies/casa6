@@ -1,6 +1,6 @@
 #include <imageanalysis/ImageTypedefs.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <casa/namespace.h> //as in ImageDecimatorData.h
+#include <casacore/casa/namespace.h> //as in ImageDecimatorData.h
 
 namespace casacore{
 

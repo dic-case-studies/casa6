@@ -6,8 +6,8 @@
 #include <alma/Enumtcl/TimeSampling.h>
 #include <alma/Enumtcl/AtmPhaseCorrection.h>
 #include <alma/ASDMBinaries/SDMDataViews.h>
-#include <tables/Tables/ArrayColumn.h>
-#include <tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ArrayColumn.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
 
 namespace asdm {
     class ExecBlockRow;

@@ -45,27 +45,27 @@
 #include <components/ComponentModels/PowerLogPoly.h>
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/TabularSpectrum.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Containers/Record.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/MUString.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/Unit.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/MVDirection.h>
-#include <casa/namespace.h>
-#include <casa/OS/Path.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/MUString.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/Unit.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/MVDirection.h>
+#include <casacore/casa/namespace.h>
+#include <casacore/casa/OS/Path.h>
 #include <components/ComponentModels/ComponentList.h>
 #include <components/ComponentModels/Flux.h>
 #include <components/ComponentModels/SkyComponent.h>
-#include <measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
 
 using namespace std;
 
