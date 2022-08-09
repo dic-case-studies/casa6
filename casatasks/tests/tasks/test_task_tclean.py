@@ -2567,10 +2567,72 @@ class test_cube(testref_base):
           self.assertTrue(self.check_final(
                     pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
 
+ # unit test cases for CAS-13260
+     def test_cube_weighting_taper_cas13260_new(self):
+          """[cube] test_cube_weighting_taper_cas13260_new: """
+          self.prepData('refim_point.ms')
+
+          delmod(self.msfile)
+          im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
+          im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
+          im_natural_taper_183_lambda = self.img + "_natural_with_taper_183_lambda"
+          im_natural_taper_500_arcsec = self.img + "_natural_with_taper_500_arcsec"
+
+          ret_natural_taper_91500_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_91500_lambda,
+                                                       imsize=100,
+                                                       cell='8.0arcsec',
+                                                       specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                       interactive=0,
+                                                       weighting='natural', uvtaper=['91.5klambda'],
+                                                       restoringbeam='common',
+                                                       parallel=self.parallel)
+          ret_natural_taper_1_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_1_arcsec, imsize=100,
+                                                   cell='8.0arcsec',
+                                                   specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                   interactive=0,
+                                                   weighting='natural', uvtaper=['1arcsec'], restoringbeam='common',
+                                                   parallel=self.parallel)
+          ret_natural_taper_183_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_183_lambda, imsize=100,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['183lambda'], restoringbeam='common',
+                                                     parallel=self.parallel)
+          ret_natural_taper_500_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_500_arcsec, imsize=100,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['500arcsec'], restoringbeam='common',
+                                                     parallel=self.parallel)
+
+          self.assertTrue(os.path.exists(im_natural_taper_91500_lambda + '.image') and os.path.exists(
+                    im_natural_taper_1_arcsec + '.image') and os.path.exists(
+                    im_natural_taper_183_lambda + '.image') and os.path.exists(im_natural_taper_500_arcsec + '.image'))
+
+          beamresult_taper_91500_lambda = imhead(im_natural_taper_91500_lambda + '.image', mode='summary')[
+                    'restoringbeam']
+          beamresult_taper_1_arcsec = imhead(im_natural_taper_1_arcsec + '.image', mode='summary')['restoringbeam']
+          beamresult_taper_183_lambda = imhead(im_natural_taper_183_lambda + '.image', mode='summary')[
+                    'restoringbeam']
+          beamresult_taper_500_arcsec = imhead(im_natural_taper_500_arcsec + '.image', mode='summary')[
+                    'restoringbeam']
+
+          _, report1 = self.th.check_val(beamresult_taper_91500_lambda['major']['value'], 93.02,
+                                              valname='Restoring beam major:', exact=False)
+          _, report2 = self.th.check_val(beamresult_taper_1_arcsec['major']['value'], 93.02,
+                                              valname='Restoring beam major:', exact=False)
+          _, report3 = self.th.check_val(beamresult_taper_183_lambda['major']['value'], 508.82,
+                                              valname='Restoring beam major:', exact=False)
+          _, report4 = self.th.check_val(beamresult_taper_500_arcsec['major']['value'], 488.31,
+                                              valname='Restoring beam major:', exact=False)
+
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
+
      # unit test cases for CAS-13260
-     def test_cube_weighting_taper_cas13260(self):
-          """[cube] test_cube_weighting_taper_cas13260: """
+     def test_cube_weighting_taper_cas13260_old(self):
+          """[cube] test_cube_weighting_taper_cas1326_old: """
           self.prepData('refim_point_linRL.ms')
+
           delmod(self.msfile)
           im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
           im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
@@ -2617,7 +2679,7 @@ class test_cube(testref_base):
                     'restoringbeam']
 
           _, report1 = self.th.check_val(beamresult_taper_91500_lambda['major']['value'], 130.49,
-                                              valname='Restoring beam major:', exact=False)
+                                         valname='Restoring beam major:', exact=False)
           _, report2 = self.th.check_val(beamresult_taper_1_arcsec['major']['value'], 130.49,
                                               valname='Restoring beam major:', exact=False)
           _, report3 = self.th.check_val(beamresult_taper_183_lambda['major']['value'], 505.43,
@@ -2626,6 +2688,7 @@ class test_cube(testref_base):
                                               valname='Restoring beam major:', exact=False)
 
           self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
+
 
 #     def test_cube_D3(self):
 #          """ EMPTY : [cube] Test_Cube_D3 : specmode cubesrc - Doppler correct to a SOURCE ephemeris"""
