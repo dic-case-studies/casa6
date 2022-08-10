@@ -1221,10 +1221,20 @@
             "comment":""
         },
         {
-            "testScript":"test_task_uvcontsub",
+            "testScript":"test_task_uvcontsub_old",
             "testType":"casatasks",
             "maintainer":"Takahiro Tsutsumi",
             "maintainerEmail":"ttsutsum@nrao.edu",
+            "testOptions":[],
+            "testGroup":["uvcontsub"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_task_uvcontsub",
+            "testType":"casatasks",
+            "maintainer":"Federico Montesino",
+            "maintainerEmail":"fpouzols@eso.org",
             "testOptions":[],
             "testGroup":["uvcontsub"],
             "timeout":0,
