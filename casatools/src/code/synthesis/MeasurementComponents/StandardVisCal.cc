@@ -589,7 +589,7 @@ void TJones::createCorruptor(const VisIter& vi, const Record& simpar, const Int 
       Float fBM_interval=max(interval(), minFBM_interval); 
       if (interval() <= 0.){ // use default value
 	fBM_interval = defaultFBM_interval;
-      } else if (fBM_interval > interval()){
+      } else if ( (fBM_interval - interval()) > 1E-5 ){
 	os << LogIO::WARN << " Requested phase screen time granularity (" << interval() 
 	   << " s) is too small! Will use the minimum permitted value: " << minFBM_interval << " s." <<  LogIO::POST;
       }
