@@ -32,24 +32,24 @@
 
 #include <msmetadata_forward.h>
 
-#include <casa/Containers/Record.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Quanta/QLogical.h>
-#include <casa/Quanta/QVector.h>
-#include <measures/Measures/MeasureHolder.h>
-#include <measures/Measures/MDirection.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <ms/MSOper/MSMetaData.h>
-#include <ms/MSOper/MSKeys.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Quanta/QLogical.h>
+#include <casacore/casa/Quanta/QVector.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/ms/MSOper/MSMetaData.h>
+#include <casacore/ms/MSOper/MSKeys.h>
 
 #include <msvis/MSVis/MSChecker.h>
 
 #include <algorithm>
 #include <regex>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #define _ORIGIN *_log << LogOrigin("msmetadata_cmpt.cc", __func__, __LINE__);
 // common method scaffold

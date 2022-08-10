@@ -5,10 +5,10 @@
 // Get statistics on table/ms columns
 //
 
-#include <casa/Containers/Record.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/Array.h>
-#include <casa/aipstype.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/aipstype.h>
 
 namespace casac {
 
