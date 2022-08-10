@@ -2634,10 +2634,12 @@ class test_cube(testref_base):
           self.prepData('refim_point_linRL.ms')
 
           delmod(self.msfile)
-          im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
-          im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
-          im_natural_taper_183_lambda = self.img + "_natural_with_taper_183_lambda"
-          im_natural_taper_500_arcsec = self.img + "_natural_with_taper_500_arcsec"
+          im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda_20220810"
+          im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec_20220810"
+          im_natural_taper_183_lambda = self.img + "_natural_with_taper_183_lambda_20220810"
+          im_natural_taper_500_arcsec = self.img + "_natural_with_taper_500_arcsec_20220810"
+          im_natural_taper_183_lambda_2 = self.img + "_natural_with_taper_183_lambda_2_20220810"
+          im_natural_taper_500_arcsec_2 = self.img + "_natural_with_taper_500_arcsec_2_20220810"
 
           ret_natural_taper_91500_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_91500_lambda,
                                                        imsize=100,
@@ -2665,6 +2667,18 @@ class test_cube(testref_base):
                                                      interactive=0,
                                                      weighting='natural', uvtaper=['500arcsec'], restoringbeam='common',
                                                      parallel=self.parallel)
+          ret_natural_taper_183_lambda_2 = tclean(vis=self.msfile, imagename=im_natural_taper_183_lambda_2, imsize=200,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['183lambda'], restoringbeam='common',
+                                                     parallel=self.parallel)
+          ret_natural_taper_500_arcsec_2 = tclean(vis=self.msfile, imagename=im_natural_taper_500_arcsec_2, imsize=200,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['500arcsec'], restoringbeam='common',
+                                                     parallel=self.parallel)
 
           self.assertTrue(os.path.exists(im_natural_taper_91500_lambda + '.image') and os.path.exists(
                     im_natural_taper_1_arcsec + '.image') and os.path.exists(
@@ -2677,6 +2691,10 @@ class test_cube(testref_base):
                     'restoringbeam']
           beamresult_taper_500_arcsec = imhead(im_natural_taper_500_arcsec + '.image', mode='summary')[
                     'restoringbeam']
+          beamresult_taper_183_lambda_2 = imhead(im_natural_taper_183_lambda_2 + '.image', mode='summary')[
+                    'restoringbeam']
+          beamresult_taper_500_arcsec_2 = imhead(im_natural_taper_500_arcsec_2 + '.image', mode='summary')[
+                    'restoringbeam']
 
           _, report1 = self.th.check_val(beamresult_taper_91500_lambda['major']['value'], 130.49,
                                          valname='Restoring beam major:', exact=False)
@@ -2686,8 +2704,12 @@ class test_cube(testref_base):
                                               valname='Restoring beam major:', exact=False)
           _, report4 = self.th.check_val(beamresult_taper_500_arcsec['major']['value'], 451.36,
                                               valname='Restoring beam major:', exact=False)
+          _, report5 = self.th.check_val(beamresult_taper_183_lambda_2['major']['value'], 504.81,
+                                              valname='Restoring beam major:', exact=False)
+          _, report6 = self.th.check_val(beamresult_taper_500_arcsec_2['major']['value'], 450.80,
+                                              valname='Restoring beam major:', exact=False)
 
-          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4 + report5 + report6))
 
 
 #     def test_cube_D3(self):
