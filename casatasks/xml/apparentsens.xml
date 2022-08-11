@@ -3,7 +3,7 @@
 
 <task category="imaging" name="apparentsens" type="function">
 
-  <shortdescription>Imaging sensitivity estimataion</shortdescription>
+  <shortdescription>Imaging sensitivity estimation</shortdescription>
 
   <description>Estimates the expected imaging sensitivity as a function of the
                visibility weights and imaging parameters.
