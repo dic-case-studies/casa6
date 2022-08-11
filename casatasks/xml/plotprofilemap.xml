@@ -2,7 +2,7 @@
 
 <task type="function" name="plotprofilemap" category="visualization">
 
-  <shortdescription>Makes profile map.</shortdescription>
+  <shortdescription>Makes profile map</shortdescription>
       
   <description>
   The plotprofilemap makes spectral profile map from specified image. 
