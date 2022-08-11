@@ -272,7 +272,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  mss_p[mss_p.nelements()-1]=new MeasurementSet(thisMSSelected0);
 	  
 	os << "  NRows selected : " << (mss_p[mss_p.nelements()-1])->nrow() << LogIO::POST;
-	//	unlockMSs();
+	unlockMSs();
       }
     else{
       throw(AipsError("Selection for given MS "+selpars.msname+" is invalid"));
