@@ -47,8 +47,9 @@ class sm_settrop_test(unittest.TestCase):
     """
     """
     
-    vis_file = 'settrop_timerange_test.ms'
-    vis_copy = 'settrop_timerange_test_copy.ms'
+    vis_file = 'settrop_split_ant_spw.ms'
+    vis_copy = 'settrop_split_ant_spw_copy.ms'
+    res_table = 'settrop_table'
     
     def setUp(self):
         if os.path.exists(self.vis_copy):
@@ -58,6 +59,8 @@ class sm_settrop_test(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.vis_copy):
             shutil.rmtree(self.vis_copy)
+        if os.path.exists(self.res_table):
+            shutil.rmtree(self.res_table)
         
     @classmethod
     def tearDownClass(cls):
@@ -67,13 +70,14 @@ class sm_settrop_test(unittest.TestCase):
         """  """
         _sm.openfromms(self.vis_copy)
         # This call exercises the new parameter CAS-13194
-        _sm.settrop(mode='screen', table='settrop_table',pwv=3.0,deltapwv=0.15,
+        _sm.settrop(mode='screen', table=self.res_table,pwv=3.0,deltapwv=0.15,
         beta=1.1,windspeed=7.0,simint=0.1)
         # Should be no steps in phase vs time table
         # Corrected data which contains corrupted vis
+        _sm.corrupt()
         _sm.done()
         
-        _tb.open('settrop_table')
+        _tb.open(self.res_table)
         time = _tb.getcol("TIME")
         cpar = _tb.getcol("CPARAM")
         _tb.close()
@@ -84,18 +88,21 @@ class sm_settrop_test(unittest.TestCase):
         
         timeDiff = time - time[0]
         
-        # get a value at 9 seconds and 11 and check the difference diff is 0 and 2
-        index1 = numpy.where(timeDiff == 0)[0][0]
-        index2 = numpy.where(timeDiff == 2)[0][0]
+        # get a value at 9 seconds and 11 and check the difference
+        index1 = numpy.where(timeDiff == 9)[0][0]
+        index2 = numpy.where(timeDiff == 11)[0][0]
+        
         par1 = cpar[0,0,index1]
         par2 = cpar[0,0,index2]
+        
         # get phase angles
         phaseang1 = numpy.angle(par1, deg=True)
         phaseang2 = numpy.angle(par2, deg=True)
-        phaseDiff = phaseang2 = phaseang1
+        
+        phaseDiff = phaseang2 - phaseang1
         
         # Test that there is no more large positive jump in phase angle
-        self.assertTrue(numpy.isclose(phaseDiff, 1.7399771), msg=phaseDiff)
+        self.assertTrue(numpy.isclose(phaseDiff, -15.6033857), msg=phaseDiff)
         # check that a corrected data col exists
         self.assertTrue(corDataExists)
         # if simint is lower than 0.1  get warning and value changed to 0.1
