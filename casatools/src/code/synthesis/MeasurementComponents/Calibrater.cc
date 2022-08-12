@@ -161,6 +161,7 @@ Record CalCounts::makeRecord(Int NAnt, Int NPol) {
     
     nSpw = spwMap_.size();
     cout << "spw map size: " << nSpw << endl;
+    Record containerRec = Record();
     Record resultRec = Record();
     
     resultRec.define("expected", totalMap_["expected"]);
@@ -185,8 +186,9 @@ Record CalCounts::makeRecord(Int NAnt, Int NPol) {
         }
         resultRec.defineRecord(RecordFieldId("spw"+to_string(spw)), spwRec);
     }
+    containerRec.defineRecord(RecordFieldId("solvestats"), resultRec);
     
-    return resultRec;
+    return containerRec;
 }
 
 CalCounts::~CalCounts() {}
@@ -3735,7 +3737,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
           // Execute the solve                                                                                              
           Bool goodsol=vcs.solve(*ve_p,*svc_p,sdbs);
-            
+          // ADD TO TABLE FOR CASE WITH BAD SOLVE
 
           if (goodsol) {
             totalGoodSol=True;
@@ -3844,7 +3846,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   actRec_.define("nAttempt",natt);
   actRec_.define("nSucceed",nsuc);
     
-  cout << nexp << ", " << natt << ", " << nsuc << endl;
+  //cout << nexp << ", " << natt << ", " << nsuc << endl;
 
   { 
     Record solveRec=svc_p->solveActionRec();
