@@ -15,9 +15,9 @@
 #include <vector>
 #include <iostream>
 
-#include<casa/Utilities/Assert.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
 #include <atmosphere_cmpt.h>
 //#include <stdcasa/StdCasa/CasacSupport.h>
 

@@ -21,14 +21,14 @@
 #else
 #include <climits>
 #endif
-#include <casa/Logging/LogIO.h>
-#include <casa/BasicSL/String.h>
-#include <casa/OS/File.h>
-#include <casa/OS/DOos.h>
-#include <tables/Tables/Table.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/OS/DOos.h>
+#include <casacore/tables/Tables/Table.h>
 #include <casacore/tables/Tables/TableUtil.h>
-#include <casa/System/Aipsrc.h>
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/System/Aipsrc.h>
+#include <casacore/casa/OS/HostInfo.h>
 #ifndef NO_CRASH_REPORTER
 #include <stdcasa/StdCasa/CrashReporter.h>
 #endif
