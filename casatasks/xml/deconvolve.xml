@@ -459,9 +459,6 @@
 
                         interactive=True will trigger an interactive GUI after deconvolution finishes.
 
-                        The interactive mode is currently not available for parallel cube imaging (please also
-                        refer to the Note under the documentation for 'parallel' below).
-
                         Options for runtime parameter modification are :
 
                         Interactive clean mask : Draw a 1/0 mask (appears as a contour) by hand.
