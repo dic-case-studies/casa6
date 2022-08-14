@@ -255,7 +255,7 @@ def deconvolve(
 
         iterrec = False
         isit = 0
-        retrec = ''
+        retrec = {}
 
         ## Setup Imager object
         decon = PyDeconvolver(params=paramList)
@@ -294,7 +294,7 @@ def deconvolve(
             isit = decon.hasConverged() # get the convergence state, to report back to the calling code
 
         ## Get summary from iterbot
-        if type(interactive) != bool:
+        if type(interactive) != bool and niter>0:
             retrec=decon.getSummary();
 
         #################################################
@@ -338,4 +338,4 @@ def deconvolve(
     except Exception as exc:
         casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
 
-    return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }
+    return retrec
