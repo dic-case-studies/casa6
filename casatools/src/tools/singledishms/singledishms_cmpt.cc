@@ -8,14 +8,14 @@
 #include <string>
 #include <iostream>
 
-#include <casa/Containers/Record.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Exceptions/Error.h>
 
 #include <singledish/SingleDish/SingleDishMS.h>
 
-#include <casa/namespace.h> // using casa namespace
+#include <casacore/casa/namespace.h> // using casa namespace
 
 using namespace std;
 

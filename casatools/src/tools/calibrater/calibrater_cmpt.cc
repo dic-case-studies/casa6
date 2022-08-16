@@ -12,27 +12,27 @@
 #include <iostream>
 #include <calibrater_cmpt.h>
 #include <synthesis/MeasurementComponents/Calibrater.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Utilities/Assert.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Utilities/Assert.h>
 
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Containers/RecordDesc.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Containers/RecordDesc.h>
 
-#include <casa/Quanta/QC.h>
-#include <casa/Utilities/Regex.h>
+#include <casacore/casa/Quanta/QC.h>
+#include <casacore/casa/Utilities/Regex.h>
 //#include <casa/BasicSL/Constants.h>
-#include <casa/OS/File.h>
-#include <casa/OS/SymLink.h>
-#include <tables/Tables/ScalarColumn.h>
-#include <ms/MeasurementSets.h>
-#include <ms/MeasurementSets/MSRange.h>
-#include <ms/MeasurementSets/MSField.h>
-#include <ms/MeasurementSets/MSSpectralWindow.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/OS/SymLink.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
+#include <casacore/ms/MeasurementSets.h>
+#include <casacore/ms/MeasurementSets/MSRange.h>
+#include <casacore/ms/MeasurementSets/MSField.h>
+#include <casacore/ms/MeasurementSets/MSSpectralWindow.h>
 #include <synthesis/TransformMachines/VisModelData.h>
 #include <synthesis/CalLibrary/CalLibraryTools.h>
 
-#include <measures/Measures/MeasTable.h>
+#include <casacore/measures/Measures/MeasTable.h>
 #include <iostream>
 
 using namespace std;
@@ -239,7 +239,8 @@ bool
 calibrater::setptmodel(const std::vector<double>& stokes) {
   try
     {
-      itsCalibrater->setModel(stokes);
+      Vector<Double> const stokesCasaVec(stokes);
+      itsCalibrater->setModel(stokesCasaVec);
     }
   catch (AipsError x)
     {
@@ -272,9 +273,11 @@ calibrater::setapply(const std::string& type,
     os << "Beginning setapply--(MSSelection version)-------" << LogIO::POST;
 
     // Forward to the Calibrater object (no spw sel yet)
+    Vector<Int> const spwmapV(spwmap);
+    Vector<Double> const opacityV(opacity);
     itsCalibrater->setapply(type,t,table,
 			    "",toCasaString(field),
-			    interp,calwt,spwmap,opacity);
+			    interp,calwt,spwmapV,opacityV);
     
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -394,12 +397,16 @@ calibrater::setsolve(const std::string& type,
     }
 
     // Forward to Calibrater object
+    Vector<Double> const delaywindowV(delaywindow);
+    Vector<Double> const ratewindowV(ratewindow);
+    Vector<Bool> const paramactiveV(paramactive);
+    Vector<Double> const rmsthreshV(rmsthresh);
     itsCalibrater->setsolve(type,toCasaString(t),table,append,preavg,mode,
 			    minblperant,
 			    toCasaString(refant),refantmode,
 			    solnorm,normtype, minsnr,combine,fillgaps,
 			    cfcache, painc, fitorder, fraction, numedge, radius, smooth,
-                            zerorates, globalsolve, niter, delaywindow, ratewindow, paramactive, solmode, rmsthresh);
+                            zerorates, globalsolve, niter, delaywindowV, ratewindowV, paramactiveV, solmode, rmsthreshV);
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
@@ -805,7 +812,8 @@ calibrater::initweights(const std::string& wtmode, const bool dowtsp,
     
     // Initialize the SIGMA, WEIGHT, and (optionally) WEIGHT_SPECTRUM columns
     if (wtmode.find("tsys") != std::string::npos) {
-    	retval = itsCalibrater->initWeightsWithTsys(wtmode,dowtsp, tsystable, gainfield, interp, spwmap);
+        Vector<Int> const spwmapV(spwmap);
+    	retval = itsCalibrater->initWeightsWithTsys(wtmode,dowtsp, tsystable, gainfield, interp, spwmapV);
     } else {
     	retval = itsCalibrater->initWeights(wtmode,dowtsp);
     }
@@ -871,9 +879,13 @@ casac::record* calibrater::fluxscale(
     oListFile.rtrim( '\n' );
     oListFile.rtrim( '\r' );
 
+    Vector<Int> const refspwmapV(refspwmap);
+    // tranidxV is updated in fluxscale method
+    // but updated values are never referenced in this method
+    Vector<Int> tranidxV(tranidx);
     itsCalibrater->fluxscale(tablein,tableout,
 			     toCasaString(reference),
-			     refspwmap,
+			     refspwmapV,
 			     toCasaString(transfer),
 			     append,
                              gainthreshold, 
@@ -881,7 +893,7 @@ casac::record* calibrater::fluxscale(
                              timerange,
                              scan,
 			     oFluxD,
-			     tranidx,
+			     tranidxV,
 			     oListFile,
                              incremental,
                              fitorder,
@@ -1017,10 +1029,11 @@ calibrater::accumulate(const std::string& tablein,
     else
       tableOut = tableout;
     
+    Vector<Int> const spwmapV(spwmap);
     itsCalibrater->accumulate(tablein,incrtable,tableOut,
 			      toCasaString(field),
 			      toCasaString(calfield),
-			      interp,t,spwmap);
+			      interp,t,spwmapV);
     
   } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -1075,7 +1088,8 @@ calibrater::specifycal(const std::string& caltable,
     LogIO os (LogOrigin ("calibrater", "specifycal"), logSink_p);
     os << "Beginning specifycal-----------------------" << LogIO::POST;
 
-    itsCalibrater->specifycal(caltype,caltable,time,spw,antenna,pol,parameter,infile,uniform);
+    Vector<Double> const parameterV(parameter);
+    itsCalibrater->specifycal(caltype,caltable,time,spw,antenna,pol,parameterV,infile,uniform);
     
   } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -1292,10 +1306,12 @@ calibrater::modelfit(const std::vector<bool>& vary,
     LogIO os(LogOrigin("calibrater", "modelfit"), logSink_p);
     os << "Beginning modelfit--------------------------" << LogIO::POST;
     
+    Vector<Double> const parV(par);
+    Vector<Bool> const varyV(vary);
     Vector<Double> thefit = itsCalibrater->modelfit(niter, 
 						    modeltype, 
-						    par, 
-						    vary, 
+						    parV,
+						    varyV,
 						    file);
     thefit.tovector(rstat);
   } catch  (AipsError x) {
