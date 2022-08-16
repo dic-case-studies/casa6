@@ -3664,6 +3664,41 @@ Bool SolvableVisCal::verifyConstraints(VisBuffGroupAcc& vbag) {
 
 }
 
+void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
+    // initalize expected and unflagged shape
+    Vector<Int> initVector(nPar(), 0);
+    
+    for (Int iant=0;iant<nAnt();++iant) {
+      antennaMap_[iant]["expected"] = initVector;
+      antennaMap_[iant]["data_unflagged"] = initVector;
+    }
+    // Iterate over sdbs and add values to expected and data unflagged
+    for (Int isdb=0;isdb<sdbs.nSDB();++isdb) {
+        SolveDataBuffer& sdb(sdbs(isdb));
+        
+        Int nRow(sdb.nRows());
+        Int nCorr(sdb.nCorrelations());
+        for (Int irow=0;irow<nRow;++irow) {
+            const Int& a1(sdb.antenna1()(irow));
+            const Int& a2(sdb.antenna2()(irow));
+            // Print the corr
+            if (a1!=a2) {
+                for (int par=0;par<nPar();par++) {
+                  antennaMap_[a1]["expected"][par] = 1;
+                  antennaMap_[a2]["expected"][par] = 1;
+                }
+            }
+            // if data is unflagged
+            if (!sdb.flagRow()(irow) && a1!=a2) {
+                for (int par=0;par<nPar();par++) {
+                  antennaMap_[a1]["data_unflagged"] = 1;
+                  antennaMap_[a2]["data_unflagged"] = 1;
+                }
+            }
+        }
+    }
+}
+
 Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
 
   // TBD: handle multi-channel infocusFlag properly
@@ -3985,18 +4020,18 @@ void SolvableVisCal::applySNRThreshold() {
   
   for (Int iant=0;iant<nAnt();++iant) {
     // Create antenna accumulation
-    antennaMap_[iant]["expected"] = initVector;
-    antennaMap_[iant]["data_unflagged"] = initVector;
+    //antennaMap_[iant]["expected"] = initVector;
+    //antennaMap_[iant]["data_unflagged"] = initVector;
     antennaMap_[iant]["above_minsnr"] = initVector;
     antennaMap_[iant]["used_as_refant"] = initVectorSingle;
     if (refant() == iant) {
       antennaMap_[iant]["used_as_refant"][0] += 1;
     }
     for (Int ipar=0;ipar<nPar();++ipar) {
-      antennaMap_[iant]["expected"][ipar] += 1;
+      //antennaMap_[iant]["expected"][ipar] += 1;
       if (solveParOK()(ipar,0,iant)){
 	    solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
-        antennaMap_[iant]["data_unflagged"][ipar] += 1;
+        //antennaMap_[iant]["data_unflagged"][ipar] += 1;
         if (solveParOK()(ipar,0,iant)) {antennaMap_[iant]["above_minsnr"][ipar] += 1;};
       }
     }

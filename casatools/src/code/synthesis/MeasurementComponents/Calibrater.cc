@@ -3606,6 +3606,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   // Start Collecting counts
   CalCounts* calCounts = new CalCounts();
   calCounts->initCounts(msmc_p->nSpw(),msmc_p->nAnt(), vi.nPolarizationIds());
+  // Set up results record
+  std::map<Int, std::map<String, Vector<Int>>> resultMap;
     
 #ifdef _OPENMP
   Tsetup+=(omp_get_wtime()-time0);
@@ -3690,6 +3692,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
     // Expecting a solution                                                                                                 
     nexp(thisSpw)+=1;
+    // Get expected and data unflagged accumulation
+    svc_p->expectedUnflagged(sdbs);
       
 
 #ifdef _OPENMP
@@ -3737,7 +3741,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
           // Execute the solve                                                                                              
           Bool goodsol=vcs.solve(*ve_p,*svc_p,sdbs);
-          // ADD TO TABLE FOR CASE WITH BAD SOLVE
 
           if (goodsol) {
             totalGoodSol=True;
@@ -3745,9 +3748,10 @@ casacore::Bool Calibrater::genericGatherAndSolve()
             svc_p->formSolveSNR();
             svc_p->applySNRThreshold();
             // accumulate from SNR NEED POL NUM
-            std::map<Int, std::map<String, Vector<Int>>> resultMap = svc_p->getAntennaMap();
+            //std::map<Int, std::map<String, Vector<Int>>> resultMap = svc_p->getAntennaMap();
+            resultMap = svc_p->getAntennaMap();
             // Collect all the antenna based information (should minbl not be counted here?)
-            calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
+            //calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
           }
           else
 	    svc_p->currMetaNote();
@@ -3786,6 +3790,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
       svc_p->currMetaNote();
     }
     //cout << endl;
+    // Get all the antenna value counts
+    calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
 
 #ifdef _OPENMP
     Tsolve+=(omp_get_wtime()-time0);
