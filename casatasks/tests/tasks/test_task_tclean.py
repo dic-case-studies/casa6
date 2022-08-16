@@ -2567,9 +2567,9 @@ class test_cube(testref_base):
           self.assertTrue(self.check_final(
                     pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
 
- # unit test cases for CAS-13260
-     def test_cube_weighting_taper_cas13260_new(self):
-          """[cube] test_cube_weighting_taper_cas13260_new: """
+     # unit test cases for CAS-13260
+     def test_cube_weighting_taper_cas13260(self):
+          """[cube] test_cube_weighting_taper_cas13260: """
           self.prepData('refim_point.ms')
 
           delmod(self.msfile)
@@ -2628,7 +2628,8 @@ class test_cube(testref_base):
 
           self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
 
-     # unit test cases for CAS-13260
+     # old unit test cases for CAS-13260
+     @unittest.skip("Skip until we can figure out what causes the common bean difference between the local runs and bamboo runs for reim_point_linRL.ms")
      def test_cube_weighting_taper_cas13260_old(self):
           """[cube] test_cube_weighting_taper_cas1326_old: """
           self.prepData('refim_point_linRL.ms')
