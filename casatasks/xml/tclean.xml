@@ -2026,13 +2026,19 @@ to use the correct direction in which the antenna is pointing with respect to th
                         or at the same time as nmajor, then that stopcode will be returned instead.
                         
                         If calcres=True, then an additional major cycle will be executed prior to
-                        starting clean. This additional major cycle will be visible in the logs, but
-                        it will not be included in the count for nmajor.
-                        
-                        For example, consider the following two use cases. For both cases, there will
-                        be a printout in the logs "Running Major Cycle 1" and the return value will
-                        include "nmajordone: 1", however there is a difference in the purpose of
-                        the major cycle and the number of minor cycles executed:
+                        starting clean, to calculate the initial residual image. The count for the 
+                        nmajor stopping criterion begins with the major cycle after the first set of 
+                        minor-cycle iterations.  
+
+                        Example 1 : A tclean run with 'nmajor=5' and 'calcres=True' will iterate for
+                        5 major cycles (not counting the initial residual calculation). But, the return
+                        dictionary will show 'nmajordone:6'.  If 'calcres=False', then the return
+                        dictionary will show 'nmajordone:5'.                         
+
+                        Example 2 : For both the following cases, there will be a printout in the logs 
+                        "Running Major Cycle 1" and the return value will include "nmajordone: 1", 
+                        however there is a difference in the purpose of the major cycle and the 
+                        number of minor cycles executed:
                             Case 1; nmajor=0, calcres=True:  The major cycle done is for the creation
                                         of the residual, and no minor cycles are executed.
                             Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
