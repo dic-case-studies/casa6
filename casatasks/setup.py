@@ -60,9 +60,9 @@ import os
 try:
     import casatools
     from casatools.config import build as tools_config
-except:
-    print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in PYTHONPATH")
-    os._exit(1)
+except ImportError as exc:
+    print(f'Exception found when importing casatools: {type(exc).__name__} {exc}')
+    sys.exit(1)
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
@@ -206,7 +206,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/ft.xml',
               'xml/gaincal.xml',
               'xml/gencal.xml',
-              'xml/uvcontsub3.xml',
               'xml/testconcat.xml',
               'xml/apparentsens.xml',
               'xml/hanningsmooth.xml',
@@ -258,6 +257,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/feather.xml',
               'xml/statwt.xml',
               'xml/virtualconcat.xml',
+              'xml/uvcontsub_old.xml',
               'xml/uvcontsub.xml',
               'xml/uvmodelfit.xml',
               'xml/visstat.xml',
