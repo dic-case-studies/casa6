@@ -301,13 +301,13 @@ A factor or gain to adjust single dish flux scale (to use in feather stage)
                        Tip : Restarting an imaging run without changing 'imagename'
                                implies continuation from the existing model image on disk.
                                 - If 'startmodel' was initially specified it needs to be set to &quot;&quot;
-                                  for the restart run (or tclean will exit with an error message).
+                                  for the restart run (or sdintimaging will exit with an error message).
                                 - By default, the residual image and psf will be recomputed
                                   but if no changes were made to relevant parameters between
                                   the runs, set calcres=False, calcpsf=False to resume directly from
                                   the minor cycle without the (unnecessary) first major cycle.
                                 To automatically change 'imagename' with a numerical
-                                increment, set restart=False (see tclean docs for 'restart').
+                                increment, set restart=False (see sdintimaging docs for 'restart').
 
                         Note : All imaging runs will by default produce restored images.
                                   For a niter=0 run, this will be redundant and can optionally
@@ -844,28 +844,28 @@ To find the nearest optimal imsize to that desired by the user, please use the f
 
                        (2) For ALMA and gridder='mosaic', ray-traced (TICRA) beams
                             are also available via the vpmanager tool.
-                            For example, call the following before the tclean run.
+                            For example, call the following before the sdintimaging run.
                            vp.setpbimage(telescope=&quot;ALMA&quot;,
                            compleximage='/home/casa/data/trunk/alma/responses/ALMA_0_DV__0_0_360_0_45_90_348.5_373_373_GHz_ticra2007_VP.im',
                            antnames=['DV'+'%02d'%k for k in range(25)])
                            vp.saveastable('mypb.tab')
-                           Then, supply vptable='mypb.tab' to tclean.
+                           Then, supply vptable='mypb.tab' to sdintimaging.
 
 
                 ------ Note on PB masks :
 
-                         In tclean, A-Projection gridders (mosaic and awproject) produce a
+                         In sdintimaging, A-Projection gridders (mosaic and awproject) produce a
                          .pb image and use the 'pblimit' subparameter to decide normalization
                          cutoffs and construct an internal T/F mask in the .pb and .image images.
                          However, this T/F mask cannot directly be used during deconvolution
                          (which needs a 1/0 mask). There are two options for making a pb based
                          deconvolution mask.
-                            -- Run tclean with niter=0 to produce the .pb, construct a 1/0 image
+                            -- Run sdintimaging with niter=0 to produce the .pb, construct a 1/0 image
                          with the desired threshold (using ia.open('newmask.im');
                          ia.calc('iif(&quot;xxx.pb&quot;&gt;0.3,1.0,0.0)');ia.close() for example),
                          and supply it via the 'mask' parameter in a subsequent run
                          (with calcres=F and calcpsf=F to restart directly from the minor cycle).
-                            -- Run tclean with usemask='pb' for it to automatically construct
+                            -- Run sdintimaging with usemask='pb' for it to automatically construct
                          a 1/0 mask from the internal T/F mask from .pb at a fixed 0.2 threshold.
 
                 ----- Making PBs for gridders other than mosaic,awproject
@@ -975,9 +975,9 @@ To find the nearest optimal imsize to that desired by the user, please use the f
                                      vp.setpbpoly(telescope='EVLA', coeff=[1.0, -1.529e-3, 8.69e-7, -1.88e-10])
                                      vp.saveastable('myvp.tab')
 
-                       Step 2 : Supply the name of that table in tclean.
+                       Step 2 : Supply the name of that table in sdintimaging.
 
-                                    tclean(....., vptable='myvp.tab',....)
+                                    sdintimaging(....., vptable='myvp.tab',....)
 
                        Please see the documentation for the vpmanager for more details on how to
                        choose different beam models. Work is in progress to update the defaults
@@ -1199,7 +1199,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                       Note : To prevent the internal T/F mask from appearing in anything other
                                  than the .pb and .image.pbcor images, 'pblimit' can be set to a
                                  negative number. The absolute value will still be used as a valid 'pblimit'.
-                                 A tclean restart using existing output images on disk that already
+                                 A sdintimaging restart using existing output images on disk that already
                                  have this T/F mask in the .residual and .image but only pblimit set
                                  to a negative value, will remove this mask after the next major cycle.
 
@@ -1443,7 +1443,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        the evaluation of   .image / .pb  for all pixels above the specified pblimit.
 
                        Note : Stand-alone PB-correction can be triggered by re-running
-                                 tclean with the appropriate imagename and with
+                                 sdintimaging with the appropriate imagename and with
                                  niter=0, calcpsf=False, calcres=False, pbcor=True, vptable='vp.tab'
                                  ( where vp.tab is the name of the vpmanager file.
                                     See the inline help for the 'vptable' parameter )
@@ -1742,7 +1742,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
                                 'cyclethreshold' is made visible and editable only in the
-                                interactive GUI when tclean is run with interactive=True.
+                                interactive GUI when sdintimaging is run with interactive=True.
 </description>
 
       <value type="double">0.0</value>
@@ -1756,7 +1756,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
-                       Set nsigma=0.0 to preserve the previous tclean behavior without this feature.
+                       Set nsigma=0.0 to preserve the previous sdintimaging behavior without this feature.
                        The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
                        to determine the threshold. 
 
@@ -1881,7 +1881,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                     once minor cycles begin.
 
 
-                       [ For scripting purposes, replacing True/False with 1/0 will get tclean to
+                       [ For scripting purposes, replacing True/False with 1/0 will get sdintimaging to
                          return an imaging summary dictionary to python ]
 
 </description>
@@ -1891,19 +1891,37 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     <param type="int" name="nmajor">
       <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
-      <description>Limits the number of major cycles that sdintimaging executes.
-                       
-                        The minimum number of major cycles to execute is 0. This value can be 0,
-                        -1, or greater than 0. Negative means no limit. (default -1)
-         
-                        If the major cycle limit is reached stopcode 9 will be returned. Other stopping
+      <description>The nmajor parameter limits the number of minor and major cycle sets
+                        that sdintimaging executes. It is defined as the number of major cycles after the 
+                        initial set of minor cycle iterations. The count of nmajor does 
+                        not include the initial residual calculation that occurs when calcres=True. 
+
+                        A setting of nmajor=-1 implies no limit (default -1). 
+                        A setting of nmajor=0 implies nothing other than the initial residual calculation
+                        A setting of nmajor>0 imples that nmajor sets of minor and major cycles will 
+                        be done in addition to the initial residual calculation.  
+                               
+                        If the major cycle limit is reached, stopcode 9 will be returned. Other stopping
                         criteria (such as threshold) could cause sdintimaging to stop in fewer than this
                         number of major cycles. If sdintimaging reaches another stopping criteria, first
                         or at the same time as nmajor, then that stopcode will be returned instead.
                         
-                        If calcres=True, then an additional major cycle will be executed prior to
-                        starting clean. This additional major cycle will be visible in the logs, but
-                        it will not be included in the count for nmajor.
+                        Note however that major cycle ids in the log messages as well as in the return
+                        dictionary do begin with 1 for the initial residual calculation, when it exists. 
+
+                        Example 1 : A run with 'nmajor=5' and 'calcres=True' will iterate for
+                        5 major cycles (not counting the initial residual calculation). But, the return
+                        dictionary will show 'nmajordone:6'.  If 'calcres=False', then the return
+                        dictionary will show 'nmajordone:5'.                         
+
+                        Example 2 : For both the following cases, there will be a printout in the logs 
+                        "Running Major Cycle 1" and the return value will include "nmajordone: 1", 
+                        however there is a difference in the purpose of the major cycle and the 
+                        number of minor cycles executed:
+                            Case 1; nmajor=0, calcres=True:  The major cycle done is for the creation
+                                        of the residual, and no minor cycles are executed.
+                            Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
+                                        major/minor cycle loop, and 1 minor cycle will be executed.
       </description>
       <value type="int">-1</value>
     </param>
@@ -1965,7 +1983,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        The name of a CASA image or region file or region string that specifies
                        a 1/0 mask to be used for deconvolution. Only locations with value 1 will
                        be considered for the centers of flux components in the minor cycle.
-                       If regions specified fall completely outside of the image, tclean will throw an error.
+                       If regions specified fall completely outside of the image, sdintimaging will throw an error.
 
                        Manual mask options/examples :
 
@@ -2176,7 +2194,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                    (and mask) can be regridded to the new coordinate system before starting.
 
                          False : A convenience feature to increment imagename with '_1', '_2',
-                                    etc as suffixes so that all runs of tclean are fresh starts (without
+                                    etc as suffixes so that all runs of sdintimaging are fresh starts (without
                                     having to change the imagename parameter or delete images).
 
                                     This mode will search the current directory for all existing
@@ -2222,7 +2240,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                       images already exist on disk (for normalization purposes).
 
                       Usage example : For large runs (or a pipeline scripts) it may be
-                                                  useful to first run tclean with niter=0 to create
+                                                  useful to first run sdintimaging with niter=0 to create
                                                   an initial .residual to look at and perhaps make
                                                   a custom mask for. Imaging can be resumed
                                                   without recomputing it.
@@ -2492,7 +2510,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
   <example>
 
-    Please refer to the CASAdocs pages for the task tclean for examples.
+    Please refer to the CASAdocs pages for the task sdintimaging for examples.
 
   </example>
 

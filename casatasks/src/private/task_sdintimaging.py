@@ -783,6 +783,9 @@ def sdintimaging(
                 if type(interactive) != bool:
                     #retrec=imager.getSummary();
                     retrec=deconvolvertool.getSummary();
+                    retrec['nmajordone'] = imager.majorCnt
+                    if calcres==True: 
+                        retrec['nmajordone'] = retrec['nmajordone'] + 1  ## To be consistent with tclean. Remove, when we can change the meaning of nmajordone to exclude the initial major cycles. 
 
             ## Restore images.
             if restoration==True:  
