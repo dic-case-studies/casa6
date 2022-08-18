@@ -3696,12 +3696,32 @@ void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
                   antennaMap_[a2]["expected"][par] = 1;
                 }
             }
-            // if data is unflagged
-            if (ntrue(sdb.flagCube()(Slice(),Slice(),irow))==0 && a1!=a2) {
-                for (int par=0;par<nPar();par++) {
-                  antennaMap_[a1]["data_unflagged"] = 1;
-                  antennaMap_[a2]["data_unflagged"] = 1;
-                }
+            // Do cal type-dependent setting of "data_unflagged" counts
+            
+            switch (this->type()) {
+            case VisCal::G:
+            case VisCal::K:
+            case VisCal::B: {  // nPar=2 (gain-like)
+                // Set each pol by flags from appropriate parallel-hand corr
+                antennaMap_[a1]["data_unflagged"][0] =
+                antennaMap_[a2]["data_unflagged"][0] = nfalse(sdb.flagCube()(0,Slice(),irow))>0 ? 1 : 0;
+                antennaMap_[a1]["data_unflagged"][1] =
+                antennaMap_[a2]["data_unflagged"][1] = nfalse(sdb.flagCube()(nCorr-1,Slice(),irow))>0 ? 1 : 0;
+                break;
+            }
+            case VisCal::T: {  // nPar=1 (gain-like)
+                // Set single pol by flags from all parallel-hand correlations
+                Int nsl(nCorr>1?2:1), isl(nCorr>2?3:1);
+                antennaMap_[a1]["data_unflagged"][0] =
+                antennaMap_[a2]["data_unflagged"][0] = nfalse(sdb.flagCube()(Slice(0,nsl,isl),Slice(),irow))>0 ? 1 : 0;
+                break;
+            }
+            default: {
+                // Set all pols by flags from all correlations (any unflagged is ok)
+                Int nGood = nfalse(sdb.flagCube()(Slice(),Slice(),irow))>0 ? 1 : 0;
+                antennaMap_[a1]["data_unflagged"].set(nGood);
+                antennaMap_[a2]["data_unflagged"].set(nGood);
+            }
             }
         }
     }
