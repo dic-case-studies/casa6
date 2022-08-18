@@ -3318,8 +3318,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                                                        ampmarkstyle,markersize,ampmarkstyle2,gamp_std)
                       else:  # not overlaying times
                           msg = "Skip %s spw%d (%s) all data flagged" % (antstring, ispw, titleString)
-                          print(msg)
-                          casalog.post(msg)
+                          casalogPost(True, msg)
                           if ((overlaySpws or overlayBasebands) and spwctr==spwctrFirstToPlot):
                               spwctrFirstToPlot += 1
                           if ((overlaySpws or overlayBasebands) and ispw==spwsToPlotInBaseband[bbctr][-1]):
