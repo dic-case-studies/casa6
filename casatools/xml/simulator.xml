@@ -1642,13 +1642,13 @@ to use.
     for the noise to be added to real and imaginary parts of the visibility.
     The noise in amplitude per visibility is approximately &quot;sigma&quot; although 
     it is not Gaussian (see Thompson, Moran, and Swenson fig. 6.9)
-    and the point source noise in a Stokes I image will be 
-    ~sigma/sqrt(n_pol)/sqrt(n_baselines)/sqrt(n_integrations), 
+    and the point source noise in a Stokes I image will approximately be 
+    sigma/sqrt(n_pol * n_baselines * n_integrations * n_chan), 
     where n_pol are the number of polarizations in the MS (typically 2),
     and n_integrations are the number of correlator integration times 
     in the MS (~ track time / int. time)
     
-    For mode=tsys-atm or tsys-atm, the noise will vary with dish
+    For mode=tsys-atm or tsys-manual, the noise will vary with dish
     diameter, antenna efficiency, system temperature, opacity, sky
     temperature, etc.  The noise will increase with the airmass if tau
     is greater than zero.  The noise is calculated according to the

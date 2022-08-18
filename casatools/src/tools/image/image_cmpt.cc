@@ -1,61 +1,61 @@
 #include <image_cmpt.h>
 
 #include <iostream>
+#include <fstream>
 #include <sys/wait.h>
 #include <casacore/casa/IO/ArrayIO.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayUtil.h>
-#include <casa/Arrays/MaskedArray.h>
-#include <casa/BasicMath/Random.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/fstream.h>
-#include <casa/BasicSL/STLIO.h>
-#include <casa/Logging/LogFilter.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/OS/Directory.h>
-#include <casa/OS/EnvVar.h>
-#include <casa/OS/HostInfo.h>
-#include <casa/OS/RegularFile.h>
-#include <casa/OS/SymLink.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Utilities/Assert.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayUtil.h>
+#include <casacore/casa/Arrays/MaskedArray.h>
+#include <casacore/casa/BasicMath/Random.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/STLIO.h>
+#include <casacore/casa/Logging/LogFilter.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/casa/OS/EnvVar.h>
+#include <casacore/casa/OS/HostInfo.h>
+#include <casacore/casa/OS/RegularFile.h>
+#include <casacore/casa/OS/SymLink.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Utilities/Assert.h>
 
-#include <images/Images/ImageExpr.h>
-#include <images/Images/ImageExprParse.h>
-#include <images/Images/ImageFITSConverter.h>
-#include <images/Images/ImageInterface.h>
-#include <images/Images/ImageStatistics.h>
-#include <images/Images/ImageSummary.h>
-#include <images/Images/ImageUtilities.h>
-#include <images/Images/LELImageCoord.h>
-#include <images/Images/PagedImage.h>
-#include <images/Images/RebinImage.h>
-#include <images/Images/TempImage.h>
-#include <images/Regions/ImageRegion.h>
-#include <images/Regions/WCLELMask.h>
-#include <lattices/LatticeMath/Fit2D.h>
-#include <lattices/LatticeMath/LatticeFit.h>
-#include <lattices/LEL/LatticeExprNode.h>
-#include <lattices/Lattices/LatticeIterator.h>
-#include <lattices/LRegions/LatticeRegion.h>
-#include <lattices/LatticeMath/LatticeSlice1D.h>
-#include <lattices/Lattices/LatticeUtilities.h>
-#include <lattices/LRegions/LCBox.h>
-#include <lattices/LRegions/LCSlicer.h>
-#include <lattices/Lattices/MaskedLatticeIterator.h>
-#include <lattices/Lattices/PixelCurve1D.h>
-#include <lattices/LRegions/RegionType.h>
-#include <lattices/Lattices/TiledLineStepper.h>
-#include <measures/Measures/Stokes.h>
-#include <measures/Measures/MeasIERS.h>
-#include <scimath/Fitting/LinearFitSVD.h>
-#include <scimath/Functionals/Polynomial.h>
-#include <scimath/Mathematics/VectorKernel.h>
-#include <tables/LogTables/NewFile.h>
-#include <tables/Tables/TableUtil.h>
+#include <casacore/images/Images/ImageExpr.h>
+#include <casacore/images/Images/ImageExprParse.h>
+#include <casacore/images/Images/ImageFITSConverter.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/images/Images/ImageStatistics.h>
+#include <casacore/images/Images/ImageSummary.h>
+#include <casacore/images/Images/ImageUtilities.h>
+#include <casacore/images/Images/LELImageCoord.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/images/Images/RebinImage.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/images/Regions/WCLELMask.h>
+#include <casacore/lattices/LatticeMath/Fit2D.h>
+#include <casacore/lattices/LatticeMath/LatticeFit.h>
+#include <casacore/lattices/LEL/LatticeExprNode.h>
+#include <casacore/lattices/Lattices/LatticeIterator.h>
+#include <casacore/lattices/LRegions/LatticeRegion.h>
+#include <casacore/lattices/LatticeMath/LatticeSlice1D.h>
+#include <casacore/lattices/Lattices/LatticeUtilities.h>
+#include <casacore/lattices/LRegions/LCBox.h>
+#include <casacore/lattices/LRegions/LCSlicer.h>
+#include <casacore/lattices/Lattices/MaskedLatticeIterator.h>
+#include <casacore/lattices/Lattices/PixelCurve1D.h>
+#include <casacore/lattices/LRegions/RegionType.h>
+#include <casacore/lattices/Lattices/TiledLineStepper.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/MeasIERS.h>
+#include <casacore/scimath/Fitting/LinearFitSVD.h>
+#include <casacore/scimath/Functionals/Polynomial.h>
+#include <casacore/scimath/Mathematics/VectorKernel.h>
+#include <casacore/tables/LogTables/NewFile.h>
+#include <casacore/tables/Tables/TableUtil.h>
 
 #include <components/ComponentModels/GaussianDeconvolver.h>
 #include <components/ComponentModels/SkyCompRep.h>
@@ -105,7 +105,7 @@
 
 #include <stdcasa/version.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #include <memory>
 
@@ -245,6 +245,7 @@ bool image::addnoise(
     const variant& region, bool zeroIt, const vector<long>& seeds
 ) {
     try {
+        Vector<Double> const parsV(pars);
         _log << LogOrigin("image", __func__);
         if (_detached()) {
             return false;
@@ -268,25 +269,25 @@ bool image::addnoise(
         if (_imageF) {
             PixelValueManipulator<Float>::addNoise(
                 _imageF, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageC) {
             PixelValueManipulator<Complex>::addNoise(
                 _imageC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageD) {
             PixelValueManipulator<Double>::addNoise(
                 _imageD, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageDC) {
             PixelValueManipulator<DComplex>::addNoise(
                 _imageDC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else {
@@ -307,29 +308,98 @@ bool image::addnoise(
     return false;
 }
 
+const ImageInfo& image::_imageInfo() const {
+    // caller needs to ensure that one pointer is not null
+    return _imageF ? _imageF->imageInfo()
+        : _imageC ? _imageC->imageInfo()
+            : _imageD ? _imageD->imageInfo()
+                : _imageDC->imageInfo();
+}
+
+const CoordinateSystem& image::_coordinates() const {
+    // caller needs to ensure that one pointer is not null
+    return _imageF ? _imageF->coordinates()
+        : _imageC ? _imageC->coordinates()
+            : _imageD ? _imageD->coordinates()
+                : _imageDC->coordinates();
+}
+
 record* image::beamarea(long channel, long polarization) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
             return nullptr;
         }
-        _notSupported(__func__);
-        auto dc = _imageF
-            ? _imageF->coordinates().directionCoordinate()
-            : _imageC->coordinates().directionCoordinate();
-        auto pixelArea = dc.getPixelArea();
-        auto beamInPixels = _imageF
-            ? _imageF->imageInfo().getBeamAreaInPixels(
-                channel, polarization, dc
-            )
-            : _imageC->imageInfo().getBeamAreaInPixels(
-                    channel, polarization, dc
+        const auto ii = _imageInfo();
+        ThrowIf(
+            ! ii.hasBeam(),
+            "This image has no beam(s). The setrestoringbeam() method may be "
+            "used to set its beam(s)"
+        );
+        auto hasMultiBeams = ii.hasMultipleBeams();
+        auto nchan = 1;
+        auto nstokes = 1;
+        if (hasMultiBeams) {
+            nchan = ii.nChannels();
+            ThrowIf(
+                channel >= nchan,
+                "This image only has " + String::toString(nchan) + " channels, "
+                "so a channel value less than " + String::toString(nchan)
+                + " must be specified"
             );
-        auto arcsec2 = beamInPixels*pixelArea;
-        record *rec = new record();
-        rec->insert("pixels", beamInPixels);
-        rec->insert("arcsec2", arcsec2.getValue("arcsec2"));
-        return rec;
+            nstokes = ii.nStokes();
+            ThrowIf(
+                polarization >= nstokes,
+                "This image only has " + String::toString(nstokes)
+                + " polarizations, so a polarization value less than "
+                + String::toString(nstokes) + " must be specified"
+            );
+            ThrowIf(
+                (channel < 0 && polarization >= 0)
+                || (channel >= 0 && polarization < 0),
+                "In the case of a multibeam image, either both channel and "
+                "polarization must be non-negative, or both must be negative"
+            );
+        }
+        const auto csys = _coordinates();
+        const auto dc = csys.directionCoordinate();
+        auto pixelArea = dc.getPixelArea();
+        std::unique_ptr<record> rec(new record());
+        if (hasMultiBeams && channel < 0 && polarization < 0) {
+            // return beam areas for all beams
+            const auto beamSet = ii.getBeamSet();
+            const auto spectralAxis = csys.spectralAxisNumber();
+            const auto polAxis = csys.polarizationAxisNumber();
+            const auto spectralIsFirst = polAxis < 0 || spectralAxis < polAxis;
+            auto beamAreasAS2 = beamSet.getAreas().getValue("arcsec2");
+            auto beamAreasPix = beamAreasAS2/pixelArea.getValue("arcsec2");
+            if (! spectralIsFirst) {
+                IPosition newOrder(2, 1, 0);
+                const auto as2 = reorderArray(beamAreasAS2, newOrder);
+                const auto pix = reorderArray(beamAreasPix, newOrder);
+                beamAreasAS2.resize(as2.shape());
+                beamAreasPix.resize(pix.shape());
+                beamAreasAS2 = as2;
+                beamAreasPix = pix;
+            }
+            vector<double> v(beamAreasPix.begin(), beamAreasPix.end());
+            const auto shape = beamAreasPix.shape();
+            std::vector<ssize_t> shape_vec(shape.begin(), shape.end());
+            rec->insert("pixels", variant(v, shape_vec));
+            vector<double> w(beamAreasAS2.begin(), beamAreasAS2.end());
+            rec->insert("arcsec2", variant(w, shape_vec));
+        }
+        else {
+            // image has only one beam or a single channel and single
+            // polarization were specified for a multi-beam image
+            auto beamInPixels = ii.getBeamAreaInPixels(
+                channel, polarization, dc
+            );
+            auto arcsec2 = beamInPixels*pixelArea;
+            rec->insert("pixels", beamInPixels);
+            rec->insert("arcsec2", arcsec2.getValue("arcsec2"));
+        }
+        return rec.release();
     }
     catch (const AipsError& x) {
         _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
@@ -1193,7 +1263,7 @@ record* image::coordmeasures(
         casacore::Record theVel;
         Vector<Double> vpixel;
         if (!(pixel.size() == 1 && pixel[0] == -1)) {
-            vpixel = pixel;
+            vpixel = Vector<Double>(pixel);
         }
         unique_ptr<Record> retval;
         casacore::String error;
@@ -1986,7 +2056,7 @@ record* image::fitprofile(const string& box, const variant& region,
         ) {
             sigmaArray.reset(new Array<Float>());
             vector<double> sigmaVector = sigma.getDoubleVec();
-            Vector<Int> shape = sigma.arrayshape();
+            Vector<Int> shape(sigma.arrayshape());
             sigmaArray->resize(IPosition(shape));
             convertArray(
                 *sigmaArray,
@@ -2305,8 +2375,9 @@ bool image::fromcomplist(
         else {
             ThrowCc("Unsupported type for parameter cl");
         }
+        Vector<Int> const shapeV(shape);
         _imageF = ImageFactory::createComponentListImage(
-            outfile, *mycl, shape, *coordinates, overwrite, log, cache
+            outfile, *mycl, shapeV, *coordinates, overwrite, log, cache
         );
         vector<String> names {
             "outfile", "shape", "cl",
@@ -2427,6 +2498,7 @@ bool image::fromshape(
     const bool linear, const bool overwrite, const bool log, const string& type
 ) {
     try {
+        Vector<Int> const shapeV(shape);
         LogOrigin lor("image", __func__);
         _log << lor;
         _reset();
@@ -2442,25 +2514,25 @@ bool image::fromshape(
         );
         if (mytype == "f") {
             _imageF = ImageFactory::floatImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "c") {
             _imageC = ImageFactory::complexImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "d") {
             _imageD = ImageFactory::doubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "cd") {
             _imageDC = ImageFactory::complexDoubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
@@ -2723,33 +2795,43 @@ variant* image::getregion(
         if (_detached()) {
             return nullptr;
         }
+        unique_ptr<variant> ret;
         if (_imageF) {
-            return _getregion2(
-                _imageF, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageF, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageC) {
-            return _getregion2(
-                _imageC, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageC, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageD) {
-            return _getregion2(
-                _imageD, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageD, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageDC) {
-            return _getregion2(
-                _imageDC, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageDC, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else {
             ThrowCc("Logic error");
         }
+        return ret.release();
     }
     catch (const AipsError& x) {
         _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
@@ -3080,19 +3162,19 @@ std::vector<std::string> image::history(bool list) {
         }
         if (_imageF) {
             ImageHistory<Float> hist(_imageF);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageC) {
             ImageHistory<Complex> hist(_imageC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageD) {
             ImageHistory<Double> hist(_imageD);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageDC) {
             ImageHistory<DComplex> hist(_imageDC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else {
             ThrowCc("Logic error");
@@ -4212,7 +4294,7 @@ image* image::pbcor(
         Array<Float> pbPixels;
         SPCIIF pb_ptr;
         if (pbimage.type() == variant::DOUBLEVEC) {
-            Vector<Int> shape = pbimage.arrayshape();
+            Vector<Int> shape(pbimage.arrayshape());
             pbPixels.resize(IPosition(shape));
             Vector<Double> localpix(pbimage.getDoubleVec());
             casacore::convertArray(pbPixels, localpix.reform(IPosition(shape)));
@@ -4421,7 +4503,7 @@ template<class T> void image::_putchunk(
     const bool list, const bool locking, const bool replicate
 ) {
     Array<T> pixelsArray;
-    Vector<Int> shape = pixels.arrayshape();
+    Vector<Int> shape(pixels.arrayshape());
     pixelsArray.resize(IPosition(shape));
     if (pixels.type() == variant::DOUBLEVEC) {
         std::vector<double> pixelVector = pixels.getDoubleVec();
@@ -4937,7 +5019,7 @@ image* image::regrid(
         String mask = _getMask(vmask);
         Vector<Int> axes;
         if (!((inaxes.size() == 1) && (inaxes[0] == -1))) {
-            axes = inaxes;
+            axes = Vector<Int>(inaxes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -5200,34 +5282,101 @@ bool image::replacemaskedpixels(
     return false;
 }
 
-record* image::restoringbeam(long channel, long polarization) {
+record* image::restoringbeam(
+    long channel, long polarization, const string& mbret
+) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
             return nullptr;
         }
-        if (_imageF) {
-            return fromRecord(
-                _imageF->imageInfo().beamToRecord(channel, polarization)
+        String ret = mbret;
+        ret.downcase();
+        const auto ii = _imageInfo();
+        const auto csys = _coordinates();
+        const auto matrixMode = ret.startsWith("m");
+        const auto multiBeam = ii.hasMultipleBeams();
+        if (matrixMode) {
+            ThrowIf(
+                ! multiBeam,
+                "mbret='matrix' only makes sense if the image has "
+                "per-plane beams. This image does not"
             );
+            ThrowIf(
+                channel >= 0 || polarization >= 0,
+                "mbret='matrix' only makes sense if both channel and polarization "
+                "are negative"
+            );
+            std::unique_ptr<record> rec(new record());
+            const auto beams = ii.getBeamSet();
+            const auto nchan =  beams.nchan();
+            const auto nstokes = beams.nstokes();
+            rec->insert("nChannels", (unsigned long)nchan);
+            rec->insert("nStokes", (unsigned long)nstokes);
+            const auto matrices = beams.paramMatrices();
+            const auto spectralAxis = csys.spectralAxisNumber();
+            const auto polAxis = csys.polarizationAxisNumber();
+            const auto spectralIsFirst = polAxis < 0 
+                || (spectralAxis > 0 && spectralAxis < polAxis);
+            for (const auto m: matrices) {
+                const auto q = m.second;
+                auto vals = q.getValue();
+                if (! spectralIsFirst) {
+                    const IPosition newOrder(2, 1, 0);
+                    const auto t = reorderArray(vals, newOrder);
+                    const auto newShape = t.shape();
+                    vals.resize(newShape);
+                    vals = t;
+                }
+                const auto shape = vals.shape();
+                const std::vector<ssize_t> shape_vec(shape.begin(), shape.end());
+                vector<double> vec(vals.begin(), vals.end());
+                record r;
+                r.insert("value", variant(vec, shape_vec));
+                r.insert("unit", q.getUnit());
+                rec->insert(m.first, r);
+            }
+            return rec.release();
         }
-        else if (_imageC) {
-            return fromRecord(
-                _imageC->imageInfo().beamToRecord(channel, polarization)
-            );
-        }
-        else if (_imageD) {
-            return fromRecord(
-                _imageD->imageInfo().beamToRecord(channel, polarization)
-            );
-        }
-        else if (_imageDC) {
-            return fromRecord(
-                _imageDC->imageInfo().beamToRecord(channel, polarization)
-            );
+        else if (ret.startsWith("l")) {
+            if (multiBeam) {
+                // consistency checks for per-plane beams
+                const auto hasSpectral = csys.hasSpectralAxis();
+                auto nChan = ii.nChannels();
+                ThrowIf(
+                    nChan > 1 && channel >= nChan,
+                    "channel value specified as " + String::toString(channel)
+                    + " must be less than the number of channels "
+                    "in the image, which is " + String::toString(nChan)
+                );
+                const auto hasStokes = csys.hasPolarizationAxis();
+                auto nStokes = ii.nStokes();
+                ThrowIf(
+                    nStokes > 1 && polarization >= nStokes,
+                    "polarization value must be less than the number of "
+                    "polarization planes in the image, which is "
+                    + String::toString(nStokes)
+                );
+                if (hasSpectral && hasStokes) {
+                    const auto negPol = polarization < 0;
+                    const auto negChan = channel < 0;
+                    if (negChan != negPol) {
+                        const auto degPol = nStokes == 1;
+                        const auto degChan = nChan == 1;
+                        ThrowIf(
+                            ! (degPol || degChan),
+                            "In the case of an image with both a nondegenerate "
+                            "spectral axis and a nondegenerate polarization "
+                            "axis either both channel and polarization must be "
+                            "positive, or both must be negative"
+                        );
+                    }
+                }
+            }
+            return fromRecord(ii.beamToRecord(channel, polarization));
         }
         else {
-            ThrowCc("Logic error");
+            ThrowCc("Unsupported mbret value " + mbret);
         }
     }
     catch (const AipsError& x) {
@@ -6271,11 +6420,11 @@ template <class T> record* image::_toworld(
         pixel.resize(0);
     }
     else if (value.type() == variant::DOUBLEVEC) {
-        pixel = value.getDoubleVec();
+        pixel = Vector<Double>(value.getDoubleVec());
     }
     else if (value.type() == variant::INTVEC) {
         variant vcopy = value;
-        Vector<Int> ipixel = vcopy.asIntVec();
+        Vector<Int> ipixel(vcopy.asIntVec());
         Int n = ipixel.size();
         pixel.resize(n);
         for (int i = 0; i < n; ++i) {
@@ -6387,7 +6536,7 @@ bool image::twopointcorrelation(
         }
         Vector<Int> iAxes;
         if (!(axes.size() == 1 && axes[0] == -1)) {
-            iAxes = axes;
+            iAxes = Vector<Int>(axes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -6789,21 +6938,18 @@ std::shared_ptr<Record> image::_getRegion(
                 ! (_imageF || _imageC || _imageD || _imageDC),
                 "No attached image. Cannot use a string value for region"
             );
+            csys = _coordinates();
             if (_imageF) {
                 shape = _imageF->shape();
-                csys = _imageF->coordinates();
             }
             else if (_imageC) {
                 shape = _imageC->shape();
-                csys = _imageC->coordinates();
             }
             else if (_imageD) {
                 shape = _imageD->shape();
-                csys = _imageD->coordinates();
             }
             else if (_imageDC) {
                 shape = _imageDC->shape();
-                csys = _imageDC->coordinates();
             }
             else {
                 ThrowCc("Logic Error");
@@ -6895,11 +7041,11 @@ vector<double> image::_toDoubleVec(const variant& v) {
     );
     vector<double> output;
     if (type == variant::INTVEC) {
-        Vector<long> x = v.toIntVec();
+        Vector<long> x(v.toIntVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     if (type == variant::DOUBLEVEC) {
-        Vector<Double> x = v.toDoubleVec();
+        Vector<Double> x(v.toDoubleVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     return output;

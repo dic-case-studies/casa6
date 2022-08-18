@@ -1119,7 +1119,7 @@ Bool calanalysis::parseTimeRange( const ::casac::variant& timerange,
 
   if ( oTimeRangeString != String("") ) {
 
-    oTimeRange = timerange.toDoubleVec();
+    oTimeRange = Vector<Double>(timerange.toDoubleVec());
 
     if ( oTimeRange.nelements() != 2 ) {
       dStartTime = 0.0;
