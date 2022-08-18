@@ -358,6 +358,8 @@ public:
     
   // Fill expected and data_unflagged
   virtual void expectedUnflagged(SDBList& sdbs);
+  // Clear antennaMap values
+  void clearMap();
 
   // Verify VisBuffer data sufficient for solving (wts, etc.)
   virtual casacore::Bool verifyConstraints(VisBuffGroupAcc& vbag);

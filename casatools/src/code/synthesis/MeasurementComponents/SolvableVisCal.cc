@@ -3664,14 +3664,22 @@ Bool SolvableVisCal::verifyConstraints(VisBuffGroupAcc& vbag) {
 
 }
 
-void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
-    // initalize expected and unflagged shape
+void SolvableVisCal::clearMap() {
+    // Clear or initalize values for the antennaMap_
     Vector<Int> initVector(nPar(), 0);
+    Vector<Int> singleVector(1, 0);
     
-    for (Int iant=0;iant<nAnt();++iant) {
-      antennaMap_[iant]["expected"] = initVector;
-      antennaMap_[iant]["data_unflagged"] = initVector;
+    for (Int iant=0; iant<nAnt(); ++iant) {
+        antennaMap_[iant]["expected"] = initVector;
+        antennaMap_[iant]["data_unflagged"] = initVector;
+        antennaMap_[iant]["above_minblperant"] = initVector;
+        antennaMap_[iant]["above_minsnr"] = initVector;
+        antennaMap_[iant]["used_as_refant"] = singleVector;
     }
+    
+}
+
+void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
     // Iterate over sdbs and add values to expected and data unflagged
     for (Int isdb=0;isdb<sdbs.nSDB();++isdb) {
         SolveDataBuffer& sdb(sdbs(isdb));
@@ -3681,7 +3689,7 @@ void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
         for (Int irow=0;irow<nRow;++irow) {
             const Int& a1(sdb.antenna1()(irow));
             const Int& a2(sdb.antenna2()(irow));
-            // Print the corr
+            
             if (a1!=a2) {
                 for (int par=0;par<nPar();par++) {
                   antennaMap_[a1]["expected"][par] = 1;
@@ -3689,7 +3697,7 @@ void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
                 }
             }
             // if data is unflagged
-            if (!sdb.flagRow()(irow) && a1!=a2) {
+            if (ntrue(sdb.flagCube()(Slice(),Slice(),irow))==0 && a1!=a2) {
                 for (int par=0;par<nPar();par++) {
                   antennaMap_[a1]["data_unflagged"] = 1;
                   antennaMap_[a2]["data_unflagged"] = 1;
@@ -3761,11 +3769,12 @@ Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
   // Apply constraints results to solutions and data
   solveParOK()=False;   // Solutions nominally bad
   for (Int iant=0;iant<nAnt();++iant) {
-    antennaMap_[iant]["above_minblperant"] = initVector;
     if (antOK(iant)) {
       // set solution good
       solveParOK().xyPlane(iant) = True;
-      antennaMap_[iant]["above_minblperant"][0] += 1;
+      for (Int ipar=0; ipar<nPar();++ipar) {
+        antennaMap_[iant]["above_minblperant"][ipar] = 1;
+      }
     }
     else {
       // This ant not ok, set soln to zero
@@ -4019,11 +4028,6 @@ void SolvableVisCal::applySNRThreshold() {
   Vector<Int> initVectorSingle(1, 0);
   
   for (Int iant=0;iant<nAnt();++iant) {
-    // Create antenna accumulation
-    //antennaMap_[iant]["expected"] = initVector;
-    //antennaMap_[iant]["data_unflagged"] = initVector;
-    antennaMap_[iant]["above_minsnr"] = initVector;
-    antennaMap_[iant]["used_as_refant"] = initVectorSingle;
     if (refant() == iant) {
       antennaMap_[iant]["used_as_refant"][0] += 1;
     }
@@ -4032,7 +4036,7 @@ void SolvableVisCal::applySNRThreshold() {
       if (solveParOK()(ipar,0,iant)){
 	    solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
         //antennaMap_[iant]["data_unflagged"][ipar] += 1;
-        if (solveParOK()(ipar,0,iant)) {antennaMap_[iant]["above_minsnr"][ipar] += 1;};
+        if (solveParOK()(ipar,0,iant)) {antennaMap_[iant]["above_minsnr"][ipar] = 1;};
       }
     }
   }

@@ -166,20 +166,20 @@ Record CalCounts::makeRecord(Int NAnt, Int NPol) {
     
     resultRec.define("expected", totalMap_["expected"]);
     resultRec.define("data_unflagged", totalMap_["data_unflagged"]);
-    resultRec.define("above_minblperant", totalMap_["above_minblperant"][0]);
+    resultRec.define("above_minblperant", totalMap_["above_minblperant"]);
     resultRec.define("above_minsnr", totalMap_["above_minsnr"]);
     
     for (Int spw=0; spw<nSpw; spw++) {
         Record spwRec = Record();
         spwRec.define("expected", spwMap_[spw]["expected"]);
         spwRec.define("data_unflagged", spwMap_[spw]["data_unflagged"]);
-        spwRec.define("above_minblperant", spwMap_[spw]["above_minblperant"][0]);
+        spwRec.define("above_minblperant", spwMap_[spw]["above_minblperant"]);
         spwRec.define("above_minsnr", spwMap_[spw]["above_minsnr"]);
         for (Int ant=0; ant<NAnt; ant++) {
             Record subRec = Record();
             subRec.define("expected", antennaMap_[spw][ant]["expected"]);
             subRec.define("data_unflagged", antennaMap_[spw][ant]["data_unflagged"]);
-            subRec.define("above_minblperant", antennaMap_[spw][ant]["above_minblperant"][0]);
+            subRec.define("above_minblperant", antennaMap_[spw][ant]["above_minblperant"]);
             subRec.define("above_minsnr", antennaMap_[spw][ant]["above_minsnr"]);
             subRec.define("used_as_refant", antennaMap_[spw][ant]["used_as_refant"]);
             spwRec.defineRecord(RecordFieldId("ant"+to_string(ant)), subRec);
@@ -3605,9 +3605,10 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     
   // Start Collecting counts
   CalCounts* calCounts = new CalCounts();
-  calCounts->initCounts(msmc_p->nSpw(),msmc_p->nAnt(), vi.nPolarizationIds());
+  calCounts->initCounts(msmc_p->nSpw(),msmc_p->nAnt(), svc_p->nPar());
   // Set up results record
   std::map<Int, std::map<String, Vector<Int>>> resultMap;
+  
     
 #ifdef _OPENMP
   Tsetup+=(omp_get_wtime()-time0);
@@ -3692,6 +3693,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
     // Expecting a solution                                                                                                 
     nexp(thisSpw)+=1;
+    // Initialize the antennaMap_ in svc
+    svc_p->clearMap();
     // Get expected and data unflagged accumulation
     svc_p->expectedUnflagged(sdbs);
       
@@ -3700,6 +3703,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     Tgather+=(omp_get_wtime()-time0);
     time0=omp_get_wtime();
 #endif
+
 
     if (sdbs.Ok()) {
         
@@ -3749,7 +3753,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
             svc_p->applySNRThreshold();
             // accumulate from SNR NEED POL NUM
             //std::map<Int, std::map<String, Vector<Int>>> resultMap = svc_p->getAntennaMap();
-            resultMap = svc_p->getAntennaMap();
+            //resultMap = svc_p->getAntennaMap();
             // Collect all the antenna based information (should minbl not be counted here?)
             //calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
           }
@@ -3791,7 +3795,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     }
     //cout << endl;
     // Get all the antenna value counts
-    calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
+    resultMap = svc_p->getAntennaMap();
+    calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), svc_p->nPar(), resultMap);
 
 #ifdef _OPENMP
     Tsolve+=(omp_get_wtime()-time0);
