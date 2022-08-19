@@ -1922,6 +1922,9 @@ to use the correct direction in which the antenna is pointing with respect to th
                                         of the residual, and no minor cycles are executed.
                             Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
                                         major/minor cycle loop, and 1 minor cycle will be executed.
+
+                        Note : For sdintimaging, the 'nmajor' parameter is not implemented for
+                                   usedata='sdonly'. Other stopping criteria still apply as usual.
       </description>
       <value type="int">-1</value>
     </param>
