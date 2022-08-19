@@ -3703,24 +3703,31 @@ void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
             case VisCal::K:
             case VisCal::B: {  // nPar=2 (gain-like)
                 // Set each pol by flags from appropriate parallel-hand corr
-                antennaMap_[a1]["data_unflagged"][0] =
-                antennaMap_[a2]["data_unflagged"][0] = nfalse(sdb.flagCube()(0,Slice(),irow))>0 ? 1 : 0;
-                antennaMap_[a1]["data_unflagged"][1] =
-                antennaMap_[a2]["data_unflagged"][1] = nfalse(sdb.flagCube()(nCorr-1,Slice(),irow))>0 ? 1 : 0;
+                if (nfalse(sdb.flagCube()(0,Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][0] =
+                  antennaMap_[a2]["data_unflagged"][0] = 1;
+                }
+                if (nfalse(sdb.flagCube()(nCorr-1,Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][1] =
+                  antennaMap_[a2]["data_unflagged"][1] = 1;
+                }
                 break;
             }
             case VisCal::T: {  // nPar=1 (gain-like)
                 // Set single pol by flags from all parallel-hand correlations
                 Int nsl(nCorr>1?2:1), isl(nCorr>2?3:1);
-                antennaMap_[a1]["data_unflagged"][0] =
-                antennaMap_[a2]["data_unflagged"][0] = nfalse(sdb.flagCube()(Slice(0,nsl,isl),Slice(),irow))>0 ? 1 : 0;
+                if (nfalse(sdb.flagCube()(Slice(0,nsl,isl),Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][0] =
+                  antennaMap_[a2]["data_unflagged"][0] = 1;
+                }
                 break;
             }
             default: {
                 // Set all pols by flags from all correlations (any unflagged is ok)
-                Int nGood = nfalse(sdb.flagCube()(Slice(),Slice(),irow))>0 ? 1 : 0;
-                antennaMap_[a1]["data_unflagged"].set(nGood);
-                antennaMap_[a2]["data_unflagged"].set(nGood);
+                if (nfalse(sdb.flagCube()(Slice(),Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"].set(1);
+                  antennaMap_[a2]["data_unflagged"].set(1);
+                }
             }
             }
         }

@@ -160,7 +160,6 @@ Record CalCounts::makeRecord(Int NAnt, Int NPol) {
     Vector<Int> totExp(NPol, 0), totUnflag(NPol, 0), totMinsnr(NPol, 0);
     
     nSpw = spwMap_.size();
-    cout << "spw map size: " << nSpw << endl;
     Record containerRec = Record();
     Record resultRec = Record();
     
@@ -1262,14 +1261,15 @@ Bool Calibrater::getIteratorSelection(Vector<Int>* observationlist, Vector<Int>*
   getIteratorSelection(&selobslist, &selscanlist, &selfieldlist, &selantlist);
   
   // Create a record with current calibrater state information
+  // TODO: re-package these into more specific sub-dicts
   rec.define("antennas", selantlist);
   rec.define("field", selfieldlist);
   rec.define("spw", getSelectedSpws());
   rec.define("scan", selscanlist);
   rec.define("observation", selobslist);
   rec.define("intents", getSelectedIntents());
-  rec.define("apply tables", getApplyTables());
-  rec.define("solve table", getSolveTable());
+  rec.define("apply_tables", getApplyTables());
+  rec.define("solve_tables", getSolveTable());
     
   rec.merge(resRec_);
   
