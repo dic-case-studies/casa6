@@ -145,6 +145,7 @@ def tclean(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False, 
+    nmajor,#=-1,
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -237,6 +238,10 @@ def tclean(
 
     if(facets>1 and parallel==True):
         casalog.post("Facetted imaging currently works only in serial. Please choose pure W-projection instead.","WARN","task_tclean")
+
+    if (nmajor < -1):
+        casalog.post("Negative values less than -1 for nmajor are reserved for possible future implementation", "WARN", "task_tclean")
+        return
 
     #####################################################
     #### Construct ImagerParameters object
@@ -425,7 +430,7 @@ def tclean(
             ## Make dirty image
             if calcres==True:
                 t0=time.time();
-                imager.runMajorCycle()
+                imager.runMajorCycle(isCleanCycle=False)
                 t1=time.time();
                 casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean"); 
 
