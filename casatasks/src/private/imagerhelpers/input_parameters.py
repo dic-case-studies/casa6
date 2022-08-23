@@ -116,6 +116,7 @@ class ImagerParameters():
                  minpsffraction=0.1,
                  maxpsffraction=0.8,
                  interactive=False,
+                 nmajor=-1,
 
                  deconvolver='hogbom',
                  scales=[],
@@ -249,7 +250,7 @@ class ImagerParameters():
                           'loopgain':loopgain, 'interactive':interactive,
                           'cyclefactor':cyclefactor, 'minpsffraction':minpsffraction, 
                           'maxpsffraction':maxpsffraction,
-                          'savemodel':savemodel,'nsigma':nsigma}
+                          'savemodel':savemodel,'nsigma':nsigma, 'nmajor':nmajor}
 
         ######### CFCache params. 
         self.cfcachepars = {'cflist': cflist}
