@@ -656,7 +656,7 @@ class calibrater_test(unittest.TestCase):
     def test_returnDict(self):
         """ Check that the returndict function gives a dictonary with the expected keys """
         cb.open(self._vis)
-        expectedKeys =  ['antennas', 'apply tables', 'field', 'intents', 'observation', 'scan', 'solve table', 'spw']
+        expectedKeys =  ['antennas', 'apply_tables', 'field', 'intents', 'observation', 'scan', 'solve_tables', 'spw']
         res = cb.returndict()
         beforeSpw = res['spw']
         resKeys = res.keys()
@@ -666,7 +666,7 @@ class calibrater_test(unittest.TestCase):
         afterSpw = res['spw']
 
         for key in resKeys:
-            self.assertTrue(key in expectedKeys)
+            self.assertTrue(key in expectedKeys, msg=key + " not in expected keys")
         self.assertTrue(len(resKeys) == len(expectedKeys))
         self.assertFalse(np.array_equal(beforeSpw, afterSpw))
         self.assertTrue(np.array_equal(afterSpw, [1]))
