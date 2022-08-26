@@ -9,11 +9,11 @@
 #include <string>
 #include <iostream>
 
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Exceptions/Error.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 using namespace std;
 
