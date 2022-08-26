@@ -2161,7 +2161,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param type="double" name="pbmask" subparam="true">
      <shortdescription>primary beam mask</shortdescription>
-<description>Sub-parameter for usemask='auto-multithresh': primary beam mask
+<description>Sub-parameter for usemask: primary beam mask
 
                        Examples : pbmask=0.0 (default, no pb mask)
                                   pbmask=0.2 (construct a mask at the 0.2 pb gain level)
