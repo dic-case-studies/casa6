@@ -139,22 +139,22 @@ def deconvolve(
     ####### Deconvolution parameters
     deconvolver,#='hogbom',
     scales,#=[],
-    nterms,#=1,
+    # TODO in CAS-13570: uncomment once test_multirun_mtmfs3x passes
+    # nterms,#=1,
     smallscalebias,#=0.0
+    # TODO in CAS-13570: uncomment once asp is working
+    # fusedthreshold,#=0.0
+    # largestscale,#=-1
 
     ### restoration options
     restoration,#=True,
     restoringbeam,#=[],
 
     ##### Iteration control
-    niter,#=0, 
+    niter,#=0,
     gain,#=0.1,
-    cyclethreshold,#=0.0,
     threshold,#=0.0, 
     nsigma,#=0.0
-    cyclefactor,#=1.0,
-    minpsffraction,#=0.1,
-    maxpsffraction,#=0.8,
     interactive,#=False,
     fastnoise,#=True,
 
@@ -193,6 +193,13 @@ def deconvolve(
         inp['cycleniter']  = inp['niter']
         inp['loopgain']    = inp.pop('gain')
         inp['scalebias']   = inp.pop('smallscalebias')
+
+        # TODO in CAS-13570: fix asp description and allow asp value once asp is working
+        if deconvolver.lower() == "asp":
+            raise RuntimeError("The "+deconvolver+" deconvolver currently has incorrect end-of-minor-cycle residual calculations and is therefore disabled. Please choose a different deconvolver.")
+        # TODO in CAS-13570: fix mtmfs description and allow mtmfs value once test_multirun_mtmfs3x passes
+        if deconvolver.lower() == "mtmfs":
+            raise RuntimeError("The "+deconvolver+" deconvolver currently has issues with the deconvolve task and is therefore disabled. Please choose a different deconvolver.")
 
         #####################################################
         #### Construct ImagerParameters
@@ -238,12 +245,9 @@ def deconvolve(
         ## create the parameters list help object
         paramList=ImagerParameters(**bparm)
 
-        # Assign cyclethreshold explicitly, if set explicitly by the user
-        if cyclethreshold != 0:
-            cyclethreshold = cyclethreshold if (type(cyclethreshold) == str) else (str(cyclethreshold*1000)+'mJy')
-            paramList.setIterPars({'cyclethreshold': cyclethreshold, 'cyclethresholdismutable': False})
-        else:
-            casalog.post("Calculating cyclethreshold based on current image, threshold, and other stopping criteria", "NORMAL")
+        # Assign cyclethreshold explicitly to threshold
+        threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
+        paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False})
 
         #####################################################
         #### Run the minor cycle
@@ -251,7 +255,7 @@ def deconvolve(
 
         iterrec = False
         isit = 0
-        retrec = ''
+        retrec = {}
 
         ## Setup Imager object
         decon = PyDeconvolver(params=paramList)
@@ -290,7 +294,7 @@ def deconvolve(
             isit = decon.hasConverged() # get the convergence state, to report back to the calling code
 
         ## Get summary from iterbot
-        if type(interactive) != bool:
+        if type(interactive) != bool and niter>0:
             retrec=decon.getSummary();
 
         #################################################
@@ -300,7 +304,6 @@ def deconvolve(
         ## Get records from iterbot, to be used in the next call to deconvolve
         iterrec = decon.getIterRecords()
 
-        # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
         ## Restore images.
         if restoration==True:  
             t0=time.time();
@@ -335,4 +338,4 @@ def deconvolve(
     except Exception as exc:
         casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
 
-    return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }
+    return retrec

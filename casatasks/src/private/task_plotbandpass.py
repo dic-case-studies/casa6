@@ -3254,7 +3254,8 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                   titleString = "%sspw%s,  field %d: %s%s" % (antennaString,spwString,uniqueFields[fieldIndex],fieldString,timeString)
                   if (sum(xflag)==nChannels and sum(yflag)==nChannels and showflagged==False):
                       if (overlayTimes):
-                          print("Skip %s (%s) for time%d=%s all data flagged" % (antstring, titleString,mytime,utstring(uniqueTimes[mytime],3)))
+                          msg = "Skip %s (%s) for time%d=%s all data flagged" % (antstring, titleString,mytime,utstring(uniqueTimes[mytime],3))
+                          casalogPost(True, msg)
                           # need to set doneOverlayTime = True if this is the final time,
                           # otherwise, we get "subplot number exceeds total subplots" at line 2427
                           # but we need to draw the labels at the top of the page, else they will not get done
@@ -3316,7 +3317,8 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                                                        channeldiff,ystartMadLabel,subplotRows,gamp_mad,mysize,
                                                                        ampmarkstyle,markersize,ampmarkstyle2,gamp_std)
                       else:  # not overlaying times
-                          print("Skip %s spw%d (%s) all data flagged" % (antstring, ispw, titleString))
+                          msg = "Skip %s spw%d (%s) all data flagged" % (antstring, ispw, titleString)
+                          casalogPost(True, msg)
                           if ((overlaySpws or overlayBasebands) and spwctr==spwctrFirstToPlot):
                               spwctrFirstToPlot += 1
                           if ((overlaySpws or overlayBasebands) and ispw==spwsToPlotInBaseband[bbctr][-1]):
