@@ -417,9 +417,15 @@ using namespace casac;
                 casac::pylist2vector(theVal,  myVals, shape);
              }
          }
-         if ( PyUnicode_Check(theUnits) )
-           deleter.reset (new Quantity(myVals, PyString_AsString(theUnits)));
-         else if ( PyString_Check(theUnits) )
+         if ( PyUnicode_Check(theUnits) ) {
+           PyObject *byte_obj = PyUnicode_AsEncodedString( theUnits, "UTF-8", NULL );   // Owned reference
+           if ( byte_obj != NULL )
+             deleter.reset (new Quantity(myVals, PyBytes_AS_STRING(byte_obj)));
+           else {
+             PyErr_SetString(PyExc_TypeError,"unit conversion to UTF-8 failed");
+             return NULL;
+           }
+         } else if ( PyString_Check(theUnits) )
            deleter.reset (new Quantity(myVals, PyString_AsString(theUnits)));
          else {
            PyErr_SetString( PyExc_TypeError, "quantity unit is neither a string or a byte vector" );
