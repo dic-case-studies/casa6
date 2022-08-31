@@ -12,17 +12,17 @@
 #include <iostream>
 #include <agentflagger_cmpt.h>
 
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Exceptions/Error.h>
 #include <flagging/Flagging/AgentFlagger.h>
-#include <casa/Containers/RecordInterface.h>
-#include <casa/Containers/Record.h>
-#include <casa/sstream.h>
+#include <casacore/casa/Containers/RecordInterface.h>
+#include <casacore/casa/Containers/Record.h>
+#include <sstream>
 #include <unistd.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <tables/Tables/Table.h>
-#include <measures/Measures/MeasIERS.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/measures/Measures/MeasIERS.h>
 
 
 using namespace std;
