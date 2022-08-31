@@ -1,9 +1,9 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-
 #include <casaswig_types.h>
 #include <swigconvert_python.h>
 #include <Python.h>
 #include <string.h>
+#include <casacore/casa/Exceptions/Error.h>
 #if USING_NUMPY_ARRAYS
 #include <numpy/arrayobject.h>
 #endif
@@ -23,10 +23,32 @@ STRINGTOCOMPLEX_DEFINITION(casac::complex,stringtoccomplex)
 #define PyInt_AsUnsignedLong            PyLong_AsUnsignedLong
 #define PyInt_Type                      PyLong_Type
 #define PyNumber_Int                    PyNumber_Long
-#define PyString_Check                  PyBytes_Check
-#define PyString_AsString               PyBytes_AsString
-#define PyString_FromString             PyUnicode_FromString
 #define MYPYSIZE                        Py_ssize_t
+
+//#define PyString_Check                  PyBytes_Check
+inline bool PyString_Check( PyObject *o ) {
+    return PyBytes_Check(o) || PyUnicode_Check(o);
+}
+
+#define PyString_FromString             PyUnicode_FromString
+inline char *PyString_FromString( PyObject *o ) {
+    if ( PyUnicode_Check(o) ) {
+        PyObject * temp_bytes = PyUnicode_AsEncodedString( o, "UTF-8", "strict" );      // Owned reference
+        if (temp_bytes != NULL) {
+            char *result = PyBytes_AS_STRING(temp_bytes);                               // Borrowed pointer
+            result = strdup(result);
+            Py_DECREF(temp_bytes);
+            return result;
+        } else {
+            // TODO: Handle encoding error.
+            throw casacore::AipsError( "encoding unicode failed" );
+        }
+    } else if ( PyBytes_Check(o) ) return PyBytes_AS_STRING( o );
+    else throw casacore::AipsError( "could not convert python object to string" );
+}
+
+#define PyString_AsString               PyString_FromString
+
 #else
 #if ( (PY_MAJOR_VERSION <= 1) || (PY_MINOR_VERSION <= 4) )
     #define MYPYSIZE int

@@ -75,18 +75,23 @@ using namespace casac;
    }
 }
 %typemap(typecheck) string {
-   $1 = PyString_Check($input);
+   $1 = PyUnicode_Check($input);
 }
 %typemap(in) string& (std::unique_ptr<string> deleter) {
-   if(PyString_Check($input)){
-       if(!$1){
-
-	   deleter.reset (new string(PyString_AsString($input)));
-	   $1 = deleter.get();
-
+   if ( PyUnicode_Check($input) ) {
+       PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL);    // Owned reference
+       if ( byte_obj != NULL ) {
+         if ( ! $1 ) {
+           deleter.reset( new string(PyBytes_AS_STRING(byte_obj)) );                  // Borrowed pointer
+           $1 = deleter.get( );
+         } else {
+           *$1 = string(PyBytes_AS_STRING(byte_obj));
+         }
        } else {
-        *$1 = string(PyString_AsString($input));
+         PyErr_SetString( PyExc_TypeError, "argument $1_name could not be encoded as UTF-8" );
+         return NULL;
        }
+       Py_DECREF( byte_obj );
    } else {
         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
         return NULL;
@@ -94,29 +99,36 @@ using namespace casac;
 }
 
 %typemap(typecheck) string& {
-   $1 = PyString_Check($input);
+   $1 = PyUnicode_Check($input);
 }
 %typemap(in) const string& (std::unique_ptr<string> deleter){
-   if(PyString_Check($input)){
-       if(!$1){
-	   deleter.reset (new string(PyString_AsString($input)));
-	   $1 = deleter.get();
-       }else {
-	   *$1 = string(PyString_AsString($input));
+   if ( PyUnicode_Check($input) ) {
+       PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL);    // Owned reference
+       if ( byte_obj != NULL ) {
+         if ( !$1 ) {
+           deleter.reset( new string(PyBytes_AS_STRING(byte_obj)) );                  // Borrowed pointer
+           $1 = deleter.get( );
+         } else {
+           *$1 = string(PyBytes_AS_STRING(byte_obj));
+         }
+       } else {
+         PyErr_SetString( PyExc_TypeError, "argument 1_name could not be encoded as UTF-8" );
+         return NULL;
        }
+       Py_DECREF( byte_obj );
    } else {
         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
         return NULL;
    }
 }
 %typemap(typecheck) const string& {
-   $1 = PyString_Check($input);
+   $1 = PyUnicode_Check($input);
 }
 
 %typemap(feeearg) const string& columnname{
-if($1){
-  delete $1;
-}
+  if ( $1 ) {
+    delete $1;
+  }
 }
 
 %typemap(in) StringVec {
@@ -125,19 +137,33 @@ if($1){
     Py_ssize_t size = PyList_Size($input);
     for (Py_ssize_t i = 0; i < size; i++) {
       PyObject *o = PyList_GetItem($input,i);
-      if (PyString_Check(o))
-        $1.value.push_back(PyString_AsString(PyList_GetItem($input,i)));
-      else {
+      if ( PyUnicode_Check(o) ) {
+        PyObject *byte_obj = PyUnicode_AsEncodedString( PyList_GetItem($input,i), "UTF-8", NULL);    // Owned reference
+        if ( byte_obj != NULL ) {
+          $1.value.push_back( PyBytes_AS_STRING(byte_obj) );                           // Borrowed pointer
+        } else {
+          PyErr_SetString( PyExc_TypeError, "argument 1_name could not be encoded as UTF-8" );
+          return NULL;
+        }
+        Py_DECREF( byte_obj );
+      } else {
         PyErr_SetString(PyExc_TypeError,"list $1_name must contain strings");
         return NULL;
       }
     }
   } else {
-    if(PyString_Check($input)){
-       $1.value.push_back(PyString_AsString($input));
+    if ( PyUnicode_Check($input) ) {
+      PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL );   // Owned reference
+      if ( byte_obj != NULL ) {
+        $1.value.push_back( PyBytes_AS_STRING(byte_obj) );
+      } else {
+        PyErr_SetString(PyExc_TypeError,"$1_name conversion to UTF-8 failed");
+        return NULL;
+      }
+      Py_DECREF( byte_obj );                                                         // Borrowed pointer
     } else {
-       PyErr_SetString(PyExc_TypeError,"$1_name is not a list");
-       return NULL;
+      PyErr_SetString(PyExc_TypeError,"$1_name is not a string");
+      return NULL;
     }
   }
 }
@@ -146,35 +172,45 @@ if($1){
   /* Check if is a list */
   if (PyList_Check($input)) {
     Py_ssize_t size = PyList_Size($input);
-    if(!$1){
-	deleter.reset (new std::vector<std::string>(size));
-        $1 = deleter.get();
+    if ( ! $1 ) {
+      deleter.reset (new std::vector<std::string>(size));
+      $1 = deleter.get();
     }
     for (Py_ssize_t i = 0; i < size; i++) {
       PyObject *o = PyList_GetItem($input,i);
-      if (PyString_Check(o))
-        if(i < (Py_ssize_t)($1->size()))
-          (*$1)[i] = PyString_AsString(PyList_GetItem($input,i));
-        else
-          $1->push_back(PyString_AsString(PyList_GetItem($input,i)));
-      else {
+      if ( PyUnicode_Check(o) ) {
+        PyObject *byte_obj = PyUnicode_AsEncodedString( PyList_GetItem($input,i), "UTF-8", NULL);    // Owned reference
+        if ( byte_obj != NULL ) {
+          if ( i < (Py_ssize_t)($1->size()) )
+            (*$1)[i] = PyString_AsString(byte_obj);
+          else
+            $1->push_back(PyString_AsString(byte_obj));
+        } else {
+          PyErr_SetString( PyExc_TypeError, "argument 1_name could not be encoded as UTF-8" );
+          return NULL;
+        }
+      } else {
         PyErr_SetString(PyExc_TypeError,"list $1_name must contain strings");
         return NULL;
       }
     }
   } else {
-    if(PyString_Check($input)){
-	if(!$1){
-	    deleter.reset (new std::vector<std::string>(1));
-	    $1 = deleter.get();
-	}
-       if(!$1->size())
-         $1->push_back(PyString_AsString($input));
-       else
-          (*$1)[0] = PyString_AsString($input);
-    } else {
-       PyErr_SetString(PyExc_TypeError,"$1_name is not a list");
-       return NULL;
+    if ( PyUnicode_Check($input) ) {
+      PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL );   // Owned reference
+      if ( byte_obj != NULL ) {
+        if ( ! $1 ) {
+          deleter.reset (new std::vector<std::string>(1));
+          $1 = deleter.get();
+        }
+        if ( ! $1->size( ) )
+          $1->push_back(PyBytes_AS_STRING(byte_obj));
+        else
+          (*$1)[0] = PyBytes_AS_STRING(byte_obj);
+      } else {
+        PyErr_SetString(PyExc_TypeError,"$1_name is not a list");
+        return NULL;
+      }
+      Py_DECREF( byte_obj );
     }
   }
 }
@@ -249,7 +285,9 @@ if($1){
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
          } else {
-             if (PyString_Check(theVal)){
+             if (PyUnicode_Check(theVal)){
+                myVals.push_back(-1);
+             } else if (PyString_Check(theVal)){
                 myVals.push_back(-1);
              } else if (PyInt_Check(theVal)){
                 myVals.push_back(double(PyInt_AsLong(theVal)));
@@ -262,7 +300,18 @@ if($1){
                 casac::pylist2vector(theVal,  myVals, shape);
              }
          }
-         $1 = Quantity(myVals, PyString_AsString(theUnits));
+         if ( PyString_Check(theUnits) )
+           $1 = Quantity(myVals, PyString_AsString(theUnits));
+         else if ( PyUnicode_Check(theUnits) ) {
+           PyObject *byte_obj = PyUnicode_AsEncodedString( theUnits, "UTF-8", NULL);    // Owned reference
+           if ( byte_obj != NULL )
+             $1 = Quantity(myVals, PyBytes_AS_STRING(byte_obj));
+           else {
+             PyErr_SetString( PyExc_TypeError, "units could not be encoded as UTF-8" );
+             return NULL;
+           }
+           Py_DECREF( byte_obj );
+         }
       }
    } else if (PyString_Check($input)) {
         std::string inpstring(PyString_AsString($input));
@@ -279,43 +328,68 @@ if($1){
 }
 
 %typemap(in) Quantity * (std::unique_ptr<Quantity> deleter){
-   if(PyDict_Check($input)){
-      PyObject *theUnits = fetch_dict_value($input, "unit");
-      PyObject *theVal = fetch_dict_value($input, "value");
-      if( theUnits && theVal){
-         std::vector<ssize_t> shape;
-         std::vector<double> myVals;
-         if(casac::pyarray_check(theVal)){
-            casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
+  if(PyDict_Check($input)){
+     PyObject *theUnits = fetch_dict_value($input, "unit");
+     PyObject *theVal = fetch_dict_value($input, "value");
+     if( theUnits && theVal ) {
+       std::vector<ssize_t> shape;
+       std::vector<double> myVals;
+       if(casac::pyarray_check(theVal)){
+         casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
+       } else {
+         if (PyUnicode_Check(theVal)){
+           myVals.push_back(-1);
+         } else if (PyString_Check(theVal)){
+           myVals.push_back(-1);
+         } else if (PyInt_Check(theVal)){
+           myVals.push_back(double(PyInt_AsLong(theVal)));
+         } else if (PyLong_Check(theVal)){
+           myVals.push_back(PyLong_AsDouble(theVal));
+         } else if (PyFloat_Check(theVal)){
+           myVals.push_back(PyFloat_AsDouble(theVal));
          } else {
-             if (PyString_Check(theVal)){
-                myVals.push_back(-1);
-             } else if (PyInt_Check(theVal)){
-                myVals.push_back(double(PyInt_AsLong(theVal)));
-             } else if (PyLong_Check(theVal)){
-                myVals.push_back(PyLong_AsDouble(theVal));
-             } else if (PyFloat_Check(theVal)){
-                myVals.push_back(PyFloat_AsDouble(theVal));
-             } else {
-               shape.push_back(PyList_Size(theVal));
-                casac::pylist2vector(theVal,  myVals, shape);
-             }
+           shape.push_back(PyList_Size(theVal));
+           casac::pylist2vector(theVal,  myVals, shape);
          }
-         $1 = new Quantity(myVals,PyString_AsString(theUnits));
-      }
-   } else if (PyString_Check($input)) {
-        std::string inpstring(PyString_AsString($input));
-        double val;
-        std::string units;
-        istringstream iss(inpstring);
-        iss >> val >> units;
-        myVals.push_back(val);
-        deleter.reset (new Quantity(myVals,units.c_str()));
-        $1 = deleter.get();
+       }
+         if ( PyString_Check(theUnits) )
+           $1 = Quantity(myVals, PyString_AsString(theUnits));
+         else if ( PyUnicode_Check(theUnits) ) {
+           PyObject *byte_obj = PyUnicode_AsEncodedString( theUnits, "UTF-8", NULL);    // Owned reference
+           if ( byte_obj != NULL )
+             $1 = Quantity(myVals, PyBytes_AS_STRING(byte_obj));
+           else {
+             PyErr_SetString( PyExc_TypeError, "units could not be encoded as UTF-8" );
+             return NULL;
+           }
+           Py_DECREF( byte_obj );
+         }
+      }n
    } else {
-      PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
-      return NULL;
-   }
+     std::string inpstring;
+     if ( PyString_Check($input) )
+       inpstring = PyString_AsString($input);
+     else if ( PyUnicode_Check($input) ) {
+       PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL );   // Owned reference
+       if ( byte_obj != NULL )
+         inpstring = PyBytes_AS_STRING(byte_obj);
+       else {
+         PyErr_SetString( PyExc_TypeError, "quantity string could not be encoded as UTF-8" );
+         return NULL;
+       }
+       Py_DECREF( byte_obj );
+     } else {
+       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
+       return NULL;
+     }
+     double val;
+     std::string units;
+     istringstream iss(inpstring);
+     iss >> val >> units;
+     myVals.push_back(val);
+     deleter.reset (new Quantity(myVals,units.c_str()));
+     $1 = deleter.get();
+  }
 }
 
 %typemap(in) Quantity & (std::unique_ptr<Quantity> deleter){
@@ -328,7 +402,9 @@ if($1){
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
          } else {
-             if (PyString_Check(theVal)){
+             if (PyUnicode_Check(theVal)){
+               myVals.push_back(-1);
+             } else if (PyString_Check(theVal)){
                 myVals.push_back(-1);
              } else if (PyInt_Check(theVal)){
                 myVals.push_back(double(PyInt_AsLong(theVal)));
@@ -341,22 +417,41 @@ if($1){
                 casac::pylist2vector(theVal,  myVals, shape);
              }
          }
-	 deleter.reset (new Quantity(myVals, PyString_AsString(theUnits)));
+         if ( PyUnicode_Check(theUnits) )
+           deleter.reset (new Quantity(myVals, PyString_AsString(theUnits)));
+         else if ( PyString_Check(theUnits) )
+           deleter.reset (new Quantity(myVals, PyString_AsString(theUnits)));
+         else {
+           PyErr_SetString( PyExc_TypeError, "quantity unit is neither a string or a byte vector" );
+           return NULL;
+         }
          $1 = deleter.get();
       }
-   } else if (PyString_Check($input)) {
-        std::vector<double> myVals;
-        std::string inpstring(PyString_AsString($input));
-        double val;
-        std::string units;
-        istringstream iss(inpstring);
-        iss >> val >> units;
-        myVals.push_back(val);
-	deleter.reset (new Quantity(myVals,units.c_str()));
-        $1 = deleter.get();
    } else {
-      PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
-      return NULL;
+     std::string inpstring;
+     if ( PyString_Check($input) )
+       inpstring = PyString_AsString($input);
+     else if ( PyUnicode_Check($input) ) {
+       PyObject *byte_obj = PyUnicode_AsEncodedString( $input, "UTF-8", NULL );   // Owned reference
+       if ( byte_obj != NULL )
+         inpstring = PyBytes_AS_STRING(byte_obj);
+       else {
+         PyErr_SetString( PyExc_TypeError, "quantity string could not be encoded as UTF-8" );
+         return NULL;
+       }
+       Py_DECREF( byte_obj );
+     } else {
+       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
+       return NULL;
+     }
+     std::vector<double> myVals;
+     double val;
+     std::string units;
+     istringstream iss(inpstring);
+     iss >> val >> units;
+     myVals.push_back(val);
+	 deleter.reset (new Quantity(myVals,units.c_str()));
+     $1 = deleter.get();
    }
 }
 
@@ -481,8 +576,10 @@ if($1){
       //cerr << "numpy2vec" << endl;
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
    } else {
-       if (PyString_Check($input)){
-          $1->push_back(-1);
+       if (PyUnicode_Check($input)){
+         $1->push_back(-1);
+       } else if (PyString_Check($input)){
+         $1->push_back(-1);
        } else if (PyInt_Check($input)){
           $1->push_back(double(PyInt_AsLong($input)));
        } else if (PyLong_Check($input)){
@@ -509,6 +606,10 @@ if($1){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
    } else {
       if (PyString_Check($input)){
+         $1->push_back(0);
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+         return NULL;
+      } else if (PyUnicode_Check($input)){
          $1->push_back(0);
          PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
          return NULL;
@@ -547,6 +648,10 @@ if($1){
          $1->push_back(-1);
          PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
          return NULL;
+      } else if (PyUnicode_Check($input)){
+         $1->push_back(-1);
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+         return NULL;
       } else if (PyInt_Check($input)){
          $1->push_back(int(PyInt_AsLong($input)));
       } else if (PyLong_Check($input)){
@@ -576,6 +681,10 @@ if($1){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
    } else {
       if (PyString_Check($input)){
+         $1->push_back(-1);
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
+         return NULL;
+      } else if (PyUnicode_Check($input)){
          $1->push_back(-1);
          PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
          return NULL;
@@ -609,6 +718,10 @@ if($1){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
    } else {
       if (PyString_Check($input)){
+         $1->push_back(-1);
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
+         return NULL;
+      } else if (PyUnicode_Check($input)){
          $1->push_back(-1);
          PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
          return NULL;
@@ -676,12 +789,12 @@ if($1){
 }
 
 %typemap(out) string {
-   $result = PyString_FromString($1.c_str());
+   $result = PyUnicode_FromString( $1.c_str() );
 }
 
 %typemap(out) string* {
    if($1)
-     $result = PyString_FromString($1->c_str());
+     $result = PyUnicode_FromString( $1->c_str() );
    else
      $result = Py_None;
    delete $1;
@@ -699,7 +812,7 @@ if($1){
 
 %typemap(out) Quantity& {
    $result = PyDict_New();
-   PyObject *s = PyString_FromString($1.units.c_str());
+   PyObject *s = PyUnicode_FromString( $1.units.c_str() );
    PyDict_SetItemString($result, "unit", s);
    Py_DECREF(s);
    PyObject *v = casac::map_vector($1.value);
@@ -709,7 +822,7 @@ if($1){
 
 %typemap(out) Quantity {
    $result = PyDict_New();
-   PyObject *s = PyString_FromString($1.units.c_str());
+   PyObject *s = PyUnicode_FromString( $1.units.c_str() );
    PyDict_SetItemString($result, "unit", s);
    Py_DECREF(s);
    PyObject *v = casac::map_vector($1.value);
@@ -719,7 +832,7 @@ if($1){
 
 %typemap(out) Quantity* {
    $result = PyDict_New();
-   PyObject *s = PyString_FromString($1->units.c_str());
+   PyObject *s = PyUnicode_FromString( $1->units.c_str() );
    PyDict_SetItemString($result, "unit", s);
    Py_DECREF(s);
    PyObject *v = casac::map_vector($1->value);
@@ -747,13 +860,13 @@ if($1){
 %typemap(out) StringVec {
    $result = PyList_New($1.size());
    for(StringVec::size_type i=0;i<$1.size();i++)
-      PyList_SetItem($result, i, PyString_FromString($1[i].c_str()));
+      PyList_SetItem($result, i, PyUnicode_FromString( $1[i].c_str() ));
 }
 
 %typemap(out) std::vector<std::string> {
    $result = PyList_New($1.size());
    for(std::vector<std::string>::size_type i=0;i<$1.size();i++)
-      PyList_SetItem($result, i, PyString_FromString($1[i].c_str()));
+      PyList_SetItem($result, i, PyUnicode_FromString( $1[i].c_str() ));
 }
 
 %typemap(out) std::vector<bool> {
@@ -899,7 +1012,7 @@ if($1){
 }
 
 %typemap(argout) string& OUTARGSTR{
-   PyObject *o = PyString_FromString($1->c_str());
+   PyObject *o = PyUnicode_FromString( $1->c_str() );
    if((!$result) || ($result == Py_None)){
       $result = o;
    } else {
@@ -918,7 +1031,7 @@ if($1){
 }
 
 %typemap(argout) std::string& OUTARGSTR{
-   PyObject *o = PyString_FromString($1->c_str());
+   PyObject *o = PyUnicode_FromString( $1->c_str() );
    if((!$result) || ($result == Py_None)){
       $result = o;
    } else {
@@ -940,7 +1053,7 @@ if($1){
 %typemap(argout) std::vector<std::string>& OUTARGVEC{
    PyObject *o = PyList_New($1.size());
    for(std::vector<std::string>::size_type i=0;i<$1.size();i++)
-      PyList_SetItem($result, i, PyString_FromString($1[i].c_str()));
+      PyList_SetItem($result, i, PyUnicode_FromString( $1[i].c_str() );
    if((!$result) || ($result == Py_None)){
       $result = o;
    } else {
@@ -1043,7 +1156,7 @@ if($1){
 
 %typemap(argout) Quantity& OUTARGQUANTITY{
    PyObject *o = PyDict_New();
-   PyObject *s = PyString_FromString($1->units.c_str());
+   PyObject *s = PyUnicode_FromString( $1->units.c_str() );
    PyDict_SetItemString(o, "unit", s);
    Py_DECREF(s);
    PyObject *v = casac::map_vector($1->value);
