@@ -92,6 +92,13 @@ using namespace casac;
          return NULL;
        }
        Py_DECREF( byte_obj );
+   } else if ( PyBytes_Check($input) ) {
+       if ( ! $1 ) {
+         deleter.reset( new string(PyBytes_AsString($input)) );                  // Borrowed pointer
+         $1 = deleter.get( );
+       } else {
+         *$1 = string(PyBytes_AsString($input));
+       }
    } else {
         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
         return NULL;
@@ -116,6 +123,13 @@ using namespace casac;
          return NULL;
        }
        Py_DECREF( byte_obj );
+   } else if ( PyBytes_Check($input) ) {
+       if ( ! $1 ) {
+         deleter.reset( new string(PyBytes_AsString($input)) );                  // Borrowed pointer
+         $1 = deleter.get( );
+       } else {
+         *$1 = string(PyBytes_AsString($input));
+       }
    } else {
         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
         return NULL;
@@ -656,7 +670,7 @@ using namespace casac;
          return NULL;
       } else if (PyUnicode_Check($input)){
          $1->push_back(-1);
-         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must not be a string");
          return NULL;
       } else if (PyInt_Check($input)){
          $1->push_back(int(PyInt_AsLong($input)));
