@@ -658,24 +658,10 @@ MAP_ARRAY_NUMPY(casac::complex, npy_cdouble, NPY_CDOUBLE,(*to).real = (*from).re
 MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
-    initialize_numpy( );
-    unsigned int size = 0;
-    for ( const auto &elem : vec ) {
-        unsigned int slen = elem.size();
-        if ( slen > size )
-            size = slen;
-    }
-    npy_intp dim[1];
-    dim[0] = vec.size();
-    PyObject *ary = PyArray_NewFromDescr( &PyArray_Type, get_string_description(size+1), 1, dim,
-					  NULL, NULL, 1, NULL );
-    char *data = (char*) PyArray_DATA((PyArrayObject*)ary);
-    memset(data, '\0', (size+1) * vec.size());
-    for ( std::vector<std::string>::const_iterator iter = vec.begin(); iter != vec.end(); ++iter ) {
-	strcpy(data,(*iter).c_str( ));
-	data += size+1;
-    }
-    return ary;
+    PyObject *result = PyList_New(vec.size( ));
+    for ( size_t i=0; i < vec.size( ); ++i )
+        PyList_SetItem( result, i, PyUnicode_FromString(vec[i].c_str()) );
+    return result;
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
