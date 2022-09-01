@@ -349,10 +349,10 @@ class advisechansel_test(sutest_base):
                 shutil.copytree(os.path.join(self.datapath, inms),inms)
 
     ### Teardown
-    def TearDown(self):
+    def tearDown(self):
         for inpdata in self.inputmses:
             if os.path.exists(inpdata):
-                shutil.rmtree(indata)
+                shutil.rmtree(inpdata)
 
     ### Test cases
     def test_advisechanelsel_datasel(self):

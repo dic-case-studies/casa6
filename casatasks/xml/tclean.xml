@@ -2006,11 +2006,48 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
                        [ For scripting purposes, replacing True/False with 1/0 will get tclean to
-                         return an imaging summary dictionary to python ]
+                         return an imaging summary dictionary to python. More info at casadocs > Synthesis Imaging > Returned Dictionary. ]
 
 </description>
       <type>bool</type><type>int</type>
       <value type="bool">False</value>
+    </param>
+    
+    <param type="int" name="nmajor">
+      <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
+      <description>The nmajor parameter limits the number of minor and major cycle sets
+                        that tclean executes. It is defined as the number of major cycles after the 
+                        initial set of minor cycle iterations. In other words, the count of nmajor does 
+                        not include the initial residual calculation that occurs when calcres=True. 
+
+                        A setting of nmajor=-1 implies no limit (default -1). 
+                        A setting of nmajor=0 implies nothing other than the initial residual calculation
+                        A setting of nmajor>0 imples that nmajor sets of minor and major cycles will 
+                        be done in addition to the initial residual calculation.  
+                               
+                        If the major cycle limit is reached, stopcode 9 will be returned. Other stopping
+                        criteria (such as threshold) could cause tclean to stop in fewer than this
+                        number of major cycles. If tclean reaches another stopping criteria, first
+                        or at the same time as nmajor, then that stopcode will be returned instead.
+                        
+                        Note however that major cycle ids in the log messages as well as in the return
+                        dictionary do begin with 1 for the initial residual calculation, when it exists. 
+
+                        Example 1 : A tclean run with 'nmajor=5' and 'calcres=True' will iterate for
+                        5 major cycles (not counting the initial residual calculation). But, the return
+                        dictionary will show 'nmajordone:6'.  If 'calcres=False', then the return
+                        dictionary will show 'nmajordone:5'.                         
+
+                        Example 2 : For both the following cases, there will be a printout in the logs 
+                        "Running Major Cycle 1" and the return value will include "nmajordone: 1", 
+                        however there is a difference in the purpose of the major cycle and the 
+                        number of minor cycles executed:
+                            Case 1; nmajor=0, calcres=True:  The major cycle done is for the creation
+                                        of the residual, and no minor cycles are executed.
+                            Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
+                                        major/minor cycle loop, and 1 minor cycle will be executed.
+      </description>
+      <value type="int">-1</value>
     </param>
 
 
@@ -2124,7 +2161,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param type="double" name="pbmask" subparam="true">
      <shortdescription>primary beam mask</shortdescription>
-<description>Sub-parameter for usemask='auto-multithresh': primary beam mask
+<description>Sub-parameter for usemask: primary beam mask
 
                        Examples : pbmask=0.0 (default, no pb mask)
                                   pbmask=0.2 (construct a mask at the 0.2 pb gain level)

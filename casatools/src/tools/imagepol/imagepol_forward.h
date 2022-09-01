@@ -1,7 +1,7 @@
 #include <coordsys_cmpt.h>
 #include <image_cmpt.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/Stokes.h>
 namespace casacore {
     class LogIO;
     class ImageRegion;

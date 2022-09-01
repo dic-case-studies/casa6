@@ -63,7 +63,7 @@ parallelImaging = False
 
 from casatools import ctsys
 from casatasks import casalog, tclean, split, virtualconcat, imstat, applycal, fluxscale, flagdata
-from casatasks import setjy, bandpass, flagmanager, gaincal, gencal, importasdm, fixplanets, uvcontsub, immoments
+from casatasks import setjy, bandpass, flagmanager, gaincal, gencal, importasdm, fixplanets, uvcontsub_old, immoments
 from casatasks import plotants
 from casaplotms import plotms
 from almatasks import wvrgcal
@@ -899,8 +899,8 @@ class regression_alma_m100_test(unittest.TestCase):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
 
                 os.system('rm -rf M100all_lores.ms.c*')
-                uvcontsub(vis='M100all_lores.ms', field='', fitspw='0:10~205;260~440',
-                          combine='', solint='inf', fitorder=1, spw='0', want_cont=False)
+                uvcontsub_old(vis='M100all_lores.ms', field='', fitspw='0:10~205;260~440',
+                              combine='', solint='inf', fitorder=1, spw='0', want_cont=False)
 
                 timing(mystep, thesteps)
 

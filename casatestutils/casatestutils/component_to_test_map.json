@@ -826,7 +826,7 @@
             "maintainer":"Takeshi Nakazato",
             "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
-            "testGroup":["nrobeamaverage"],
+            "testGroup":["Single Dish", "nrobeamaverage"],
             "timeout":0,
             "comment":""
         },
@@ -973,8 +973,8 @@
         {
             "testScript":"test_task_sdbaseline",
             "testType":"casatasks",
-            "maintainer":"Kana Sugimoto",
-            "maintainerEmail":"kana.sugi@nao.ac.jp",
+            "maintainer":"Takeshi Nakazato",
+            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
             "testGroup":["sdbaseline","Single Dish","default"],
             "timeout":0,
@@ -993,8 +993,8 @@
         {
             "testScript":"test_task_sdfit",
             "testType":"casatasks",
-            "maintainer":"Kana Sugimoto",
-            "maintainerEmail":"kana.sugi@nao.ac.jp",
+            "maintainer":"Takeshi Nakazato",
+            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
             "testGroup":["sdfit","Single Dish"],
             "timeout":0,
@@ -1003,8 +1003,8 @@
         {
             "testScript":"test_task_sdfixscan",
             "testType":"casatasks",
-            "maintainer":"Kana Sugimoto",
-            "maintainerEmail":"kana.sugi@nao.ac.jp",
+            "maintainer":"Takeshi Nakazato",
+            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
             "testGroup":["sdfixscan","Single Dish"],
             "timeout":0,
@@ -1046,7 +1046,7 @@
             "maintainer":"Takeshi Nakazato",
             "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
-            "testGroup":["sdpolaverage"],
+            "testGroup":["Single Dish", "sdpolaverage"],
             "timeout":0,
             "comment":""
         },
@@ -1056,17 +1056,17 @@
             "maintainer":"Takeshi Nakazato",
             "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
-            "testGroup":["sdsidebandsplit"],
+            "testGroup":["Single Dish", "sdsidebandsplit"],
             "timeout":0,
             "comment":""
         },
         {
             "testScript":"test_task_sdsmooth",
             "testType":"casatasks",
-            "maintainer":"Kana Sugimoto",
-            "maintainerEmail":"kana.sugi@nao.ac.jp",
+            "maintainer":"Takeshi Nakazato",
+            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
             "testOptions":[],
-            "testGroup":["sdsmooth"],
+            "testGroup":["Single Dish", "sdsmooth"],
             "timeout":0,
             "comment":""
         },
@@ -1221,10 +1221,20 @@
             "comment":""
         },
         {
-            "testScript":"test_task_uvcontsub",
+            "testScript":"test_task_uvcontsub_old",
             "testType":"casatasks",
             "maintainer":"Takahiro Tsutsumi",
             "maintainerEmail":"ttsutsum@nrao.edu",
+            "testOptions":[],
+            "testGroup":["uvcontsub"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_task_uvcontsub",
+            "testType":"casatasks",
+            "maintainer":"Federico Montesino",
+            "maintainerEmail":"fpouzols@eso.org",
             "testOptions":[],
             "testGroup":["uvcontsub"],
             "timeout":0,
@@ -1521,6 +1531,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_quanta",
+            "testType":"casatools",
+            "maintainer":"Dave Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tool_regionmanager",
             "testType":"casatools",
             "maintainer":"David Mehringer",
@@ -1555,6 +1575,16 @@
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_tool_table",
+            "testType":"casatools",
+            "maintainer":"Darrell Schiebel",
+            "maintainerEmail":"dschieb@nrao.edu",
             "testOptions":[],
             "testGroup":["casatools"],
             "timeout":0,

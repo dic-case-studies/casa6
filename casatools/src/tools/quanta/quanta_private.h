@@ -3,8 +3,7 @@
 
 casacore::Quantity casaQuantityFromVar(const ::casac::variant& theVar);
 casacore::QuantumHolder quantumHolderFromVar(const ::casac::variant& theVar);
-casac::record* recordFromQuantity(casacore::Quantity q);
-casac::record* recordFromQuantity(const casacore::Quantum<casacore::Vector<casacore::Double> >& q);
+template<class T> casac::record* recordFromQuantity(const casacore::Quantum<T>& q);
 
 bool qcompare(const ::casac::variant& v, const casacore::Quantity a);
 
