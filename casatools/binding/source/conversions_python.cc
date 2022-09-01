@@ -67,7 +67,7 @@ inline char *PyString_FromString( PyObject *o ) {
 // Create a numpy array description that will be passed to with PyArray_NewFromDescr.
 // PyArray_NewFromDescr will steal it.
 static PyArray_Descr *get_string_description(unsigned int size) {
-    auto string_descr = PyArray_DescrNewFromType(NPY_STRING);
+    auto string_descr = PyArray_DescrNewFromType(NPY_UNICODE);
     string_descr->elsize = size;
 
     return string_descr;
@@ -666,24 +666,21 @@ PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
     initialize_numpy( );
-    unsigned int size = 0;
+    size_t stringlen = 0;
     for ( const auto &elem : vec ) {
-        unsigned int slen = elem.size();
-        if ( slen > size )
-            size = slen;
+        size_t slen = elem.size();
+        if ( slen > stringlen )
+            stringlen = slen;
     }
-    npy_intp *dim = new npy_intp[shape.size()];
-    copy( shape.begin(), shape.end(), dim );
-    PyObject *ary = PyArray_NewFromDescr( &PyArray_Type, get_string_description(size+1), shape.size(), dim,
-					  NULL, NULL, 1, NULL );
-    char *data = (char*) PyArray_DATA((PyArrayObject*)ary);
-    memset(data, '\0', (size+1) * vec.size());
-    for ( std::vector<std::string>::const_iterator iter = vec.begin(); iter != vec.end(); ++iter ) {
-	strcpy(data,(*iter).c_str( ));
-	data += size+1;
+    size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
+    void *mem = PyDataMem_NEW(memlen);
+    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
+    for ( const auto &str : vec ) {
+        for ( size_t i=0; i < stringlen; ++i ) {
+            *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
+        }
     }
-    delete [] dim;
-    return ary;
+    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 #define HANDLE_NUMPY_ARRAY_CASE(NPYTYPE,CVTTYPE)				\
