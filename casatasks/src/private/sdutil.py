@@ -1,6 +1,7 @@
 import abc
 import contextlib
 import functools
+import inspect
 import os
 import re
 import traceback
@@ -15,9 +16,9 @@ from casatools import mstransformer, table
 from casatools.platform import bytes2str
 
 from . import flaghelper as fh
-from .mstools import write_history
-from .parallel.parallel_data_helper import ParallelDataHelper
-from .update_spw import update_spwchan
+from casatasks.private.mstools import write_history
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+from casatasks.private.update_spw import update_spwchan
 
 
 @contextlib.contextmanager
@@ -121,8 +122,9 @@ def callable_sdtask_decorator(func):
 
     Currently the decorator does:
 
-       1) if it get the parameter '__log_origin', read it and set origin to the logger.
-        otherwise it reads the function name and set origin to the logger.
+       1) if the task is decorated it was called from a task and the caller set a log origin by casalog.origin(),
+          then the decorator sets a caller's origin to the logger.
+          Otherwise, it reads the function name and set an origin to the logger.
        2) handle exception
 
     So, you don't need to set origin in the task any more.
@@ -138,13 +140,11 @@ def callable_sdtask_decorator(func):
         pass
 
     def othertask(..)
-        kwargs['__log_origin'] = 'othertask'
         sometask(*args, **kwargs)  # logged "othertask::..."
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        caller = kwargs.pop('__log_origin', func.__name__)
-        casalog.origin(caller)
+        __set_origin(inspect.stack(), casalog.getOrigin(), func.__name__)
 
         retval = None
         # Any errors are handled outside the task.
@@ -158,10 +158,16 @@ def callable_sdtask_decorator(func):
             casalog.post(traceback_info, 'SEVERE')
             casalog.post(str(e), 'ERROR')
             raise
-        if caller != func.__name__:
-            kwargs['__log_origin'] = caller
         return retval
     return wrapper
+
+
+def __set_origin(callstack, origin, funcname):
+    for frame_info in callstack:
+        if frame_info.function == origin:
+            casalog.origin(origin)
+            return
+    casalog.origin(funcname)
 
 
 def __format_trace(s):

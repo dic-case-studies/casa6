@@ -609,13 +609,10 @@ class _ImsmoothParams(AbstractValidatable):
             raise ValueError(f'Unsupported maskmode, {self.kernel}', 'SEVERE')
 
     def __call__(self) -> Union[List[Any], Dict[str, str]]:
-        """Convert the class into arguments of imsmooth().
-
-        __log_origin is for callabletask.log_origin_setter
-        """
+        """Convert the class into arguments of imsmooth()."""
         retval = dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major,
                       minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
-                      outfile=self.outfile, __log_origin='imbaseline')
+                      outfile=self.outfile)
         if dump_tasks:
             print(_dump_tasks('imsmooth', retval))
         return retval
@@ -655,13 +652,9 @@ class _SdsmoothParams(AbstractValidatable):
             raise ValueError(f'Unsupported maskmode, {self.kernel}', 'SEVERE')
 
     def __call__(self) -> Dict[str, Any]:
-        """Convert the class into arguments of sdsmooth().
-
-        __log_origin is for sdutil.callabletask_decorator.
-        """
+        """Convert the class into arguments of sdsmooth()."""
         retval = dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
-                      kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile,
-                      __log_origin='imbaseline')
+                      kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile)
         if dump_tasks:
             print(_dump_tasks('sdsmooth', retval))
         return retval
@@ -777,18 +770,14 @@ class _SdbaselineParams(AbstractValidatable):
             raise ValueError(f'input file {self.blparam} does not exists', 'SEVERE')
 
     def __call__(self) -> Dict[str, Any]:
-        """Convert the class into arguments of sdbaseline().
-
-        __log_origin is for sdutil.callabletask_decorator.
-        """
+        """Convert the class into arguments of sdbaseline()."""
         retval = dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
                       maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit,
                       minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput,
                       blfunc=self.blfunc, order=self.order, npiece=self.npiece,
                       applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
                       rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
-                      blparam=self.blparam, outfile=self.outfile, spw=self.spw,
-                      __log_origin='imbaseline')
+                      blparam=self.blparam, outfile=self.outfile, spw=self.spw)
         if dump_tasks:
             print(_dump_tasks('sdbaseline', retval))
 
@@ -1150,9 +1139,8 @@ def _dump_tasks(taskname: str, vals: dict):
     cmd = f'{taskname}('
     arr = []
     for key, val in vals.items():
-        if key != '__log_origin':
-            quote = '' if type(val) in (bool, int, float) else '\''
-            arr.append(f'{key}={quote}{val}{quote}')
+        quote = '' if type(val) in (bool, int, float) else '\''
+        arr.append(f'{key}={quote}{val}{quote}')
     cmd += ', '.join(arr)
     cmd += ')'
     return cmd
