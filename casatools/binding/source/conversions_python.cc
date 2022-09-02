@@ -658,10 +658,27 @@ MAP_ARRAY_NUMPY(casac::complex, npy_cdouble, NPY_CDOUBLE,(*to).real = (*from).re
 MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
-    PyObject *result = PyList_New(vec.size( ));
-    for ( size_t i=0; i < vec.size( ); ++i )
-        PyList_SetItem( result, i, PyUnicode_FromString(vec[i].c_str()) );
-    return result;
+    initialize_numpy( );
+    size_t stringlen = 0;
+    for ( const auto &elem : vec ) {
+        size_t slen = elem.size();
+        if ( slen > stringlen )
+            stringlen = slen;
+    }
+    size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
+    void *mem = PyDataMem_NEW(memlen);
+    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
+    for ( const auto &str : vec ) {
+        for ( size_t i=0; i < stringlen; ++i ) {
+            *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
+        }
+    }
+    npy_intp shape[ ] = { vec.size( ) };
+    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, (stringlen > 0 ? stringlen : 40)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+    //                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                                                                      |
+    //  A ZERO VEC SIZE RESULTS IN THE ERROR  >>>>>>>-----------------------+
+    //  'data type must provide an itemsize"
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
