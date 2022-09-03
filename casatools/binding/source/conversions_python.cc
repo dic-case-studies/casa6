@@ -151,6 +151,50 @@ npycomplextostring(npy_clongdouble,"(%Lf,%Lf)")
     delete [] buf;							\
     }
 
+#define NUMPY2VECTOR_PLACEUNI(TYPE,CONVERT)				\
+    {									\
+    char *buf = new char[itemsize+1];					\
+    buf[itemsize] = '\0';						\
+    uint32_t *data = (uint32_t*) PyArray_DATA(obj);     \
+    if (PyArray_CHKFLAGS(obj,NPY_ARRAY_F_CONTIGUOUS)) {			\
+	for ( unsigned int D=0; D < size; ++D ) {			\
+        unsigned int S;                         \
+        for ( S=0; S < itemsize; ++S ) {        \
+            buf[S] = (char) data[D*itemsize+S]; \
+            if ( buf[S] == 0 ) break;           \
+        }                                       \
+        buf[S] = 0;                             \
+	    vec[D] =  CONVERT(buf);					\
+	}								\
+    } else {								\
+	/*** convert c-style to fortran order ***/			\
+	npy_intp counts[NPY_MAXDIMS];					\
+	npy_intp strides[NPY_MAXDIMS];					\
+	for ( int i=0; i < ndims; ++i ) {				\
+	    counts[i] = 0;						\
+	    strides[i] = PyArray_STRIDE(obj,i);				\
+	}								\
+	for ( unsigned int D=0; D < size; ++D ) {			\
+	    int offset = 0;						\
+	    for ( int i=0; i < ndims; ++i ) {				\
+		offset += counts[i] * strides[i];			\
+	    }								\
+        unsigned int S;                         \
+        for ( S=0; S < itemsize; ++S ) {   \
+            buf[S] = (char) data[offset+S]; \
+            if ( buf[S] == 0 ) break;           \
+        }                                       \
+        buf[S] = 0;                             \
+	    vec[D] = CONVERT(buf);					\
+	    for ( int j=0; j < ndims; ++j ) {				\
+		if ( ++counts[j] < dims[j] ) break;			\
+		counts[j] = 0;						\
+	    }								\
+	}								\
+    }									\
+    delete [] buf;							\
+    }
+
 #define COPY_PYNSTRING(TYPE,NPYTYPE,START, END, ITR)			\
     char *buf = new char[itemsize+1];					\
     buf[itemsize] = '\0';						\
@@ -275,9 +319,7 @@ void casac::numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vect
  	fprintf( stderr, "cannot handle numpy arrays of: NPY_CHAR\n" ); 		\
 	break;										\
     case NPY_UNICODE:									\
-	vec.resize(0);									\
-	shape.resize(0);								\
-	fprintf( stderr, "cannot handle numpy arrays of: NPY_UNICODE\n" );		\
+	NUMPY2VECTOR_PLACEUNI(TYPE,STRCVT)						\
 	break;										\
     case NPY_VOID:									\
 	vec.resize(0);									\
@@ -658,6 +700,15 @@ MAP_ARRAY_NUMPY(casac::complex, npy_cdouble, NPY_CDOUBLE,(*to).real = (*from).re
 MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
+    if ( vec.size( ) <= 0 ) {
+        npy_intp shape[ ] = { vec.size( ) };
+        return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, 0, 20, 0, nullptr );
+        //                                                                    ^^
+        //                                                                    |
+        //  A ZERO VEC SIZE RESULTS IN THE ERROR  >>>>>>>---------------------+
+        //  'data type must provide an itemsize"
+    }
+
     initialize_numpy( );
     size_t stringlen = 0;
     for ( const auto &elem : vec ) {
@@ -667,18 +718,16 @@ PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
     }
     size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
     void *mem = PyDataMem_NEW(memlen);
-    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
-    for ( const auto &str : vec ) {
+    uint32_t *baseptr = reinterpret_cast<uint32_t*>(mem);
+    for ( unsigned int D = 0; D < vec.size( ); ++D ) {
+        const std::string str = vec[D];
+        uint32_t *ptr = baseptr + D * stringlen;
         for ( size_t i=0; i < stringlen; ++i ) {
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
     npy_intp shape[ ] = { vec.size( ) };
-    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, (stringlen > 0 ? stringlen : 40)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
-    //                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                                                                      |
-    //  A ZERO VEC SIZE RESULTS IN THE ERROR  >>>>>>>-----------------------+
-    //  'data type must provide an itemsize"
+    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, stringlen, NPY_ARRAY_OWNDATA, nullptr );
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
@@ -697,7 +746,7 @@ PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vecto
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
-    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 #define HANDLE_NUMPY_ARRAY_CASE(NPYTYPE,CVTTYPE)				\
@@ -733,8 +782,7 @@ else if ( casac::pyarray_check(obj) ) {						\
     case NPY_CHAR:								\
 	fprintf( stderr, "cannot handle numpy arrays of: NPY_CHAR\n" );		\
 	break;									\
-    case NPY_UNICODE:								\
-	fprintf( stderr, "cannot handle numpy arrays of: NPY_UNICODE\n" );	\
+    HANDLE_NUMPY_ARRAY_CASE(NPY_UNICODE,String)					\
 	break;									\
     case NPY_VOID:								\
 	fprintf( stderr, "cannot handle numpy arrays of: NPY_VOID\n" );		\
@@ -1042,7 +1090,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CFLOAT ||                     \
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CDOUBLE ||                    \
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CLONGDOUBLE ||                \
-                 PyArray_TYPE((PyArrayObject*)val) == NPY_STRING))) {                   \
+                 PyArray_TYPE((PyArrayObject*)val) == NPY_UNICODE))) {                  \
 	      rec.insert(str,pyobj2variant(val,DO_THROW));				\
             }                                                                           \
                                                                                         \
