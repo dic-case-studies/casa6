@@ -3448,7 +3448,6 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot amp on xframe %d" % (xframe))
 # #     # #            print(",,,,,,,,,,,,,,,, Starting with newylimits = ", newylimits)
 
-                      print("Requesting xframe={}".format(xframe))
                       adesc = safe_pb_subplot(xframe)
 
                       if (previousSubplot != xframe):
