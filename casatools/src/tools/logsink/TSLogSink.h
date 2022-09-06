@@ -30,10 +30,10 @@
 #define CASA_TSLOGSINK_H
 
 //# Includes
-#include <casa/aips.h>
-#include <casa/Logging/LogSink.h>
-#include <casa/Containers/Block.h>
-#include <casa/BasicSL/String.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/BasicSL/String.h>
 
 #include <fstream>
 

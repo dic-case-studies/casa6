@@ -28,26 +28,27 @@
 //# @version
 //////////////////////////////////////////////////////////////////////////////
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/OS/DOos.h>
-#include <casa/OS/File.h>
-#include <casa/Quanta/MVTime.h>
-#include <fits/FITS/FITSReader.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <ms/MeasurementSets/MSHistoryHandler.h>
-#include <ms/MeasurementSets/MSRange.h>
-#include <ms/MeasurementSets/MSColumns.h>
-#include <ms/MSOper/MSConcat.h>
-#include <ms/MSOper/MSLister.h>
-#include <ms/MSOper/MSSummary.h>
-#include <ms/MSSel/MSSelectionTools.h>
-#include <ms/MSSel/MSSelUtil2.h>
-#include <msfits/MSFits/MSFitsInput.h>
-#include <msfits/MSFits/MSFitsOutput.h>
-#include <msfits/MSFits/MSFitsIDI.h>
-#include <tables/Tables/ConcatTable.h>
-#include <tables/Tables/SetupNewTab.h>
-#include <tables/Tables/TableCopy.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/OS/DOos.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/fits/FITS/FITSReader.h>
+#include <casacore/measures/Measures/MeasTable.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
+#include <casacore/ms/MeasurementSets/MSRange.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
+#include <casacore/ms/MSOper/MSConcat.h>
+#include <casacore/ms/MSOper/MSLister.h>
+#include <casacore/ms/MSOper/MSSummary.h>
+#include <casacore/ms/MSSel/MSSelectionTools.h>
+#include <casacore/ms/MSSel/MSSelUtil2.h>
+#include <casacore/msfits/MSFits/MSFitsInput.h>
+#include <casacore/msfits/MSFits/MSFitsOutput.h>
+#include <casacore/msfits/MSFits/MSFitsIDI.h>
+#include <casacore/tables/Tables/ConcatTable.h>
+#include <casacore/tables/Tables/SetupNewTab.h>
+#include <casacore/tables/Tables/TableCopy.h>
 
 #include <asdmstman/AsdmStMan.h>
 #include <mstransform/TVI/ChannelAverageTVI.h>
@@ -95,7 +96,7 @@
 #include <msmetadata_cmpt.h>
 #include <tools/table/Statistics.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 #include <cassert>
 
 using namespace casacore;
@@ -2962,7 +2963,8 @@ ms::selectpolarization(const std::vector<std::string>& wantedpol)
             if (checkinit()) {
                 *itsLog << LogOrigin("ms", "selectpolarization");
                 Record polnSelRec(Record::Variable);
-                String polnExpr = MSSelection::nameExprStr(wantedpol);
+                Vector<String> const wantedpolV(wantedpol);
+                String polnExpr = MSSelection::nameExprStr(wantedpolV);
                 polnSelRec.define("polarization", polnExpr);
                 std::unique_ptr<::casac::record> casacRec(fromRecord(polnSelRec));
                 retval = doMSSelection(*casacRec);
@@ -7010,7 +7012,7 @@ ms::split(const std::string&      outputms,  const ::casac::variant& field,
 
         if (toCasaString(tileShape) != String("")) {
             t_tileshape.resize();
-            t_tileshape=tileShape.toIntVec();
+            t_tileshape=Vector<Int>(tileShape.toIntVec());
         }
 
         const String t_combine = downcase(combine);
@@ -7104,7 +7106,7 @@ ms::partition(const std::string&      outputms,   const ::casac::variant& field,
 
         if (toCasaString(tileShape) != String("")) {
             t_tileshape.resize();
-            t_tileshape=tileShape.toIntVec();
+            t_tileshape=Vector<Int>(tileShape.toIntVec());
         }
 
         const String t_combine = downcase(combine);

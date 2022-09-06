@@ -7,13 +7,13 @@
 #include <tools/utils/stdBaseInterface.h>
 #include <stdcasa/record.h>
 #include <iostream>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/NullLogSink.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/NullLogSink.h>
 #include <sys/stat.h>
 
-#include <casa/BasicSL/String.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/Unit.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/Unit.h>
 
 
 //extern "C" char **rl_completion_matches __P((const char *, rl_compentry_func_t *));
