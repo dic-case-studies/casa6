@@ -14,8 +14,6 @@
 
 STRINGTOCOMPLEX_DEFINITION(casac::complex,stringtoccomplex)
 
-#ifndef PyInt_Check
-// support for python3
 #define PyInt_Check                     PyLong_Check
 #define PyInt_FromLong                  PyLong_FromLong
 #define PyInt_FromUnsignedLong          PyLong_FromUnsignedLong
@@ -31,7 +29,7 @@ inline bool PyString_Check( PyObject *o ) {
 }
 
 #define PyString_FromString             PyUnicode_FromString
-inline char *PyString_FromString( PyObject *o ) {
+inline char *PyString_AsString( PyObject *o ) {
     if ( PyUnicode_Check(o) ) {
         PyObject * temp_bytes = PyUnicode_AsEncodedString( o, "UTF-8", "strict" );      // Owned reference
         if (temp_bytes != NULL) {
@@ -47,17 +45,6 @@ inline char *PyString_FromString( PyObject *o ) {
     else throw casacore::AipsError( "could not convert python object to string" );
 }
 
-#define PyString_AsString               PyString_FromString
-
-#else
-#if ( (PY_MAJOR_VERSION <= 1) || (PY_MINOR_VERSION <= 4) )
-    #define MYPYSIZE int
-#else
-    #define MYPYSIZE Py_ssize_t
-#endif
-#endif
-
-
 #define NODOCOMPLEX(x) (x)
 #define DOCOMPLEX(x) casac::complex(x,0)
 #define DOCOMPLEXCOND(cond) casac::complex((cond ? 1 : 0),0)
@@ -68,7 +55,7 @@ inline char *PyString_FromString( PyObject *o ) {
 // PyArray_NewFromDescr will steal it.
 static PyArray_Descr *get_string_description(unsigned int size) {
     auto string_descr = PyArray_DescrNewFromType(NPY_UNICODE);
-    string_descr->elsize = size;
+    string_descr->elsize = size*sizeof(uint32_t);
 
     return string_descr;
 }
@@ -153,14 +140,15 @@ npycomplextostring(npy_clongdouble,"(%Lf,%Lf)")
 
 #define NUMPY2VECTOR_PLACEUNI(TYPE,CONVERT)				\
     {									\
-    char *buf = new char[itemsize+1];					\
-    buf[itemsize] = '\0';						\
+    uint32_t stringlen = itemsize/sizeof(uint32_t);     \
+    char *buf = new char[stringlen+1];	 				\
+    buf[stringlen] = '\0';								\
     uint32_t *data = (uint32_t*) PyArray_DATA(obj);     \
     if (PyArray_CHKFLAGS(obj,NPY_ARRAY_F_CONTIGUOUS)) {			\
 	for ( unsigned int D=0; D < size; ++D ) {			\
         unsigned int S;                         \
-        for ( S=0; S < itemsize; ++S ) {        \
-            buf[S] = (char) data[D*itemsize+S]; \
+        for ( S=0; S < stringlen; ++S ) {        \
+            buf[S] = (char) data[D*stringlen+S]; \
             if ( buf[S] == 0 ) break;           \
         }                                       \
         buf[S] = 0;                             \
@@ -180,7 +168,7 @@ npycomplextostring(npy_clongdouble,"(%Lf,%Lf)")
 		offset += counts[i] * strides[i];			\
 	    }								\
         unsigned int S;                         \
-        for ( S=0; S < itemsize; ++S ) {   \
+        for ( S=0; S < stringlen; ++S ) {   \
             buf[S] = (char) data[offset+S]; \
             if ( buf[S] == 0 ) break;           \
         }                                       \
@@ -699,17 +687,19 @@ MAP_ARRAY_NUMPY(std::complex<double>, npy_cdouble, NPY_CDOUBLE,(*to).real = (*fr
 MAP_ARRAY_NUMPY(casac::complex, npy_cdouble, NPY_CDOUBLE,(*to).real = (*from).re; (*to).imag = (*from).im)
 MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 
+
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
+    initialize_numpy( );
+
     if ( vec.size( ) <= 0 ) {
         npy_intp shape[ ] = { vec.size( ) };
-        return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, 0, 20, 0, nullptr );
-        //                                                                    ^^
+        return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, 0, 20*sizeof(uint32_t), 0, nullptr );
+        //                                                                    ^^^^^^^^^^^^^^^^^^^
         //                                                                    |
         //  A ZERO VEC SIZE RESULTS IN THE ERROR  >>>>>>>---------------------+
         //  'data type must provide an itemsize"
     }
 
-    initialize_numpy( );
     size_t stringlen = 0;
     for ( const auto &elem : vec ) {
         size_t slen = elem.size();
@@ -718,16 +708,14 @@ PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
     }
     size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
     void *mem = PyDataMem_NEW(memlen);
-    uint32_t *baseptr = reinterpret_cast<uint32_t*>(mem);
-    for ( unsigned int D = 0; D < vec.size( ); ++D ) {
-        const std::string str = vec[D];
-        uint32_t *ptr = baseptr + D * stringlen;
+    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
+    for ( const auto &str : vec ) {
         for ( size_t i=0; i < stringlen; ++i ) {
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
     npy_intp shape[ ] = { vec.size( ) };
-    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, stringlen, NPY_ARRAY_OWNDATA, nullptr );
+    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
@@ -746,7 +734,7 @@ PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vecto
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
-    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 #define HANDLE_NUMPY_ARRAY_CASE(NPYTYPE,CVTTYPE)				\
