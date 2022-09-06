@@ -572,8 +572,10 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
                     timerangeListIndex = allTimeranges.index(uTPFPStimerangeValue)
                 except ValueError:
                     casalogPost(debug, "uTPFPStimerangeValue = {} is not in the list allTimeranges".format(uTPFPStimerangeValue))
-                    casalogPost(debug, "Setting timerangeListIndex = 0. This will change the overlay colors index to a default state. The time labels might not look as expected.")
+                    casalogPost(debug, "Setting timerangeListIndex = 0. This will change the overlay colors index to a default value. The time labels might not look as expected.")
+                    casalogPost(debug, "It is possible that certain antennas had a slightly different timestamp.")
                     timerangeListIndex = 0
+                
                 overlayColorsIndex = timerangeList[timerangeListIndex]
                 pb.text(x0, y0, legendString, color=overlayColors[overlayColorsIndex], fontsize=mysize, transform=pb.gcf().transFigure)
                 
@@ -714,7 +716,7 @@ def run_with_old_pyplot_style(func):
     return func_old_style
 
 DEFAULT_PLATFORMING_THRESHOLD = 10.0 # unused if platformingSigma != 0
-@run_with_old_pyplot_style
+# @run_with_old_pyplot_style
 def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                  xaxis='chan', figfile='', plotrange=[0,0,0,0], 
                  caltable2='', overlay='', showflagged=False, timeranges='',
@@ -3444,6 +3446,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot amp on xframe %d" % (xframe))
 # #     # #            print(",,,,,,,,,,,,,,,, Starting with newylimits = ", newylimits)
 
+                      print("Requesting xframe={}".format(xframe))
                       adesc = safe_pb_subplot(xframe)
 
                       if (previousSubplot != xframe):
