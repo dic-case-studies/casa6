@@ -64,16 +64,26 @@ using namespace casac;
 }
 
 %typemap(in) string {
-   if(PyString_Check($input)){
-      $1 = string(PyString_AsString($input));
+   if ( PyUnicode_Check($input) ) {
+      PyObject * temp_bytes = PyUnicode_AsEncodedString( $input, "UTF-8", "strict" ); // Owned reference
+      if (temp_bytes != NULL) {
+         $1 = string(PyBytes_AS_STRING(temp_bytes));                                 // Borrowed pointer
+         Py_DECREF(temp_bytes);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"unicode encoding for argument $1_name failed");
+         return NULL;
+      }
+   } else if ( PyBytes_Check($input) ) {
+      $1 = string(PyBytes_AS_STRING($input));
    } else {
       // Can't throw an exception here as it's not in a try catch block
       //
       //throw casa::AipsError("Not a String");
-        PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
-        return NULL;
+      PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+      return NULL;
    }
 }
+
 %typemap(typecheck) string {
    $1 = PyUnicode_Check($input);
 }
@@ -627,11 +637,11 @@ using namespace casac;
    } else {
       if (PyString_Check($input)){
          $1->push_back(0);
-         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a boolean");
          return NULL;
       } else if (PyUnicode_Check($input)){
          $1->push_back(0);
-         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a string");
+         PyErr_SetString(PyExc_TypeError,"argument $1_name must be a boolean");
          return NULL;
       } else if (PyBool_Check($input)){
          $1->push_back(bool(PyInt_AsLong($input)));
