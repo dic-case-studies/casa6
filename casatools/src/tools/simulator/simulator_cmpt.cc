@@ -12,18 +12,18 @@
 
 #include <iostream>
 #include <simulator_cmpt.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Containers/Record.h>
 #include <synthesis/MeasurementEquations/Simulator.h>
-#include<casa/BasicSL/String.h>
-#include<casa/Utilities/Assert.h>
-#include<measures/Measures/MDirection.h>
-#include<measures/Measures/MPosition.h>
-#include<measures/Measures/MEpoch.h>
-#include <measures/Measures/MeasureHolder.h>
-#include<casa/Quanta/QuantumHolder.h>
-#include<ms/MeasurementSets.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MPosition.h>
+#include <casacore/measures/Measures/MEpoch.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/ms/MeasurementSets.h>
+#include <casacore/casa/Logging/LogIO.h>
 #include <imageanalysis/ImageAnalysis/ImageFactory.h>
 
 using namespace std;

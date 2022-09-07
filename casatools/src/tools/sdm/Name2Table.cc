@@ -39,7 +39,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include <casa/Logging.h>
+#include <casacore/casa/Logging.h>
 
 using namespace std;
 using namespace casacore;
