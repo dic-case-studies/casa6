@@ -42,7 +42,9 @@ bool atcafiller::open(const std::string& msName,
 		 const std::vector<std::string>& rpfitsFiles,
 		 const std::vector<std::string>& options)
 {
-    itsATCAFiller->open(msName,rpfitsFiles,options,0);
+    Vector<String> const rpfitsFilesV(rpfitsFiles);
+    Vector<String> const optionsV(options);
+    itsATCAFiller->open(msName,rpfitsFilesV,optionsV,0);
     return true;
 }
 
@@ -57,10 +59,12 @@ bool atcafiller::select(long firstScan, long lastScan,
 		   const std::vector<std::string>& fieldList,float edge)
 {
     itsATCAFiller->scanRange(firstScan,lastScan);
-    itsATCAFiller->freqSel(spw);
+    Vector<Int> const spwV(spw);
+    itsATCAFiller->freqSel(spwV);
     itsATCAFiller->freqRange(casaQuantity(lowFreq).getValue("Hz"),
 			    casaQuantity(highFreq).getValue("Hz"));
-    itsATCAFiller->fields(fieldList);
+    Vector<String> const fieldListV(fieldList);
+    itsATCAFiller->fields(fieldListV);
     itsATCAFiller->edge(edge);
     return true;
 }
@@ -68,7 +72,8 @@ bool atcafiller::select(long firstScan, long lastScan,
 std::vector<double> atcafiller::opacities(const std::vector<double>& fGHz,float tempK,
   float humi, float press, float height)
 {
-  Vector<Double> v=itsATCAFiller->opacities(fGHz,tempK,humi,press,height);
+  Vector<Double> const fGHzV(fGHz);
+  Vector<Double> v=itsATCAFiller->opacities(fGHzV,tempK,humi,press,height);
   std::vector<double> out(0);
   v.tovector(out);
   return out;  
