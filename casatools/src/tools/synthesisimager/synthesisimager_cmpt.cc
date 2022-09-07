@@ -8,13 +8,13 @@
  ***/
 
 #include <iostream>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Utilities/Assert.h>
-#include <ms/MeasurementSets.h>
-#include <ms/MeasurementSets/MSHistoryHandler.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/ms/MeasurementSets.h>
+#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
+#include <casacore/casa/Logging/LogIO.h>
 
 //#include <synthesis/ImagerObjects/TmpSwitch.h>
 
@@ -536,7 +536,8 @@ bool synthesisimager::setweighting(const std::string& type,
       
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
-      itsImager->dryGridding(cfList);
+      Vector<String> const cfListV(cfList);
+      itsImager->dryGridding(cfListV);
       
     } catch  (AipsError x) {
       RETHROW(x);
@@ -558,7 +559,8 @@ bool synthesisimager::setweighting(const std::string& type,
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
       //Bool conjBeams=itsImager->getSynthesisParamsGrid().conjBeams;
-      itsImager->fillCFCache(cfList,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
+      Vector<String> const cfListV(cfList);
+      itsImager->fillCFCache(cfListV,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
       
     } catch  (AipsError x) {
       RETHROW(x);

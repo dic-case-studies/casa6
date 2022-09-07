@@ -11,21 +11,13 @@ import unittest
 import json
 import datetime
 import platform
-
+import re
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
 
 default_timeout = 1800
 sys.path.insert(0,'')
-
-# mem mode variables
-HAVE_MEMTEST=True
-MEM = 0
-try:
-    import memTest
-except ImportError:
-    HAVE_MEMTEST = False
 
 # cov mode variables
 HAVE_COVTEST=True
@@ -36,12 +28,8 @@ except ImportError:
     HAVE_COVTEST = False
 
 # pybot mode variables
-HAVE_ROBOT = True
+
 USE_PYBOT = 0
-try:
-    import robot
-except ImportError:
-    HAVE_ROBOT = False
 
 #### PYTEST IMPORT
 HAVE_PYTEST = True
@@ -50,12 +38,6 @@ try:
 except ImportError:
     HAVE_PYTEST = False
 
-#### NOSE IMPORT
-HAVE_NOSE = True
-try:
-    import nose
-except ImportError:
-    HAVE_NOSE = False
 
 IS_CASA6 = False
 CASA6 = False
@@ -63,14 +45,6 @@ verbose = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
-
-try:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-except ImportError:
-    CASA6 = True
-    IS_CASA6 = True
 
 # Dry run of Tests
 DRY_RUN = False
@@ -238,6 +212,30 @@ class TestDescriptionPlugin:
     file_obj.write(string)
     file_obj.close()
 
+def write_pytestini(filepath, testname):
+    string = """
+[pytest]
+junit_suite_name = '{}'
+    """.format(testname)
+
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
+
+def update_xml(filename):
+    import xml.etree.ElementTree as ET
+    xmlTree = ET.parse(filename)
+    rootElement = xmlTree.getroot()
+    for element in rootElement.iter():
+        if element.tag == 'testcase':
+            testname = element.attrib['name']
+            testscript = element.attrib['classname'].split(".")[0]
+            testclass = element.attrib['classname'].split(".")[1]
+            #print(name,testscript,testclass)
+            element.set("classname",testscript)
+            element.set("name",'.'.join([testclass,testname]))
+    xmlTree.write(filename,encoding='UTF-8',xml_declaration=True) 
+
 class casa_test:
     def __init__(self,
                  name,
@@ -271,7 +269,12 @@ class casa_test:
 def read_conf(conf):
     with open(conf) as f:
         lines = [line.rstrip() for line in f]
-    return dict(x.split('==') for x in lines)
+    outDict = dict(x.split('==') for x in lines)
+    for key in list(outDict.keys()):
+        if ".dev" in outDict[key]:
+            tag = re.findall(r"a([\s\S]*)$",outDict[key])[0]
+            outDict[key] = "CAS-" + tag.replace(".dev","-")
+    return outDict
 
 def fetch_tests(work_dir, branch):
 
@@ -294,7 +297,7 @@ def fetch_tests(work_dir, branch):
     # Clone the repository and checkout branch
     for repo in repositories:
         cmd = ("git clone " + repo_path + repo).split()
-        print(cmd)
+        print("Running: ", " ".join(str(x) for x in cmd))
         try:
             r = ShellRunner()
             r.runshell(cmd, default_timeout, source_dir)
@@ -358,20 +361,17 @@ def readfile(FILE):
 def list_tests():
     print('Full list of unit tests')
     print('-----------------------')
-    if IS_CASA6:
-        if os.path.isdir(os.getcwd() +"/testlist/"):
-            shutil.rmtree(os.getcwd() +"/testlist/")
-        os.makedirs(os.getcwd() +"/testlist/")
-        testpaths = fetch_tests(os.getcwd() +"/testlist/", 'master')
-        for path in testpaths:
-            gather_all_tests(path, os.getcwd() +"/testlist/")
-        tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
-        for test in tests:
-            if test.startswith("test_"):
-                print(test)
-    else:
-        for t in readfile(LISTofTESTS):
-            print(t)
+    if os.path.isdir(os.getcwd() +"/testlist/"):
+        shutil.rmtree(os.getcwd() +"/testlist/")
+    os.makedirs(os.getcwd() +"/testlist/")
+    testpaths = fetch_tests(os.getcwd() +"/testlist/", 'master')
+    for path in testpaths:
+        gather_all_tests(path, os.getcwd() +"/testlist/")
+    tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
+    for test in tests:
+        if test.startswith("test_"):
+            print(test)
+
 
 def gather_all_tests(path, workpath):
 
@@ -499,6 +499,27 @@ def unpack_pkg(pkg, work_dir, outputdir):
     if casatestutils_exec_path == None:
         raise Exception("Couldn't find casatestutils")
     return exec_path, casatestutils_exec_path
+    
+def build_xml(outfile, indir):
+    import pathlib
+    import xml.etree.ElementTree as ET
+
+    root = ET.Element("Tests")
+
+    for xml_file in pathlib.Path(indir).glob('**/*.xml'):
+        #print(xml_file)
+        test = str(xml_file).split("/")[-2]
+        #print(test)
+        xmlTree = ET.parse(xml_file)
+        rootElement = xmlTree.getroot()
+        root.append(rootElement)
+        for element in rootElement.iter():
+            if element.tag == 'testsuites':
+                element.set("testsuites",test)
+
+    tree = ET.ElementTree(root)
+    with open (outfile, "wb") as files :
+        tree.write(files, encoding = "UTF-8", xml_declaration = True)
 
 ########################################################################################################################
 ##############################################            Run            ###############################################
@@ -506,189 +527,194 @@ def unpack_pkg(pkg, work_dir, outputdir):
 
 def run(testnames, branch=None, DRY_RUN=False):
 
-    if IS_CASA6:
-
-        if HAVE_PYTEST:
-            cwd = os.getcwd() + "/"
-            workpath = os.getcwd() +"/nosedir/"
-            workdir = os.getcwd() +"/nosedir/"
-
-            clean_working_directory(workpath)
-            # Copy Tests to Working Directory
-            os.makedirs(workdir)
-
-            # Remove Duplicates
-            # Since working directory is based on script name
-            # We need to remove multiple calls to the same script
-            setlist = []
-            for duplicate in list(set([ x.split("/")[-1] for x in testnames])):
-                inlist = True
-                for test in testnames:
-                    if duplicate in test:
-                        if inlist:
-                            setlist.append(test)
-                            inlist = False
-            testnames = setlist
-            print("Tests: {}".format(sorted(testnames)))
-            gittest = True
-            if branch ==None:
-                branch = 'master'
-            # Only Checkout When Needed
-            if any([False if ".py" in x else True for x in testnames ]):
-                testpaths = fetch_tests(workdir, branch)
-                os.makedirs(workdir + "tests/")
-                for path in testpaths:
-                    gather_all_tests(path, workdir + "tests/")
-                print(workdir + "tests/")
-
-            for testname in testnames:
-                cmd = []
-
-                # Copy Test To nosedir Directory if in cwd
-                if testname.startswith("test"):
-                    test = testname
-                    # Check if specific tests are requested
-                    if "[" and "]" in test:
-                        testname = getname(test)
-                        tests = gettests(test)
-
-                        teststring = ""
-                        if len(tests) == 1:
-                            teststring = tests[0]
-                        elif len(tests) > 1:
-                            print(tests)
-                            teststring = " or ".join(tests)
-
-                        cmd = ["-k {}".format(teststring)] + cmd
-                        test = testname
-
-                    # Set up Test Working Directory
-                    if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
-                        print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                        os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
-
-                    if test.endswith(".py"):
-                        try:
-                            print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                            shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        except:
-                            traceback.print_exc()
-                    else:
-                        try:
-                            print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        except:
-                            traceback.print_exc()
-                            
-                    # https://docs.pytest.org/en/stable/usage.html
-                    
-                    cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
-                    if DRY_RUN:
-                        cmd = ["--collect-only"] + cmd
-                    
-                    if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
-                        os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
-                    xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
-
-                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
-                    #print("Running Command: pytest {}".format(cmd))
-                    #print("Work Path: {}".format(workpath))
-                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                        print("No Tests to Run")
-                        sys.exit()
-                    else:
-                        
-                        myworkdir = os.getcwd()
-                        os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                        print("Test Directory: {}".format(os.getcwd()))
-                        print("Running Command: pytest {}".format(cmd))
-                        conf_name = os.path.join(os.getcwd(),"conftest.py")
-                        if platform.system() == 'Darwin':
-                            write_conftest_osx(conf_name)
-                        else:
-                            write_conftest_linux(conf_name)
-                        try: 
-                            from casampi.MPIEnvironment import MPIEnvironment
-                            if MPIEnvironment.is_mpi_enabled:
-                                pytest.main(cmd)
-                            else:
-                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
-                        except:
-                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
-                        os.remove(conf_name)
-                        os.chdir(myworkdir)
-
-                ##################################################
-                ########## Real Path ##########
-                ##################################################
-                 # Copy Test To nosedir Directory assuming it's in another location
-                elif testname.startswith("/"):
-                    testpath = testname.split("[")[0]
-                    cmd = []
-                    dirname = testname.split("/")[-1]
-                    test = dirname
-                    if "[" and "]" in test:
-                        testname = getname(test)
-                        tests = gettests(test)
-                        teststring = ""
-                        if len(tests) == 1:
-                            teststring = tests[0]
-                        elif len(tests) > 1:
-                            print(tests)
-                            teststring = " or ".join(tests)
-                        cmd = ["-k {}".format(teststring)] + cmd
-                        dirname = testname
-
-                    dirname = "{}".format(dirname if not dirname.endswith(".py") else dirname[:-3])
-
-                    # Set up Test Working Directory
-                    if not os.path.exists(workdir + "{}/".format(dirname)):
-                        print("Setting Working Directory: {}".format(workdir + "{}/".format(dirname)))
-                        os.makedirs(workdir + "{}/".format(dirname))
-                        cmd = [ workdir + "{}/".format(dirname) ] + cmd
-                    try:
-                        shutil.copy2(testpath, workdir + "{}/".format(dirname))
-                    except:
-                        traceback.print_exc()
-
-                    cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
-
-                    if DRY_RUN:
-                        cmd = ["--collect-only"] + cmd
-                    
-                    if not os.path.isdir(workpath + '/xml/{}/'.format(dirname)):
-                        os.makedirs(workpath + '/xml/{}/'.format(dirname))
-                    xmlfile = workpath + 'xml/{}/nose.xml'.format(dirname)
-                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
-                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                        print("No Tests to Run")
-                        sys.exit()
-                    else:
-                        myworkdir = os.getcwd()
-                        os.chdir(workdir + "{}/".format(dirname))
-                        print("Test Directory: {}".format(os.getcwd()))
-                        print("Running Command: pytest {}".format(cmd))
-                        conf_name = os.path.join(os.getcwd(),"conftest.py")
-                        if platform.system() == 'Darwin':
-                            write_conftest_osx(conf_name)
-                        else:
-                            write_conftest_linux(conf_name)
-                        try: 
-                            from casampi.MPIEnvironment import MPIEnvironment
-                            if MPIEnvironment.is_mpi_enabled:
-                                pytest.main(cmd)
-                            else:
-                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
-                        except:
-                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
-                        os.remove(conf_name)
-                        os.chdir(myworkdir)
-            os.chdir(cwd)
-
-        if not HAVE_PYTEST:
+    if not HAVE_PYTEST:
             raise ImportError('No Module Named Pytest. Pytest is Required for runtest.py')
 
+    if HAVE_PYTEST:
+        cwd = os.getcwd() + "/"
+        workpath = os.getcwd() +"/nosedir/"
+        workdir = os.getcwd() +"/nosedir/"
+
+        clean_working_directory(workpath)
+        # Copy Tests to Working Directory
+        os.makedirs(workdir)
+
+        # Remove Duplicates
+        # Since working directory is based on script name
+        # We need to remove multiple calls to the same script
+        setlist = []
+        for duplicate in list(set([ x.split("/")[-1] for x in testnames])):
+            inlist = True
+            for test in testnames:
+                if duplicate in test:
+                    if inlist:
+                        setlist.append(test)
+                        inlist = False
+        testnames = setlist
+        print("Tests: {}".format(sorted(testnames)))
+        gittest = True
+        if branch ==None:
+            branch = 'master'
+        # Only Checkout When Needed
+        if any([False if ".py" in x else True for x in testnames ]):
+            testpaths = fetch_tests(workdir, branch)
+            os.makedirs(workdir + "tests/")
+            for path in testpaths:
+                gather_all_tests(path, workdir + "tests/")
+            print(workdir + "tests/")
+
+        for testname in testnames:
+            #print(testname)
+            cmd = []
+
+            # Copy Test To nosedir Directory if in cwd
+            if testname.startswith("test"):
+                test = testname
+                # Check if specific tests are requested
+                if "[" and "]" in test:
+                    testname = getname(test)
+                    tests = gettests(test)
+
+                    teststring = ""
+                    if len(tests) == 1:
+                        teststring = tests[0]
+                    elif len(tests) > 1:
+                        print(tests)
+                        teststring = " or ".join(tests)
+
+                    cmd = ["-k {}".format(teststring)] + cmd
+                    test = testname
+
+                # Set up Test Working Directory
+                if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
+                    print("\nSetting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                    os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                    cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
+
+                if test.endswith(".py"):
+                    try:
+                        print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                        shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                    except:
+                        traceback.print_exc()
+                else:
+                    try:
+                        print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                    except:
+                        traceback.print_exc()
+                        
+                # https://docs.pytest.org/en/stable/usage.html
+                
+                cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
+                if DRY_RUN:
+                    cmd = ["--collect-only"] + cmd
+                
+                if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
+                    os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
+                xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
+
+                cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
+                #print("Running Command: pytest {}".format(cmd))
+                #print("Work Path: {}".format(workpath))
+                if len(os.listdir(workpath)) < 1: # If only the XML dir was created
+                    print("No Tests to Run")
+                    sys.exit()
+                else:
+                    
+                    myworkdir = os.getcwd()
+                    os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                    print("Test Directory: {}\n".format(os.getcwd()))
+                    print("Running Command: pytest {}\n".format(cmd))
+                    conf_name = os.path.join(os.getcwd(),"conftest.py")
+                    write_pytestini(os.path.join(os.getcwd(),"pytest.ini"),test if not test.endswith(".py") else test[:-3])
+                    if platform.system() == 'Darwin':
+                        write_conftest_osx(conf_name)
+                    else:
+                        write_conftest_linux(conf_name)
+                    try: 
+                        from casampi.MPIEnvironment import MPIEnvironment
+                        if MPIEnvironment.is_mpi_enabled:
+                            pytest.main(cmd)
+                        else:
+                            subprocess.run([sys.executable,"-m","pytest"] + pytest_args + cmd , env={**os.environ})
+                    except:
+                        subprocess.run([sys.executable,"-m","pytest"] + pytest_args + cmd, env={**os.environ})
+                    update_xml(xmlfile)
+                    os.remove(conf_name)
+                    os.remove(os.path.join(os.getcwd(),"pytest.ini"))
+                    os.chdir(myworkdir)
+
+            ##################################################
+            ########## Real Path ##########
+            ##################################################
+             # Copy Test To nosedir Directory assuming it's in another location
+            elif testname.startswith("/"):
+                testpath = testname.split("[")[0]
+                cmd = []
+                dirname = testname.split("/")[-1]
+                test = dirname
+                if "[" and "]" in test:
+                    testname = getname(test)
+                    tests = gettests(test)
+                    teststring = ""
+                    if len(tests) == 1:
+                        teststring = tests[0]
+                    elif len(tests) > 1:
+                        print(tests)
+                        teststring = " or ".join(tests)
+                    cmd = ["-k {}".format(teststring)] + cmd
+                    dirname = testname
+
+                dirname = "{}".format(dirname if not dirname.endswith(".py") else dirname[:-3])
+
+                # Set up Test Working Directory
+                if not os.path.exists(workdir + "{}/".format(dirname)):
+                    print("\nSetting Working Directory: {}".format(workdir + "{}/".format(dirname)))
+                    os.makedirs(workdir + "{}/".format(dirname))
+                    cmd = [ workdir + "{}/".format(dirname) ] + cmd
+                try:
+                    shutil.copy2(testpath, workdir + "{}/".format(dirname))
+                except:
+                    traceback.print_exc()
+
+                cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
+
+                if DRY_RUN:
+                    cmd = ["--collect-only"] + cmd
+                
+                if not os.path.isdir(workpath + '/xml/{}/'.format(dirname)):
+                    os.makedirs(workpath + '/xml/{}/'.format(dirname))
+                xmlfile = workpath + 'xml/{}/nose.xml'.format(dirname)
+                cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
+                if len(os.listdir(workpath)) < 1: # If only the XML dir was created
+                    print("No Tests to Run")
+                    sys.exit()
+                else:
+                    myworkdir = os.getcwd()
+                    os.chdir(workdir + "{}/".format(dirname))
+                    print("Test Directory: {}\n".format(os.getcwd()))
+                    print("Running Command: pytest {}\n".format(cmd))
+                    conf_name = os.path.join(os.getcwd(),"conftest.py")
+                    write_pytestini(os.path.join(os.getcwd(),"pytest.ini"),dirname)
+                    if platform.system() == 'Darwin':
+                        write_conftest_osx(conf_name)
+                    else:
+                        write_conftest_linux(conf_name)
+                    try: 
+                        from casampi.MPIEnvironment import MPIEnvironment
+                        if MPIEnvironment.is_mpi_enabled:
+                            pytest.main(cmd)
+                        else:
+                            subprocess.run([sys.executable,"-m","pytest"] + pytest_args + cmd , env={**os.environ})
+                    except:
+                        subprocess.run([sys.executable,"-m","pytest"] + pytest_args + cmd , env={**os.environ})
+                    update_xml(xmlfile)
+                    os.remove(conf_name)
+                    os.remove(os.path.join(os.getcwd(),"pytest.ini"))
+                    os.chdir(myworkdir)
+        #build_xml(workpath + '/xml/xUnit.xml', workpath + '/xml/')
+        os.chdir(cwd)
 
 ########################################################################################################################
 #######################################            Run Bamboo Option            ########################################
@@ -946,11 +972,8 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 
 if __name__ == "__main__":
 
-    print("HAVE_MEMTEST: {}".format(HAVE_MEMTEST))
     print("HAVE_COVTEST: {}".format(HAVE_COVTEST))
-    print("HAVE_ROBOT: {}".format(HAVE_ROBOT))
     print("HAVE_PYTEST: {}".format(HAVE_PYTEST))
-    print("HAVE_NOSE: {}".format(HAVE_NOSE))
     print("")
 
     # List of tests to run
@@ -983,14 +1006,10 @@ if __name__ == "__main__":
 
     parser.add_argument('--ignore_list',  help='map file of tests to ignore', required=False)
 
-    if not IS_CASA6:
-        if "-c" in sys.argv:
-            i = sys.argv.index("-c")
-        args, unknownArgs = parser.parse_known_args(sys.argv[i+2:])
-    else:
-        args, unknownArgs = parser.parse_known_args()
+    args, unknownArgs = parser.parse_known_args()
     
     print(args)
+
     print("")
 
     tests_to_ignore = None
@@ -1033,13 +1052,19 @@ if __name__ == "__main__":
                     #print(component, myDict["testGroup"])
                     if component in myDict["testGroup"] or component in myDict["testType"]:
                         _isComponent = True
-                        if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
+                        if (myDict["testScript"] not in testnames):
+                            if tests_to_ignore is not None:
+                                if myDict["testScript"] in tests_to_ignore:
+                                    continue
+                            testnames.append(myDict["testScript"])
                 if not _isComponent:
                     print("No Tests for Component: {}".format(component))
                     no_test_components.append(component)
 
-            if (len(no_test_components) > 0) and (len(testnames)==0):
-                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+            if len(testnames)==0:
+                if len(no_test_components) > 0:
+                    print("No Test Suite for Component(s): {}".format(no_test_components))
+                print("Generating Suite Using Component 'default'")
                 component = 'default'
                 for myDict in component_to_test_map["testlist"]:
                     if component in myDict["testGroup"]:
@@ -1083,10 +1108,12 @@ if __name__ == "__main__":
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
     temp_storage = []
+    pytest_args = []
     for arg in unknownArgs:
         if arg.startswith(("-", "--")):
-            raise ValueError('unrecognized argument: %s'%(arg))
-            sys.exit()
+            pytest_args.append(arg)
+            #raise ValueError('unrecognized argument: %s'%(arg))
+            #sys.exit()
         else:
             if '[' in arg:
                 tests = [x.strip() for x in arg.split("],")]
@@ -1137,6 +1164,7 @@ if __name__ == "__main__":
                         testnames.append(test)
                 except:
                     traceback.print_exc()
+    print("Arguments Sent Direct To Pytest : ",pytest_args)
     try:
         if args.bamboo:
             from testrunner.shell_runner import ShellRunner
@@ -1166,7 +1194,7 @@ if __name__ == "__main__":
                         for root, dirs, files in os.walk(test_path):
                             for file in files:
                                 if file.endswith(".py") and file.startswith("test_"):
-                                     tests.append(os.path.join(root, file))
+                                     tests.append(os.path.realpath(os.path.join(root, file)))
                 else:
                     for test_path in test_paths:
                         #print(test_path)
@@ -1177,9 +1205,10 @@ if __name__ == "__main__":
                             for root, dirs, files in os.walk(test_path):
                                 for file in files:
                                     if file == test:
-                                        tests.append(os.path.join(root, file))
+                                        tests.append(os.path.realpath(os.path.join(root, file)))
                 testnames = tests
 
+            # This section is duplicate. TO be removed with CAS-13820
             if tests_to_ignore is not None:
                 print("\nTests to Ignore: ",tests_to_ignore )
                 indices = []
@@ -1192,8 +1221,8 @@ if __name__ == "__main__":
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-            #print(testnames)
-            #sys.exit()
+
+            print("Running {} Test(s)".format(len(testnames)))
             run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()

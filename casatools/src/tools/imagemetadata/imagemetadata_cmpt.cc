@@ -1,14 +1,14 @@
 #include <imagemetadata_cmpt.h>
 
-#include <casa/Containers/ValueHolder.h>
-#include <casa/Utilities/PtrHolder.h>
+#include <casacore/casa/Containers/ValueHolder.h>
+#include <casacore/casa/Utilities/PtrHolder.h>
 #include <imageanalysis/ImageAnalysis/ImageFactory.h>
 #include <imageanalysis/ImageAnalysis/ImageMetaDataRW.h>
-#include <images/Images/ImageOpener.h>
+#include <casacore/images/Images/ImageOpener.h>
 
 #include <stdcasa/version.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #include <memory>
 

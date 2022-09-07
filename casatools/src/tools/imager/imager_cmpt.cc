@@ -10,25 +10,25 @@
  ***/
 
 #include <iostream>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayLogical.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Exceptions/Error.h>
 #include <synthesis/MeasurementEquations/ImagerMultiMS.h>
 #include <synthesis/Utilities/FixVis.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Utilities/Assert.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MPosition.h>
-#include <measures/Measures/MeasureHolder.h>
-#include <measures/Measures/MeasTable.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <ms/MeasurementSets.h>
-#include <ms/MeasurementSets/MSHistoryHandler.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MPosition.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MeasTable.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/ms/MeasurementSets.h>
+#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
+#include <casacore/casa/Logging/LogIO.h>
 #include <imager_cmpt.h>
-#include <casa/iostream.h>
+#include <iostream>
 //#include <casa/System/PGPlotterNull.h>
 //#include <graphics/Graphics/PGPlotterLocal.h>
 
@@ -182,7 +182,9 @@ imager::boxmask(const std::string& mask, const std::vector<long>& blc, const std
       try {
       //Vector <String> amodel(toVectorString(model));
       //Vector <String> apsf(toVectorString(psf));
-          rstat = itsImager->boxmask(mask, blc, trc, value);
+          Vector<Int> const blcV(blc);
+          Vector<Int> const trcV(trc);
+          rstat = itsImager->boxmask(mask, blcV, trcV, value);
        } catch  (AipsError x) {
           //*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
 	  RETHROW(x);
@@ -209,7 +211,8 @@ bool imager::calcuvw(const std::vector<long>& fields, const std::string& refcode
     }
 
     FixVis visfixer(*itsMS);
-    visfixer.setFields(fields);
+    Vector<Int> const fieldsV(fields);
+    visfixer.setFields(fieldsV);
     // String obs(observation);
     // if(obs != "")
     //   visfixer.setObsIDs(obs);
@@ -549,12 +552,13 @@ imager::linearmosaic(const std::vector<std::string>& images, const std::string& 
    if(hasValidMS_p){
    try {
       Vector <String> aimages(toVectorString(images));
+      Vector<Int> const fieldidsV(fieldids);
       String vp(vptable);
       if(!vp.empty())
 	itsImager->setvp(true, false, vp, false, casacore::Quantity(360.0, "deg"), casacore::Quantity(180.0, "deg"));
       else if(usedefaultvp)
 	itsImager->setvp(true, true, "", false, casacore::Quantity(360.0, "deg"), casacore::Quantity(180.0, "deg"));
-      rstat = itsImager->linearmosaic(mosaic, fluxscale, sensitivity, aimages, fieldids);
+      rstat = itsImager->linearmosaic(mosaic, fluxscale, sensitivity, aimages, fieldidsV);
     } catch  (AipsError x) {
        //*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
        RETHROW(x);
@@ -907,11 +911,11 @@ Bool rstat(false);
 	Vector<Float> weight;
 	Vector<Int> shape;
 	if (d_weight.type() == ::casac::variant::DOUBLEVEC) {
-	  shape = d_weight.arrayshape();
+	  shape = Vector<Int>(d_weight.arrayshape());
 	  weight.resize(casacore::product(shape));
 	  casacore::convertArray(weight, Vector<Double>(d_weight.getDoubleVec()));
 	} else if (d_weight.type() == ::casac::variant::INTVEC) {
-	  shape = d_weight.arrayshape();
+	  shape = Vector<Int>(d_weight.arrayshape());
 	  weight.resize(casacore::product(shape));
 	  casacore::convertArray(weight, Vector<Int>(d_weight.getIntVec()));
 	  
@@ -989,7 +993,7 @@ imager::regionmask(const std::string& mask, const ::casac::record& region,
 	  }
 	}
 	else if(boxes.type() == ::casac::variant::STRINGVEC){
-	  Vector<Int> shape = boxes.arrayshape();
+	  Vector<Int> shape(boxes.arrayshape());
 	  casacore::Vector<casacore::Quantity> theCorners;
 	  toCasaVectorQuantity(boxes, theCorners);
 	  if(casacore::product(shape) != Int(theCorners.nelements())){
@@ -1111,7 +1115,7 @@ imager::regiontoimagemask(const std::string& mask,
       }
     }
     else if(boxes.type() == ::casac::variant::STRINGVEC){
-      Vector<Int> shape = boxes.arrayshape();
+      Vector<Int> shape(boxes.arrayshape());
       casacore::Vector<casacore::Quantity> theCorners;
       toCasaVectorQuantity(boxes, theCorners);
       if(casacore::product(shape) != Int(theCorners.nelements())){
@@ -1636,10 +1640,14 @@ imager::setjy(const ::casac::variant& field, const ::casac::variant& spw,
       casacore::String intentstr(intent);
       casacore::String interpstr(interpolation);
 
+      Vector<Double> const fluxdensityV(fluxdensity);
+      Vector<Double> const spixV(spix);
+      Vector<Double> const polindexV(polindex);
+      Vector<Double> const polangleV(polangle);
       //rstat = itsImager->setjy(fieldIndex, spwid, fieldnames, spwstring, 
       retval = itsImager->setjy(fieldIndex, spwid, fieldnames, spwstring, 
-                               modimage, fluxdensity, standard, scalebychan,
-                               spix, mfreqref, polindex, polangle, rotmeas, 
+                               modimage, fluxdensityV, standard, scalebychan,
+                               spixV, mfreqref, polindexV, polangleV, rotmeas,
                                timerange, scanstr, intentstr, obsstr, interpstr);
     } 
     catch(AipsError x){
@@ -1783,7 +1791,7 @@ imager::settaylorterms(const long ntaylorterms, const double reffreq)
 bool
 imager::setsdoptions(const double scale, const double weight, const long convsupport, const std::string& pointingcolumntouse,
     const ::casac::variant &truncate, const ::casac::variant &gwidth, const ::casac::variant &jwidth,
-    const double minweight, const bool clipminmax)
+    const double minweight, const bool clipminmax, const bool enablecache)
 {
 
    Bool rstat(false);
@@ -1798,7 +1806,8 @@ imager::setsdoptions(const double scale, const double weight, const long convsup
              << "qJWidth=" << qJWidth.getValue() << qJWidth.getUnit() << LogIO::POST;
      rstat = itsImager->setsdoptions(scale, weight, convsupport, pcolToUse,
                                      qTruncate, qGWidth, qJWidth,
-                                     Float(minweight), Bool(clipminmax));
+                                     Float(minweight), Bool(clipminmax),
+                                     Bool(enablecache));
    } catch  (AipsError x) {
      //*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
      RETHROW(x);
