@@ -28,6 +28,10 @@ inline bool PyString_Check( PyObject *o ) {
     return PyBytes_Check(o) || PyUnicode_Check(o);
 }
 
+inline size_t non_zero( size_t val ) {
+    return  val <= 0 ? 5 : val;
+}
+
 #define PyString_FromString             PyUnicode_FromString
 inline char *PyString_AsString( PyObject *o ) {
     if ( PyUnicode_Check(o) ) {
@@ -691,50 +695,42 @@ MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
     initialize_numpy( );
 
-    if ( vec.size( ) <= 0 ) {
-        npy_intp shape[ ] = { vec.size( ) };
-        return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, 0, 20*sizeof(uint32_t), 0, nullptr );
-        //                                                                    ^^^^^^^^^^^^^^^^^^^
-        //                                                                    |
-        //  A ZERO VEC SIZE RESULTS IN THE ERROR  >>>>>>>---------------------+
-        //  'data type must provide an itemsize"
-    }
-
     size_t stringlen = 0;
     for ( const auto &elem : vec ) {
         size_t slen = elem.size();
         if ( slen > stringlen )
             stringlen = slen;
     }
-    size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
+    size_t memlen = vec.size( ) * non_zero(stringlen) * sizeof(uint32_t);
     void *mem = PyDataMem_NEW(memlen);
     uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
     for ( const auto &str : vec ) {
-        for ( size_t i=0; i < stringlen; ++i ) {
+        for ( size_t i=0; i < non_zero(stringlen); ++i ) {
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
     npy_intp shape[ ] = { vec.size( ) };
-    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
     initialize_numpy( );
+
     size_t stringlen = 0;
     for ( const auto &elem : vec ) {
         size_t slen = elem.size();
         if ( slen > stringlen )
             stringlen = slen;
     }
-    size_t memlen = vec.size( ) * stringlen * sizeof(uint32_t);
+    size_t memlen = vec.size( ) * non_zero(stringlen) * sizeof(uint32_t);
     void *mem = PyDataMem_NEW(memlen);
     uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
     for ( const auto &str : vec ) {
-        for ( size_t i=0; i < stringlen; ++i ) {
+        for ( size_t i=0; i < non_zero(stringlen); ++i ) {
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
-    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, stringlen*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 #define HANDLE_NUMPY_ARRAY_CASE(NPYTYPE,CVTTYPE)				\

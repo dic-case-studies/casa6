@@ -27,7 +27,7 @@ using namespace casac;
 %}
 
 %typemap(in) long long {
-  if(!(PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
+  if(!(PyUnicode_Check($input) || PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
      $1 = PyInt_AsLong($input);
   } else {
      cerr << "Failed here " << $input->ob_type->tp_name << endl;
@@ -36,7 +36,7 @@ using namespace casac;
   }
 }
 %typemap(in) long {
-  if(!(PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
+  if(!(PyUnicode_Check($input) || PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
      $1 = PyInt_AsLong($input);
   } else {
      cerr << "Failed here " << $input->ob_type->tp_name << endl;
@@ -46,7 +46,7 @@ using namespace casac;
 }
 
 %typemap(in) int {
-  if(!(PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
+  if(!(PyUnicode_Check($input) || PyString_Check($input) || PyFloat_Check($input) || PyDict_Check($input) || PyList_Check($input))){
      $1 = PyInt_AsLong($input);
   } else {
      cerr << "Failed here " << $input->ob_type->tp_name << endl;
