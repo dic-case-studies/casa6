@@ -709,7 +709,7 @@ PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
             *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
         }
     }
-    npy_intp shape[ ] = { vec.size( ) };
+    npy_intp shape[ ] = { (npy_intp) vec.size( ) };
     return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
