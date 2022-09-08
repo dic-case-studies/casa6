@@ -1368,7 +1368,7 @@ Bool Simulator::settrop(const String& mode,
       simparDesc.addField ("combine", TpString);
 
       if(simintsec>0.){
-	simparDesc.addField ("simint", TpString);
+        simparDesc.addField ("simint", TpString);
       }
 
       simparDesc.addField ("startTime", TpDouble);
