@@ -1139,8 +1139,7 @@ def _dump_tasks(taskname: str, vals: dict):
     cmd = f'{taskname}('
     arr = []
     for key, val in vals.items():
-        quote = '' if type(val) in (bool, int, float) else '\''
-        arr.append(f'{key}={quote}{val}{quote}')
+        arr.append(f'{key}={repr(val)}')
     cmd += ', '.join(arr)
     cmd += ')'
     return cmd
