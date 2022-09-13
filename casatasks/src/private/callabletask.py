@@ -6,7 +6,7 @@ from casatasks import casalog
 
 def log_origin_setter(func):
     """
-    This is a decorator function for a task calls other tasks.
+    This is a decorator function for a casatask calling other casatasks.
 
     If the task is decorated it was called from a task and the caller set a log origin by casalog.origin(),
     then the decorator sets a caller's origin to the logger.
