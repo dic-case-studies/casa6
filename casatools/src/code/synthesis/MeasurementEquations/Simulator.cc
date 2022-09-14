@@ -1345,7 +1345,8 @@ Bool Simulator::settrop(const String& mode,
 			const Float pwv,
 			const Float deltapwv,
 			const Float beta,
-			const Float windspeed) {
+			const Float windspeed,
+			const Float simintsec=-1.) {
   
   LogIO os(LogOrigin("Simulator", "settrop()", WHERE));
 
@@ -1365,6 +1366,11 @@ Bool Simulator::settrop(const String& mode,
       simparDesc.addField ("beta", TpFloat);
       simparDesc.addField ("windspeed", TpFloat);
       simparDesc.addField ("combine", TpString);
+
+      if(simintsec>0.){
+        simparDesc.addField ("simint", TpString);
+      }
+
       simparDesc.addField ("startTime", TpDouble);
       simparDesc.addField ("stopTime", TpDouble);
 
@@ -1393,6 +1399,10 @@ Bool Simulator::settrop(const String& mode,
       simpar.define ("beta", beta);
       simpar.define ("windspeed", windspeed);
       simpar.define ("combine", "");
+
+      if(simintsec>0.){
+	simpar.define ("simint", String::toString(simintsec)+"s");
+      }
 
       simpar.define ("seed", seed_p);
 
