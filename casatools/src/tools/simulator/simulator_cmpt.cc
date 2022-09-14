@@ -844,14 +844,15 @@ simulator::setapply(const std::string& table,
 bool
 simulator::settrop(const std::string& mode, const std::string& table, 
 		   const double pwv, const double deltapwv, 
-		   const double beta, const double windspeed)
+		   const double beta, const double windspeed,
+		   const double simint)
 {
   Bool rstat(false);
   try {
     
     if(itsSim !=0){  
       //      casacore::Quantity qinter(casaQuantity(interval));
-      rstat=itsSim->settrop(mode, table, pwv, deltapwv, beta, windspeed);
+      rstat=itsSim->settrop(mode, table, pwv, deltapwv, beta, windspeed, simint);
     }
     // RI TODO interpolation params have to get to SolvableVisCal::setApply.
     // RI TODO do we make the user call sm.setapply to deal with that, 
