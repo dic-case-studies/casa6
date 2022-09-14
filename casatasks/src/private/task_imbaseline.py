@@ -1137,9 +1137,7 @@ class _MS2ImageMethods():
 
 def _dump_tasks(taskname: str, vals: dict):
     cmd = f'{taskname}('
-    arr = []
-    for key, val in vals.items():
-        arr.append(f'{key}={repr(val)}')
+    arr = [f'{key}={repr(val)}' for key, val in vals.items()]
     cmd += ', '.join(arr)
     cmd += ')'
     return cmd
