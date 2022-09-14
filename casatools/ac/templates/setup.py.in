@@ -2588,7 +2588,7 @@ def generate_casacore_version_header():
         casacore_version_minor = casacore_version_from_project[1]
         casacore_version_patch = casacore_version_from_project[2]
 
-    print(f"Casacore version {casacore_version_major}.{casacore_version_minor}.{casacore_version_patch}")
+    print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
 
     with open("include/casacore/casa/version.h","w") as out, open("casacore/casa/version.h.in") as f:
         for line in f:
