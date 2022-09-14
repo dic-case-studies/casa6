@@ -15,7 +15,8 @@ else:
 
 def fringefit(vis=None,caltable=None,
               field=None,spw=None,intent=None,
-              selectdata=None,timerange=None,antenna=None,scan=None,
+              selectdata=None,timerange=None,uvrange=None,
+              antenna=None,scan=None,
               observation=None, msselect=None,
               solint=None,combine=None,refant=None,
               minsnr=None,zerorates=None,globalsolve=None,niter=None,
@@ -41,7 +42,7 @@ def fringefit(vis=None,caltable=None,
             # pass all data selection parameters in as specified
             mycb.selectvis(time=timerange,spw=spw, scan=scan, field=field,
                            intent=intent, observation=str(observation),
-                           baseline=antenna,chanmode='none',
+                           baseline=antenna,uvrange=uvrange,chanmode='none',
                            msselect=msselect)
         else:
             # selectdata=F, so time,scan,baseline,msselect=''

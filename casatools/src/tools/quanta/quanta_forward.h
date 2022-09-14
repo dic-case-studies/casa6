@@ -1,8 +1,8 @@
 // Include file for forward declarations
 
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <casa/stdmap.h>
-#include <casa/Quanta/UnitName.h>
+#include <casacore/casa/stdmap.h>
+#include <casacore/casa/Quanta/UnitName.h>
 
 namespace casacore{
 

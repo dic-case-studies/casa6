@@ -2,8 +2,8 @@
 #include <iostream>
 #include <mstransformer_cmpt.h>
 
-#include <casa/Arrays/Vector.h>
-#include <casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <casacore/casa/Logging/LogOrigin.h>
 #include <casacore/casa/Exceptions/Error.h>
@@ -14,8 +14,8 @@
 #include <casacore/casa/sstream.h>
 #include <unistd.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
-#include <tables/Tables/Table.h>
-#include <measures/Measures/MeasIERS.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/measures/Measures/MeasIERS.h>
 
 
 using namespace std;
