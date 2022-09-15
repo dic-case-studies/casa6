@@ -2904,7 +2904,7 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
     }
 
     const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
-    if (isNewMs() || d->getRefString() != direction.getRefString() || d->getAngle("rad") != direction.getAngle("rad")) {
+    if (isNewMs() || d->getRef() != direction.getRef() || d->getAngle("rad") != direction.getAngle("rad")) {
         // phaseCenter should change according to field ID
         measFrame.resetDirection(direction);
     }
