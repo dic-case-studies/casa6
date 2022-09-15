@@ -2890,17 +2890,17 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 	MEpoch epoch(MVEpoch(Quantity(time, "s")), timeFrameOfReference_p);
 
-	const MPosition &position = msIter_p->telescopePosition();
+	const MPosition &telescopePosition = msIter_p->telescopePosition();
 	const MDirection &direction = msIter_p->phaseCenter();
 
-    thread_local static MeasFrame measFrame(epoch, position, direction);
+    thread_local static MeasFrame measFrame(epoch, telescopePosition, direction);
 
     measFrame.resetEpoch(epoch);
 
     if (isNewMs()) {
         // assuming that individual MS contains only one observatory information
         // (i.e., OBSERVATION.TELESCOPE_NAME values are identical)
-        measFrame.resetPosition(position);
+        measFrame.resetPosition(telescopePosition);
     }
 
     const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
