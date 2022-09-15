@@ -2900,6 +2900,8 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
     if (isNewMs()) {
         // assuming that individual MS contains only one observatory information
         // (i.e., OBSERVATION.TELESCOPE_NAME values are identical)
+        auto const telescopeNames = msIter_p->msColumns().observation().telescopeName().getColumn();
+        AlwaysAssert(allEQ(telescopeNames, telescopeNames[0]), AipsError);
         measFrame.resetPosition(telescopePosition);
 
         const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
