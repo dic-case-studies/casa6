@@ -2901,12 +2901,12 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
         // assuming that individual MS contains only one observatory information
         // (i.e., OBSERVATION.TELESCOPE_NAME values are identical)
         measFrame.resetPosition(telescopePosition);
-    }
 
-    const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
-    if (isNewMs() || d->getRef() != direction.getRef() || d->getAngle("rad") != direction.getAngle("rad")) {
-        // phaseCenter should change according to field ID
-        measFrame.resetDirection(direction);
+        const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
+        if (d->getRef() != direction.getRef() || d->getAngle("rad") != direction.getAngle("rad")) {
+            // phaseCenter should change according to field ID
+            measFrame.resetDirection(direction);
+        }
     }
 
 	MFrequency::Ref observedFrame(measurementFrequencyType, measFrame);
