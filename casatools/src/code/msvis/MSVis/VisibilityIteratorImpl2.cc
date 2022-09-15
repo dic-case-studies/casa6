@@ -2952,9 +2952,8 @@ VisibilityIteratorImpl2::getObservatoryFrequencyType() const
 {
     Int const spwId = msIter_p->spectralWindowId();
     Int const measFreqRef = getMeasurementFrame(spwId);
-    MFrequency::Types t = (measFreqRef >= 0) ? MFrequency::castType((uInt)measFreqRef) : MFrequency::DEFAULT;
-
-	return t;
+    return (measFreqRef >= 0) ? MFrequency::castType((uInt)measFreqRef)
+                              : MFrequency::DEFAULT;
 }
 
 MPosition
