@@ -2890,10 +2890,10 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 	MEpoch epoch(MVEpoch(Quantity(time, "s")), timeFrameOfReference_p);
 
-	const MPosition &telescopePosition = msIter_p->telescopePosition();
-	const MDirection &direction = msIter_p->phaseCenter();
+	const auto &telescopePosition = msIter_p->telescopePosition();
+	const auto &currentDirection = msIter_p->phaseCenter();
 
-    thread_local static MeasFrame measFrame(epoch, telescopePosition, direction);
+    thread_local static MeasFrame measFrame(epoch, telescopePosition, currentDirection);
 
     measFrame.resetEpoch(epoch);
 
@@ -2904,10 +2904,11 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
         AlwaysAssert(allEQ(telescopeNames, telescopeNames[0]), AipsError);
         measFrame.resetPosition(telescopePosition);
 
-        const MDirection *d = dynamic_cast<const MDirection *>(measFrame.direction());
-        if (d->getRef() != direction.getRef() || d->getAngle("rad") != direction.getAngle("rad")) {
-            // phaseCenter should change according to field ID
-            measFrame.resetDirection(direction);
+        const MDirection *referenceDirection = dynamic_cast<const MDirection *>(measFrame.direction());
+        if (referenceDirection->getRef() != currentDirection.getRef()
+          || referenceDirection->getAngle("rad") != currentDirection.getAngle("rad")) {
+            // reference direction should update according to field ID
+            measFrame.resetDirection(currentDirection);
         }
     }
 
