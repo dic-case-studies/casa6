@@ -2593,60 +2593,64 @@ class test_cube(testref_base):
           self.prepData('refim_point.ms')
 
           delmod(self.msfile)
-          im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
-          im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
-          im_natural_taper_183_lambda = self.img + "_natural_with_taper_183_lambda"
-          im_natural_taper_500_arcsec = self.img + "_natural_with_taper_500_arcsec"
+          im_natural_taper_910_lambda = self.img + "_natural_with_taper_910_lambda"
+          im_natural_taper_100_arcsec = self.img + "_natural_with_taper_100_arcsec"
+          im_natural_taper_elliptical_lambda = self.img + "_natural_with_taper_elliptical_lambda"
+          im_natural_taper_elliptical_arcsec = self.img + "_natural_with_taper_elliptical_arcsec"
 
-          ret_natural_taper_91500_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_91500_lambda,
-                                                       imsize=100,
+          ret_natural_taper_910_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_910_lambda,
+                                                       imsize=100, 
                                                        cell='8.0arcsec',
                                                        specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
-                                                       interactive=0,
-                                                       weighting='natural', uvtaper=['91.5klambda'],
+                                                       interactive=0, interpolation='nearest',
+                                                       weighting='natural', uvtaper=['910.19lambda'],
                                                        restoringbeam='common',
                                                        parallel=self.parallel)
-          ret_natural_taper_1_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_1_arcsec, imsize=100,
+          ret_natural_taper_100_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_100_arcsec, imsize=100,
                                                    cell='8.0arcsec',
                                                    specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
-                                                   interactive=0,
-                                                   weighting='natural', uvtaper=['1arcsec'], restoringbeam='common',
+                                                   interactive=0,interpolation='nearest',
+                                                   weighting='natural', uvtaper=['100.0arcsec'], restoringbeam='common',
                                                    parallel=self.parallel)
-          ret_natural_taper_183_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_183_lambda, imsize=100,
+          ret_natural_taper_elliptical_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_elliptical_lambda, imsize=100,
                                                      cell='8.0arcsec',
                                                      specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
-                                                     interactive=0,
-                                                     weighting='natural', uvtaper=['183lambda'], restoringbeam='common',
+                                                     interactive=0,interpolation='nearest',
+                                                     weighting='natural', uvtaper=['910.19lambda', '455.09lambda', '120.00deg'], restoringbeam='common',
                                                      parallel=self.parallel)
-          ret_natural_taper_500_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_500_arcsec, imsize=100,
+          ret_natural_taper_elliptical_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_elliptical_arcsec, imsize=100,
                                                      cell='8.0arcsec',
                                                      specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
-                                                     interactive=0,
-                                                     weighting='natural', uvtaper=['500arcsec'], restoringbeam='common',
+                                                     interactive=0,interpolation='nearest',
+                                                     weighting='natural', uvtaper=['200.00arcsec', '100.00arcsec', '30.00deg'], restoringbeam='common',
                                                      parallel=self.parallel)
 
-          self.assertTrue(os.path.exists(im_natural_taper_91500_lambda + '.image') and os.path.exists(
-                    im_natural_taper_1_arcsec + '.image') and os.path.exists(
-                    im_natural_taper_183_lambda + '.image') and os.path.exists(im_natural_taper_500_arcsec + '.image'))
+          self.assertTrue(os.path.exists(im_natural_taper_910_lambda + '.image') and os.path.exists(
+                    im_natural_taper_100_arcsec + '.image') and os.path.exists(
+                    im_natural_taper_elliptical_lambda + '.image') and os.path.exists(im_natural_taper_elliptical_arcsec + '.image'))
 
-          beamresult_taper_91500_lambda = imhead(im_natural_taper_91500_lambda + '.image', mode='summary')[
+          beamresult_taper_910_lambda = imhead(im_natural_taper_910_lambda + '.image', mode='summary')[
                     'restoringbeam']
-          beamresult_taper_1_arcsec = imhead(im_natural_taper_1_arcsec + '.image', mode='summary')['restoringbeam']
-          beamresult_taper_183_lambda = imhead(im_natural_taper_183_lambda + '.image', mode='summary')[
+          beamresult_taper_100_arcsec = imhead(im_natural_taper_100_arcsec + '.image', mode='summary')['restoringbeam']
+          beamresult_taper_elliptical_lambda = imhead(im_natural_taper_elliptical_lambda + '.image', mode='summary')[
                     'restoringbeam']
-          beamresult_taper_500_arcsec = imhead(im_natural_taper_500_arcsec + '.image', mode='summary')[
+          beamresult_taper_elliptical_arcsec = imhead(im_natural_taper_elliptical_arcsec + '.image', mode='summary')[
                     'restoringbeam']
 
-          _, report1 = self.th.check_val(beamresult_taper_91500_lambda['major']['value'], 93.02,
+          _, report1 = self.th.check_val(beamresult_taper_910_lambda['major']['value'], 154.58,
                                               valname='Restoring beam major:', exact=False)
-          _, report2 = self.th.check_val(beamresult_taper_1_arcsec['major']['value'], 93.02,
+          _, report2 = self.th.check_val(beamresult_taper_100_arcsec['major']['value'], 154.58,
                                               valname='Restoring beam major:', exact=False)
-          _, report3 = self.th.check_val(beamresult_taper_183_lambda['major']['value'], 508.82,
+          _, report3 = self.th.check_val(beamresult_taper_elliptical_lambda['major']['value'], 244.55,
                                               valname='Restoring beam major:', exact=False)
-          _, report4 = self.th.check_val(beamresult_taper_500_arcsec['major']['value'], 488.31,
+          _, report4 = self.th.check_val(beamresult_taper_elliptical_arcsec['major']['value'], 244.55,
                                               valname='Restoring beam major:', exact=False)
+          _, report5 = self.th.check_val(beamresult_taper_elliptical_lambda['positionangle']['value'], 32.12,
+                                              valname='Restoring beam pa:', exact=False)
+          _, report6 = self.th.check_val(beamresult_taper_elliptical_arcsec['positionangle']['value'], 32.12,
+                                              valname='Restoring beam pa:', exact=False)
 
-          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4 +report5 +report6))
 
      # old unit test cases for CAS-13260
      @unittest.skip("Skip until we can figure out what causes the common bean difference between the local runs and bamboo runs for reim_point_linRL.ms")

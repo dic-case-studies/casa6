@@ -605,8 +605,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
      LogIO os(LogOrigin("VisImagingWeight", "setFilter()", WHERE));
 
+     // Steps : (1) Convert the uvtaper information into "sigma" for the uv-domain Gaussian.
+     //             (2) Rotate u,v per cell in the weightdensity grid onto an axis where the position angle is zero.  The u,v becomes ru,rv.          
+     //             (3) Evaluate the Gaussian as e^{-1/2 (ru^2/sigma_{maj}^2 + rv^2/sigma_{min}^2)} where sigma is separate for the maj and min axes.  
+     //             (4) Multiply the weightdensity grid (each cell) with the evaluated Gaussian above.
+
+     // There are two ways this input may be supplied : In the image domain or the UV domain.
+     // For both options, the code below calculates xx = 1 / ( 2 sigma_{maj}^2) and yy = 1 / (2 sigma_{min}^2)  for the major and minor axes. 
+     // The Gaussian is then evaluated as exp( - xx * ru^2  - yy * rv^2 ) in the ::filter() method. In this code, xx is called rbmaj_p and rbmin_p. 
+
     if (type=="gaussian") {
-      
+
+      // uvtaper input is supplied in the uv domain as the HWHM of a Gaussian. This is a 'uvdistance' or 'baseline length' interpretation
+      // The FWHM_uv (in wavelengths) = beam_lambda * 2  to take it from HWHM to FWHM.
+      // sigma_uv = FWHM_uv / (2 sqrt(2 log2))
+      // xx = 1 / ( 2 sigma_uv^2) = (log2) / (beam_lambda)^2
+
         Bool lambdafilt=false;
       
         if( bmaj.getUnit().contains("lambda"))
@@ -620,21 +634,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
             rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
 
- 
-
       }
       else{
+
+	// uvtaper input is supplied in the image domain, as the FWHM of a Gaussian. This is an 'convolving' angular resolution interpretation
+	// This FWHM_lm (in radians) must be converted to a "Sigma" of the Gaussian, and then taken to the UV-domain. 
+        // FWHM_lm = beam_radians
+	// sigma_lm = FWHM_lm / (2 sqrt(2 log2))
+	// sigma_uv = 1 / ( 2 pi sigma_lm )
+	// xx = 1 / ( 2 sigma_uv^2) = ( (pi^2)/(4 log2) ) * (beam_radians)^2
+	
             os << "Filtering for Gaussian of shape: "
             << bmaj.get("arcsec").getValue() << " by "
             << bmin.get("arcsec").getValue() << " (arcsec) at p.a. "
             << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
     
             // Convert to values that we can use
-            // Refer CAS-13260 in jira for the fact modification from fact = 4.0*log(2.0) to pi.
-            Double fact = C::pi;
+            Double fact = C::pi*C::pi/(4.0*log(2.0));
             rbmaj_p = fact*square(bmaj.get("rad").getValue());
             rbmin_p = fact*square(bmin.get("rad").getValue());
           }
+
        Double rbpa  = MVAngle(bpa).get("rad").getValue();
        cospa_p = sin(rbpa);
        sinpa_p = cos(rbpa);
@@ -677,6 +697,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Double u = uvw(0,row);
     Double v = uvw(1,row);
     if(!flag(chn,row) && (weight(chn%nChanWt,row)>0.0) ) {
+      // Rotate the u,v values of each cell, so that 'ru' and 'rv' are aligned with the Major and Minor axie of the uvtaper Gaussian. 
+      // If the uvtaper Gaussian has positionangle=0, then ru=u, rv=v.
+      // If the uvtaper Gaussian has positionangle=90, then ru=v,  rv= -u 
       Double ru = invLambdaC*(  cospa_p * u + sinpa_p * v);
       Double rv = invLambdaC*(- sinpa_p * u + cospa_p * v);
       Double filter = exp(-rbmaj_p*square(ru) - rbmin_p*square(rv));

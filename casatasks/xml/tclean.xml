@@ -1732,19 +1732,22 @@ to use the correct direction in which the antenna is pointing with respect to th
                    down relative to lower spatial frequencies to suppress artifacts
                    arising from poorly sampled areas of the uv-plane. It is equivalent to
                    smoothing the PSF obtained by other weighting schemes and can be
-                   specified either as a Gaussian in uv-space (eg. units of lambda)
-                   or as a Gaussian in the image domain (eg. angular units like arcsec).
+                   specified either as the HWHM of a Gaussian in uv-space (eg. units of lambda)
+                   or as the FWHM of a Gaussian in the image domain (eg. angular units like arcsec).
 
                    uvtaper = [bmaj, bmin, bpa]
 
-                   NOTE: The on-sky HWHM (Half Width at Half Max) in arcsec is the uv taper/ 91.5(klambda).
+		   Note : FWHM_uv_lambda = (4 log2) / ( pi * FWHM_lm_radians )  
+  
+		   A FWHM_lm of 100.000 arcsec maps to a HWHM_uv of 910.18 lambda
+                   A FWHM_lm of 1 arcsec maps to a HWHM_uv of 91 klambda
+		   
                    default: uvtaper=[]; no Gaussian taper applied
-                   example: uvtaper=['5klambda']  circular taper
-                                HWHM=5 kilo-lambda
-                            uvtaper=['5klambda','3klambda','45.0deg']
-                            uvtaper=['10arcsec'] on-sky FWHM 10 arcseconds
-                            uvtaper=['300.0'] default units are lambda
-                                in aperture plane
+                   example: uvtaper=['5klambda']  circular taper of  HWHM=5 kilo-lambda
+                            uvtaper=['5klambda','3klambda','45.0deg'] uv-domain HWHM
+			    uvtaper=['50arcsec','30arcsec','30.0deg'] : image domain FWHM
+                            uvtaper=['10arcsec'] : image domain FWHM 
+                            uvtaper=['300.0'] default units are lambda in aperture plane
 
 </description>
       <value type="vector">
