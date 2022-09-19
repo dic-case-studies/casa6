@@ -56,7 +56,7 @@ For measurement sets, the task vishead should be used.
                      * list: Show supported keywords and their
                        values. Ignores all but imagename and mode
                        parameters.
-                       put: Modify the specified value associated with
+                     * put: Modify the specified value associated with
                        the keyword. True is returned if the metadatum
                        was successfully modified, False
                        otherwise. Normally, a diagnostic message is

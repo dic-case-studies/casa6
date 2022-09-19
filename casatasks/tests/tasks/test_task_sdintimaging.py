@@ -92,6 +92,12 @@
 #17. Single pointing test with INT-only data from refim_point.ms : Compare with tclean mtmfs
 #testname: test_intonly_mfs_compare_with_tclean
 #
+#18. Single pointing test : mtmfs : with nmajor
+#testname: test_singlepointing_mtmfs_nmajor
+#
+#19. Single pointing test : cube : with nmajor
+#testname: test_singlepointing_cube_nmajor
+#
 ###########################################################################
 import os
 import sys
@@ -598,7 +604,84 @@ class test_singlepointing(testref_base):
         
         self.checkfinal(pstr=report)
 
+    # Test 18
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    def test_singlepointing_mtmfs_nmajor(self):
+        # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
+        """ [singlePointing] Test_singlepointing_mtmfs_nmajor """
+        ######################################################################################
+        # Test single field imaging for sd+int combination - mfs 
+        # main parameters to be tested: specmode='mfs', usedata='sdint', gridder='standard', nmajor
+        # with the default weighting (='natural')
+        ######################################################################################
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'msname':'papersky_standard.ms',
+                   'sdimage':'papersky_standard.sdimage',
+                   'sdpsf':'papersky_standard.sdpsf',
+                   'mask':'papersky_standard.true.im.masklist'}
+        # data specific parameters 
+        # imsize, cell, phasecenter, reffreq, nchan, scales 
+        # set to the default values for sdgain (1.0) and dishdia (100.0)
+        #
+        # Other secondary non-default parameters: 
+        deconvolver='mtmfs'
+        # iterations may need to be shorten for the final version of test
+        self.prepData(inputdata=inputdata)
 
+        imname=self.img+'.sp_mfs_sdint'
+        if self.niter==100:
+            incycleniter=20 # overwrite the initial setup for niter=100 to make the test pass for 6.1 (need furhter investigation)
+
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0,nmajor=2)
+
+        outimg = imname+'.joint.multiterm'
+        report=th.checkall(imgexist=[outimg+'.psf.tt0', 
+                                     outimg+'.residual.tt0', outimg+'.image.tt0', 
+                                     outimg+'.image.tt1',outimg+'.alpha'], 
+                           ret=ret, nmajordone=3,iterdone=40)   
+
+        self.checkfinal(pstr=report)
+
+
+    # Test 19
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    def test_singlepointing_cube_nmajor(self):
+        # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
+        """ [singlePointing] Test_singlepointing_cube_nmajor """
+        ######################################################################################
+        # Test single field imaging for sd+int combination - mfs 
+        # main parameters to be tested: specmode='mfs', usedata='sdint', gridder='standard', nmajor
+        # with the default weighting (='natural')
+        ######################################################################################
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'msname':'papersky_standard.ms',
+                   'sdimage':'papersky_standard.sdimage',
+                   'sdpsf':'papersky_standard.sdpsf',
+                   'mask':'papersky_standard.true.im.masklist'}
+        # data specific parameters 
+        # imsize, cell, phasecenter, reffreq, nchan, scales 
+        # set to the default values for sdgain (1.0) and dishdia (100.0)
+        #
+        # Other secondary non-default parameters: 
+        deconvolver='hogbom'
+        # iterations may need to be shorten for the final version of test
+        self.prepData(inputdata=inputdata)
+
+        imname=self.img+'.sp_cube_sdint'
+        if self.niter==100:
+            incycleniter=20 # overwrite the initial setup for niter=100 to make the test pass for 6.1 (need furhter investigation)
+
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, gain=0.01,scales=self.scales, niter=self.niter, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0,nmajor=2)
+
+  
+        outimg = imname+'.joint.cube'
+        report=th.checkall(imgexist=[outimg+'.psf', 
+                                     outimg+'.residual', outimg+'.image'],
+                                     check_keywords_misc=False, # sdonly images don't go through the vivb2 and don't need the keywords from CAS-12204
+                           ret = ret, nmajordone=3, iterdone=incycleniter*self.nchan*2)     
+        self.checkfinal(pstr=report)
+
+     
 class test_mosaic(testref_base):
 
     def setUp(self):

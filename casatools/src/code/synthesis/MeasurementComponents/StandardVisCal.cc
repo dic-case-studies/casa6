@@ -30,35 +30,35 @@
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/VisBuffAccumulator.h>
 #include <synthesis/CalTables/CTIter.h>
-#include <ms/MeasurementSets/MSColumns.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 #include <synthesis/MeasurementComponents/SolveDataBuffer.h>
-#include <scimath/Fitting/LSQFit.h>
-#include <scimath/Fitting/LinearFit.h>
-#include <scimath/Functionals/CompiledFunction.h>
-#include <scimath/Functionals/Polynomial.h>
-#include <scimath/Mathematics/AutoDiff.h>
-#include <casa/BasicMath/Math.h>
-#include <tables/TaQL/ExprNode.h>
+#include <casacore/scimath/Fitting/LSQFit.h>
+#include <casacore/scimath/Fitting/LinearFit.h>
+#include <casacore/scimath/Functionals/CompiledFunction.h>
+#include <casacore/scimath/Functionals/Polynomial.h>
+#include <casacore/scimath/Mathematics/AutoDiff.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/tables/TaQL/ExprNode.h>
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/MatrixMath.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Utilities/GenSort.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/OS/Memory.h>
-#include <casa/System/Aipsrc.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/MatrixMath.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Utilities/GenSort.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/OS/Memory.h>
+#include <casacore/casa/System/Aipsrc.h>
 
-#include <casa/sstream.h>
+#include <sstream>
 
-#include <measures/Measures/MCBaseline.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MEpoch.h>
-#include <measures/Measures/MeasTable.h>
+#include <casacore/measures/Measures/MCBaseline.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MEpoch.h>
+#include <casacore/measures/Measures/MeasTable.h>
 
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogSink.h>
 // math.h ?
 
 using namespace casacore;
@@ -584,8 +584,15 @@ void TJones::createCorruptor(const VisIter& vi, const Record& simpar, const Int 
       }
 
       // RI todo T::createCorr make min screen granularity a user parameter
-      Float fBM_interval=max(interval(),10.); // generate screens on >10s intervals
-      if (prtlev()>2) cout<<"set fBM_interval"<<" to "<<fBM_interval<<" startTime="<<corruptor_p->startTime()<<" stopTime="<<corruptor_p->stopTime()<<endl;
+      Float minFBM_interval = 0.1; // generate screens on >0.1s intervals
+      Float defaultFBM_interval = 10.; 
+      Float fBM_interval=max(interval(), minFBM_interval); 
+      if (interval() <= 0.){ // use default value
+	fBM_interval = defaultFBM_interval;
+      } else if ( (fBM_interval - interval()) > 1E-5 ){
+	os << LogIO::WARN << " Requested phase screen time granularity (" << interval() 
+	   << " s) is too small! Will use the minimum permitted value: " << minFBM_interval << " s." <<  LogIO::POST;
+      }
 
       corruptor_p->setEvenSlots(fBM_interval);
 
