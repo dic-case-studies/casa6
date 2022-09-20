@@ -28,7 +28,7 @@
 import shutil
 import unittest
 import os
-import numpy
+import numpy as np
 import math
 
 from casatools import image as iatool
@@ -58,9 +58,18 @@ class ImageBase(unittest.TestCase):
         self.outcont = ''
         self.outline = ''
 
+
+    def tearDown(self):
+        self._myia.done()
+        self.tb.done()
+        self.qa.done()
+        self.cl.done()
+        
+
 # Tests for image.adddegaxes
 class ia_adddegaxes_test(ImageBase):
-    
+   
+ 
     def tearDown(self):
         self._myia.done()
         data = ["ia.fromshape2.image_c" , "ia.fromshape.image_c",
@@ -69,9 +78,9 @@ class ia_adddegaxes_test(ImageBase):
             if os.path.exists(f) and os.path.isdir(f):
                 shutil.rmtree(f)
 
+
     def test_general(self):
         """general tests"""
-#        cs = coordsys( )
         myim = self._myia
         
         for t in ('f', 'c'):
@@ -147,6 +156,7 @@ class ia_adddegaxes_test(ImageBase):
             self.assertTrue(myim.done())
         cs.done( )
     
+
     def test_beams(self):
         """test hyperbeams get accounted for correctly"""
 #        qa = quanta( )
@@ -172,6 +182,7 @@ class ia_adddegaxes_test(ImageBase):
         qa.done( )
         deg.done()
 
+
     def test_history(self):
         """Test history writing"""
         myia = self._myia
@@ -183,14 +194,17 @@ class ia_adddegaxes_test(ImageBase):
         self.assertTrue("ia.adddegaxes" in msgs[-2])        
         self.assertTrue("ia.adddegaxes" in msgs[-1])
 
+
 # Tests for image.addnoise
 class ia_addnoise_test(ImageBase):
+
 
     def tearDown(self):
         self._myia.done()
         tb = table()
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done()
+
 
     def test_history(self):
         """Test history is added to image"""
@@ -201,13 +215,143 @@ class ia_addnoise_test(ImageBase):
         self.assertTrue("addnoise" in msgs[-1])
         myia.done()
 
+
+class ia_beamarea_test(ImageBase):
+    
+
+    def test_exceptions(self):
+        """Test various exception cases"""
+        def __test_exception(method_parms, expected_msg):
+            res = None
+            with self.assertRaises(RuntimeError) as cm:
+                res = ia.beamarea(**method_parms)
+            print('res', res)
+            got_exception = cm.exception
+            pos = str(got_exception).find(expected_msg)
+            self.assertNotEqual(
+                pos, -1, msg=f'Unexpected exception was thrown: {got_exception}'
+            )
+
+
+        ia = self._myia
+        # no beam
+        ia.fromshape('', [200,200,4,10])
+        __test_exception({},
+                'This image has no beam(s). The setrestoringbeam() method may be '
+                'used to set its beam(s).'
+            ) 
+        # channel too high
+        ia.setrestoringbeam(
+                major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+                polarization=0
+            )
+        parms = {}
+        parms['channel'] = 15
+        parms['polarization'] = 0
+        __test_exception(
+                parms,
+                'This image only has 10 channels, so a channel value less than '
+                '10 must be specified.'
+            ) 
+        parms['channel'] = 8
+        parms['polarization'] = 5
+        __test_exception(
+                parms,
+                'This image only has 4 polarizations, so a polarization value '
+                'less than 4 must be specified.'
+            ) 
+        parms['channel'] = -1
+        parms['polarization'] = 0
+        __test_exception(
+                parms,
+                'In the case of a multibeam image, either both channel and '
+                'polarization must be non-negative, or both must be negative.'
+            ) 
+        parms['channel'] = 0
+        parms['polarization'] = -1
+        __test_exception(
+                parms,
+                'In the case of a multibeam image, either both channel and '
+                'polarization must be non-negative, or both must be negative.'
+            ) 
+        ia.done()        
+
+
+    def test_single_beam(self):
+        """Test getting area for a single beam"""
+        ia = self._myia
+        ia.fromshape('', [200,200,4,10])
+        ia.setrestoringbeam(major='3arcmin', minor='1arcmin', pa='40deg')
+        expec = ia.beamarea()
+        for chan in (-1, 3, 13):
+            for stokes in (-1, 3, 13):
+                got = ia.beamarea(channel=chan, polarization=stokes)
+                for k in ('arcsec2', 'pixels'):
+                    self.assertEqual(got[k], expec[k])
+        ia.done()
+
+
+    def test_multi_beams(self):
+        """Test getting the area for multiple beams"""
+        ia = self._myia
+        # polarization axis before spectral axis
+        ia.fromshape('', [200,200,4,10])
+        ia.setrestoringbeam(
+                major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+                polarization=0
+            )
+        ia.setrestoringbeam(
+                major='5arcmin', minor='4arcmin', pa='40deg', channel=3,
+                polarization=1
+            )
+        got = ia.beamarea()
+        f = np.pi/(4*np.log(2))
+        expec_pix = np.full([4, 10], f*3*1)
+        expec_pix[1, 3] = f*5*4
+        expec_as2 = 3600*expec_pix
+        self.assertTrue(np.allclose(got['pixels'], expec_pix))
+        self.assertTrue(np.allclose(got['arcsec2'], expec_as2))
+        for i in range(4):
+            for j in range(10):
+                expec_pix = f*5*4 if i == 1 and j == 3 else f*3*1
+                expec_as2 = 3600*expec_pix
+                got = ia.beamarea(channel=j, polarization=i)
+                self.assertTrue(np.isclose(got['pixels'], expec_pix))
+                self.assertTrue(np.isclose(got['arcsec2'], expec_as2))
+        ia.done()
+
+        # spectral axis before polarization axis
+        ia.fromshape('', [200,200,10,4])
+        ia.setrestoringbeam(
+                major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+                polarization=0
+            )
+        ia.setrestoringbeam(
+                major='5arcmin', minor='4arcmin', pa='40deg', channel=3,
+                polarization=1
+            )
+        got = ia.beamarea()
+        expec_pix = np.full([10, 4], f*3*1)
+        expec_pix[3, 1] = f*5*4
+        expec_as2 = 3600*expec_pix
+        self.assertTrue(np.allclose(got['pixels'], expec_pix))
+        self.assertTrue(np.allclose(got['arcsec2'], expec_as2))
+        for i in range(10):
+            for j in range(4):
+                expec_pix = f*5*4 if i == 3 and j == 1 else f*3*1
+                expec_as2 = 3600*expec_pix
+                got = ia.beamarea(channel=i, polarization=j)
+                self.assertTrue(np.isclose(got['pixels'], expec_pix))
+                self.assertTrue(np.isclose(got['arcsec2'], expec_as2))
+        ia.done()
+
+
 # Tests for image.boxcar
 class ia_boxcar_test(ImageBase):
 
     def tearDown(self):
-        tb = table()
-        self.assertTrue(len(tb.showcache()) == 0)
-        tb.done()
+        self.assertTrue(len(self.tb.showcache()) == 0)
+        self.tb.done()
         data = [self.mymask, self.imagename]
         for f in data:
             if os.path.exists(f):
@@ -239,7 +383,7 @@ class ia_boxcar_test(ImageBase):
 
     def test_general(self):
         """Test general behavior"""
-        myia = iatool()
+        myia = self._myia
         length = 13
         self.imagename = "test_gen.im"
         myia.fromshape(self.imagename, [1, 1, length])
@@ -490,7 +634,7 @@ class ia_constructors_test(ImageBase):
 
     def test_newimagefromarray(self):
         """ test repeated call of newimagefromarray doesn't segfault, CAS-5646"""
-        my_image = numpy.zeros([128, 128, 16])
+        my_image = np.zeros([128, 128, 16])
         myia = iatool()
         self.outfile = "mynewimage.image"
         zz = myia.newimagefromarray(
@@ -708,7 +852,7 @@ class ia_convolve2d_test(ImageBase):
 
     def make_gauss2d(self, shape, xfwhm, yfwhm):
         fac = 4 * math.log(2)
-        values = numpy.empty(shape, dtype=float)
+        values = np.empty(shape, dtype=float)
         for i in range(shape[0]):
             x = shape[0] / 2 - i
             for j in range(shape[1]):
@@ -1199,7 +1343,7 @@ class ia_decimate_test(ImageBase):
         myia = iatool()
         for m in [0, 1]:
             imagename = "myim_" + str(m) + ".im"
-            shape = numpy.array([10, 20, 41, 1])
+            shape = np.array([10, 20, 41, 1])
             myia.fromshape(imagename, shape)
             myia.addnoise()
             myia.calcmask(imagename + " < 0")
@@ -1539,9 +1683,8 @@ class ia_fft_test(ImageBase):
         a3 = im3.getchunk(trc=trc)
         a4 = im4.getchunk(trc=trc)
 
-        from numpy.fft import fft2
         p = testim.getchunk(trc=trc)
-        c = fft2(p)
+        c = np.fft.fft2(p)
         b1 = c.real
         b2 = c.imag
         b3 = abs(c)  # sqrt( real(x)^2 + imag(x)^2 )
@@ -1569,7 +1712,7 @@ class ia_fft_test(ImageBase):
         a4 = im4.getchunk()
 
         p = testim.getchunk()
-        c = fft2(p)
+        c = np.fft.fft2(p)
         b1 = c.real
         b2 = c.imag
         b3 = abs(c)
@@ -1690,10 +1833,10 @@ class ia_fft_test(ImageBase):
         myia.done(remove=True)
         cdelt = csys.increment()['numeric']
         csys.done()
-        mye = 1 / (npix / 60 * numpy.pi / 180)
-        expec = numpy.array([-mye, mye])
+        mye = 1 / (npix / 60 * np.pi / 180)
+        expec = np.array([-mye, mye])
         print((cdelt - expec) / expec)
-        self.assertTrue(numpy.allclose(cdelt, expec))
+        self.assertTrue(np.allclose(cdelt, expec))
 
 # Tests for image.findsources
 class ia_findsources_test(ImageBase):
@@ -1726,10 +1869,10 @@ class ia_fromarray_test(ImageBase):
     def test_fromarray(self):
         """Test general functionality"""
         myia = self._myia
-        ar1 = numpy.zeros([2, 3], numpy.float64)
+        ar1 = np.zeros([2, 3], np.float64)
         fval = 2.2
         ar1[:] = fval
-        ar2 = numpy.zeros([4, 4], numpy.complex)
+        ar2 = np.zeros([4, 4], np.complex)
         cval = 2 - 6j
         ar2[:] = cval
         i = 0
@@ -1747,7 +1890,7 @@ class ia_fromarray_test(ImageBase):
     def test_history(self):
         """test writing of history"""
         myia = self._myia
-        ar1 = numpy.zeros([2, 3], numpy.float64)
+        ar1 = np.zeros([2, 3], np.float64)
         myia.fromarray("", ar1)
         msgs = myia.history()
         self.assertTrue("ia.fromarray" in msgs[-2])
@@ -1854,7 +1997,7 @@ class ia_fromcomplist_test(ImageBase):
             got = stats['sum'][i]
             expec = flux[stokestoflux[i]]
             self.assertTrue(
-                numpy.isclose(got, expec),
+                np.isclose(got, expec),
                 'i=' + str(i) + ' got=' + str(got) + ' expec=' + str(expec)
             )
         mycl.done()
@@ -1898,10 +2041,10 @@ class ia_fromcomplist_test(ImageBase):
                 gotdir = mycl.getrefdir(0)
                 rainsec = self.qa.convert(gotdir['m0'], 's')['value']
                 decinamin = self.qa.convert(gotdir['m1'], 'arcmin')['value']
-                self.assertTrue(numpy.isclose(rainsec, expecra[j], tol))
-                self.assertTrue(numpy.isclose(decinamin, expecdec[j], tol))
+                self.assertTrue(np.isclose(rainsec, expecra[j], tol))
+                self.assertTrue(np.isclose(decinamin, expecdec[j], tol))
                 self.assertEqual(gotdir['refer'], "J2000")
-                self.assertTrue(numpy.isclose(mycl.getfluxvalue(0)[i], flux[i]))
+                self.assertTrue(np.isclose(mycl.getfluxvalue(0)[i], flux[i]))
                 mycl.done()
                 i += 1
             myia.done()
@@ -1932,12 +2075,12 @@ class ia_fromcomplist_test(ImageBase):
                 rainsec = self.qa.convert(gotdir['m0'], 's')['value']
                 decinamin = self.qa.convert(gotdir['m1'], 'arcmin')['value']
                 self.assertTrue(
-                    numpy.isclose(rainsec, expecra[i], rtol=0, atol=atol),
+                    np.isclose(rainsec, expecra[i], rtol=0, atol=atol),
                     "got: " + str(rainsec) + " expec: " + str(expecra[i])
                 )
-                self.assertTrue(numpy.isclose(decinamin, expecdec[i], rtol=0, atol=atol))
+                self.assertTrue(np.isclose(decinamin, expecdec[i], rtol=0, atol=atol))
                 self.assertEqual(gotdir['refer'], "J2000")
-                self.assertTrue(numpy.isclose(mycl.getfluxvalue(0)[k], flux[k]))
+                self.assertTrue(np.isclose(mycl.getfluxvalue(0)[k], flux[k]))
             mycl.done()
             k += 1
         myia.done()
@@ -2064,7 +2207,7 @@ class ia_fromcomplist_test(ImageBase):
             exponent = index[0] + index[1]*x + index[2]*x*x + index[3]*x*x*x
             expec = pow(y, exponent)
             self.assertTrue(
-                numpy.isclose(pix[10, 10, chan], expec, 1e-7),
+                np.isclose(pix[10, 10, chan], expec, 1e-7),
                 'Incorrect pixel value'
             )
         myia.done()
@@ -2087,7 +2230,7 @@ class ia_fromfits_test(ImageBase):
         """test writing of history"""
         myia = self._myia
         self.fits = ''
-        ar1 = numpy.zeros([2, 3], numpy.float64)
+        ar1 = np.zeros([2, 3], np.float64)
         myia.fromarray("", ar1)
         self.fits = "myim.fits"
         myia.tofits(self.fits)
@@ -2548,8 +2691,8 @@ class ia_histograms_test(ImageBase):
         res = myia.histograms(axes=[0, 1])
         bb = myia.getchunk()
         for i in range(20):
-            self.assertTrue(abs(res['mean'][i] - numpy.mean(bb[:, :, i])) < 1e-7)
-            self.assertTrue(abs(res['sigma'][i] - numpy.std(bb[:, :, i], ddof=1)) < 1e-7)
+            self.assertTrue(abs(res['mean'][i] - np.mean(bb[:, :, i])) < 1e-7)
+            self.assertTrue(abs(res['sigma'][i] - np.std(bb[:, :, i], ddof=1)) < 1e-7)
         myia.done()
 
 # Tests for image.imageconcat
@@ -3128,7 +3271,7 @@ class ia_modify_test(ImageBase):
         myia.fromshape("", [101, 101])
         myia.modify(mycl.torecord(), subtract=False)
         mycl.done()
-        self.assertTrue(numpy.isclose(myia.statistics()['sum'][0], 1, 1e-2))
+        self.assertTrue(np.isclose(myia.statistics()['sum'][0], 1, 1e-2))
         myia.done()
 
 # Tests for image.newfromimage
@@ -3156,6 +3299,7 @@ class ia_newimagefromimage_test(ImageBase):
 # Tests for image.pad
 class ia_pad_test(ImageBase):
 
+
     def tearDown(self):
         data = [self.mymask, self.imagename]
         for f in data:
@@ -3165,6 +3309,7 @@ class ia_pad_test(ImageBase):
                 else:
                     shutil.rmtree(f)
 
+
     def test_pad(self):
         """ ia.pad(): Test pad()"""
         myia = self._myia
@@ -3173,13 +3318,13 @@ class ia_pad_test(ImageBase):
         chunk = myia.getchunk()
         chunk[:, :, :] = 1
         myia.putchunk(chunk)
-        for np in [5, 7]:
-            pad = myia.pad(npixels=np)
+        for npix in [5, 7]:
+            pad = myia.pad(npixels=npix)
             got = pad.shape()
             # make a copy, not a reference
             expshape = shape[:]
-            expshape[0] += 2 * np
-            expshape[1] += 2 * np
+            expshape[0] += 2 * npix
+            expshape[1] += 2 * npix
             # did we get the correct shape
             self.assertTrue((got == expshape).all())
             # did we actually copy the source pixel values
@@ -3191,46 +3336,46 @@ class ia_pad_test(ImageBase):
             exp = myia.statistics()['npts']
             self.assertTrue((got == exp).all())
             # coordinate system consistency checks
-            exp = myia.coordsys().referencepixel()['numeric'] + [np, np, 0]
+            exp = myia.coordsys().referencepixel()['numeric'] + [npix, npix, 0]
             got = pad.coordsys().referencepixel()['numeric']
             self.assertTrue((abs(got - exp) < 1e-8).all())
             exp = myia.toworld([0, 0, 0])['numeric']
-            got = pad.toworld([np, np, 0])['numeric']
+            got = pad.toworld([npix, npix, 0])['numeric']
 
             self.assertTrue((abs(got - exp) < 1e-8).all())
 
             # checks for not masking pixels
-            pad = myia.pad(npixels=np, padmask=True)
+            pad = myia.pad(npixels=npix, padmask=True)
             got = pad.shape()
             self.assertTrue((got == expshape).all())
             # test that padding pixels are not masked
             got = pad.statistics()['npts']
-            exp = numpy.prod(pad.shape())
+            exp = np.prod(pad.shape())
             self.assertTrue(got[0] == exp)
             # coordinate system consistency checks
-            exp = myia.coordsys().referencepixel()['numeric'] + [np, np, 0]
+            exp = myia.coordsys().referencepixel()['numeric'] + [npix, npix, 0]
             got = pad.coordsys().referencepixel()['numeric']
             self.assertTrue((abs(got - exp) < 1e-8).all())
             exp = myia.toworld([0, 0, 0])['numeric']
-            got = pad.toworld([np, np, 0])['numeric']
+            got = pad.toworld([npix, npix, 0])['numeric']
 
             # checks for not masking pixels and setting to value
-            pad = myia.pad(npixels=np, padmask=True, value=1)
+            pad = myia.pad(npixels=npix, padmask=True, value=1)
             got = pad.shape()
             self.assertTrue((got == expshape).all())
             # test that padding pixels are not masked
             got = pad.statistics()['npts']
-            exp = numpy.prod(pad.shape())
+            exp = np.prod(pad.shape())
             self.assertTrue(got[0] == exp)
             # test that padding pixels are set to value
             got = pad.statistics()['sum'][0]
-            exp = myia.statistics()['sum'] + (numpy.prod(pad.shape()) - numpy.prod(shape))
+            exp = myia.statistics()['sum'] + (np.prod(pad.shape()) - np.prod(shape))
             # coordinate system consistency checks
-            exp = myia.coordsys().referencepixel()['numeric'] + [np, np, 0]
+            exp = myia.coordsys().referencepixel()['numeric'] + [npix, npix, 0]
             got = pad.coordsys().referencepixel()['numeric']
             self.assertTrue((abs(got - exp) < 1e-8).all())
             exp = myia.toworld([0, 0, 0])['numeric']
-            got = pad.toworld([np, np, 0])['numeric']
+            got = pad.toworld([npix, npix, 0])['numeric']
 
     def test_stretch(self):
         """ ia.pad(): Test stretch parameter"""
@@ -3271,30 +3416,30 @@ class ia_pad_test(ImageBase):
             self.assertTrue((mask[:, padsize - 1] == False).all())
             self.assertTrue((mask[1:padsize - 1, 1:padsize - 1] == expec).all())
 
-        myia = iatool()
+        myia = self._myia
         self.imagename = "xyz.im"
         n = 20
         myia.fromshape(self.imagename, [n, n])
         myia.addnoise()
-        np = 1
-        padsize = n + 2 * np
-        pad = myia.pad(npixels=np)
+        npix = 1
+        padsize = n + 2 * npix
+        pad = myia.pad(npixels=npix)
         expec = myia.getchunk(getmask=True)
         _check()
 
-        pad = myia.pad(npixels=np, mask=self.imagename + ">0")
+        pad = myia.pad(npixels=npix, mask=self.imagename + ">0")
         expec = myia.getchunk() > 0
         _check()
 
         # give the image a pixel mask
         myia.calcmask(self.imagename + "<0")
-        pad = myia.pad(npixels=np)
+        pad = myia.pad(npixels=npix)
         expec = myia.getchunk(getmask=True)
         _check()
 
         # pixel mask + region defined by using an OTF mask
-        pad = myia.pad(npixels=np, mask=self.imagename + "<0.5")
-        expec = numpy.logical_and(myia.getchunk(getmask=True), myia.getchunk() < 0.5)
+        pad = myia.pad(npixels=npix, mask=self.imagename + "<0.5")
+        expec = np.logical_and(myia.getchunk(getmask=True), myia.getchunk() < 0.5)
         _check()
 
         pad.done()
@@ -3480,14 +3625,14 @@ class ia_replacemaskedpixels_test(ImageBase):
 # Tests for image.restoringbeam
 class ia_restoringbeam_test(ImageBase):
 
+
     def tearDown(self):
-        self.qa.done()
-        self._myia.done()
         if self.imagename:
             if os.path.isfile(self.imagename):
                 os.unlink(self.imagename)
             else:
                 shutil.rmtree(self.imagename)
+
 
     def test_global_beam(self):
         """Test adding, deleting, and setting beams"""
@@ -3736,17 +3881,24 @@ class ia_restoringbeam_test(ImageBase):
             )
         )
 
-    def test_history(self):
+    def test_history_rotatebeam(self):
         """verify history writing"""
         myia = self._myia
         myia.fromshape("", [20, 20])
         myia.setrestoringbeam(major="5arcmin", minor="3arcmin", pa="45deg")
         myia.rotatebeam("20deg")
         msgs = myia.history()
-        self.assertTrue("ia.rotatebeam" in msgs[-2])
-        self.assertTrue("ia.rotatebeam" in msgs[-1])
+        self.assertTrue(
+            "ia.rotatebeam" in msgs[-4],
+            f'found unexpected entry -2 in list {msgs}'
+        )
+        self.assertTrue(
+            "ia.rotatebeam" in msgs[-3],
+            f'found unexpected entry -1 in list {msgs}'
+        )
 
-    def test_history(self):
+
+    def test_history_restoringbeam(self):
         """verify history writing"""
         myia = self._myia
         self.imagename = "zz"
@@ -3759,6 +3911,7 @@ class ia_restoringbeam_test(ImageBase):
         myia.done()
         self.assertTrue("ia.setrestoringbeam" in msgs[-2])
         self.assertTrue("ia.setrestoringbeam" in msgs[-1])
+
 
     def test_replacing_largest_beam(self):
         """Verify fix for CAS-12627"""
@@ -3794,6 +3947,414 @@ class ia_restoringbeam_test(ImageBase):
             newcommonbeam['major']['value'], 12,
             'replacement of largest beam failed'
         )
+
+    def test_exceptions(self):
+        """Test various exception cases"""
+        def __test_exception(method_parms, expected_msg):
+            res = None
+            with self.assertRaises(RuntimeError) as cm:
+                res = ia.restoringbeam(**method_parms)
+            got_exception = cm.exception
+            pos = str(got_exception).find(expected_msg)
+            self.assertNotEqual(
+                pos, -1, msg=f'Unexpected exception was thrown: {got_exception}'
+            )
+            
+        
+        ia = self._myia
+        ia.fromshape('', [200,200,4,10])
+        # mbret='matrix' tests
+        # mbret='matrix' without per-plane beams
+        parms = {}
+        parms['mbret'] = 'm'
+        __test_exception(
+            parms,
+            'mbret=\'matrix\' only makes sense if the image has per-plane '
+            'beams. This image does not.'
+        ) 
+        ia.setrestoringbeam(major='3arcmin', minor='1arcmin', pa='40deg')
+        __test_exception(
+            parms,
+            'mbret=\'matrix\' only makes sense if the image has per-plane '
+            'beams. This image does not.'
+        ) 
+        ia.setrestoringbeam(remove=True)
+        ia.setrestoringbeam(
+            major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+            polarization=0
+        )
+        parms['channel'] = 0
+        __test_exception(
+            parms,
+            'mbret=\'matrix\' only makes sense if both channel and '
+            'polarization are negative'
+        ) 
+        parms = {}
+        parms['polarization'] = 0
+        parms['mbret'] = 'm'
+        __test_exception(
+            parms,
+            'mbret=\'matrix\' only makes sense if both channel and '
+            'polarization are negative'
+        ) 
+        # mbret='list' and image has per-plane beam tests tests
+        # no channel axis, but channel specified
+        ia.fromshape("", [20, 20, 4])
+        ia.setrestoringbeam(
+            major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+            polarization=0
+        )
+        parms = {}
+        parms['channel'] = 0
+        parms['polarization'] = 0
+        ia.fromshape("", [20, 20, 10])
+        ia.setrestoringbeam(
+            major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+            polarization=0
+        )
+        parms = {}
+        parms['channel'] = 0
+        parms['polarization'] = 0
+        # channel too high
+        parms = {}
+        parms['channel'] = 15
+        parms['polarization'] = 0
+        __test_exception(
+            parms,
+            'channel value specified as 15 must be less than the number of '
+            'channels in the image, which is 10.'
+        ) 
+        ia.fromshape("", [20, 20, 4, 10])
+        ia.setrestoringbeam(
+            major='3arcmin', minor='1arcmin', pa='40deg', channel=0,
+            polarization=0
+        )
+        parms = {}
+        parms['channel'] = 8
+        parms['polarization'] = 5
+        __test_exception(
+            parms,
+            'polarization value must be less than the number of polarization '
+            'planes in the image, which is 4'
+        ) 
+        parms['channel'] = -1
+        parms['polarization'] = 0
+        __test_exception(
+            parms,
+            'Exception: In the case of an image with both a nondegenerate '
+            'spectral axis and a nondegenerate polarization axis either both '
+            'channel and polarization must be positive, or both must be '
+            'negative.'
+        ) 
+        parms['channel'] = 0
+        parms['polarization'] = -1
+        __test_exception(
+            parms,
+            'Exception: In the case of an image with both a nondegenerate '
+            'spectral axis and a nondegenerate polarization axis either both '
+            'channel and polarization must be positive, or both must be '
+            'negative.'
+        )
+        parms = {}
+        parms['mbret'] = 'bogus'
+        __test_exception(
+            parms,
+            'Unsupported mbret value bogus'
+        )
+        ia.done()
+
+
+    def test_empty_return(self):
+        """
+        Test that an empty dictionary is returned if mbret='list' and the image
+        has no beam(s)
+        """
+        ia = self._myia
+        ia.fromshape("", [20, 20, 4, 5])
+        self.assertEquals(
+            ia.restoringbeam(), {},
+            'Empty dictionary was not returned but should have been'
+        )
+        ia.done()
+
+
+    def test_single_beam(self):
+        """
+        Test that a single global beam is always returned if mbret='list', no
+        matter what the values of channel and polarization are
+        """
+        ia = self._myia
+        ia.fromshape("", [20, 20, 4, 5])
+        bmaj = qa.quantity('5arcsec')
+        bmin = qa.quantity('4arcsec')
+        bpa = qa.quantity('40deg')
+        ia.setrestoringbeam(major=bmaj, minor=bmin, pa=bpa)
+        for c in range(-2, 10):
+            for p in range(-2, 10):
+                beam = ia.restoringbeam(channel=c, polarization=p)
+                self.assertEquals(
+                    beam['major'], bmaj, 'returned beam major axis incorrect'
+                )
+                self.assertEquals(
+                    beam['minor'], bmin, 'returned beam minor axis incorrect'
+                )
+                self.assertEquals(
+                    beam['positionangle'], bpa,
+                    'returned beam position angle incorrect'
+                )
+        ia.done()
+
+
+    def test_per_plane_beams_list_mode(self):
+        """
+        Test retrieving beams for an image with per-plane beams using mode='list'
+        """
+        # test specifying specific channel/polarization pair returns correct beam
+        ia = self._myia
+        ia.fromshape("", [20, 20, 4, 5])
+        bmaj0 = qa.quantity('5arcsec')
+        bmin0 = qa.quantity('4arcsec')
+        bpa0 = qa.quantity('40deg')
+        ia.setrestoringbeam(
+            major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+        )
+        bmaj1 = qa.quantity('7arcsec')
+        bmin1 = qa.quantity('6arcsec')
+        bpa1 = qa.quantity('50deg')
+        ia.setrestoringbeam(
+            major=bmaj1, minor=bmin1, pa=bpa1, channel=3, polarization=2
+        )
+        for c in range(5):
+            for p in range(4):
+                if c == 3 and p == 2:
+                    bmaje = bmaj1
+                    bmine = bmin1
+                    bpae = bpa1
+                else:
+                    bmaje = bmaj0
+                    bmine = bmin0
+                    bpae = bpa0
+                ret = ia.restoringbeam(channel=c, polarization=p)
+                emsg = (
+                    f'Incorrect beam returned for channel={c}, polarization={p}'
+                )
+                self.assertEquals(ret['major'], bmaje, emsg)
+                self.assertEquals(ret['minor'], bmine, emsg)
+                self.assertEquals(ret['positionangle'], bpae, emsg)
+        ia.done()
+        # Test polarization can be anything if channel is non-negative if stokes
+        # axis doesn't exist or is degenerate
+        for shape in ([20, 20, 5], [20, 20, 5, 1]):
+            ia.fromshape("", shape)
+            ia.setrestoringbeam(
+                major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+            )
+            ia.setrestoringbeam(
+                major=bmaj1, minor=bmin1, pa=bpa1, channel=3, polarization=0
+            )
+            for c in range(5):
+                for p in range(-2, 10):
+                    if c == 3:
+                        bmaje = bmaj1
+                        bmine = bmin1
+                        bpae = bpa1
+                    else:
+                        bmaje = bmaj0
+                        bmine = bmin0
+                        bpae = bpa0
+                    ret = ia.restoringbeam(channel=c, polarization=p)
+                    emsg = (
+                        f'Incorrect beam returned for channel={c}, '
+                        f'polarization={p}'
+                    )
+                    self.assertEquals(ret['major'], bmaje, emsg)
+                    self.assertEquals(ret['minor'], bmine, emsg)
+                    self.assertEquals(ret['positionangle'], bpae, emsg)
+            ia.done()
+        # Test channel can be anything if polarization is non-negative and
+        # if spectral axis doesn't exist or is degenerate
+        for shape in ([20, 20, 4], [20, 20, 4, 1]):
+            ia.fromshape("", shape)
+            ia.setrestoringbeam(
+                major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+            )
+            ia.setrestoringbeam(
+                major=bmaj1, minor=bmin1, pa=bpa1, channel=0, polarization=2
+            )
+            for c in range(-2, 10):
+                for p in range(4):
+                    if p == 2:
+                        bmaje = bmaj1
+                        bmine = bmin1
+                        bpae = bpa1
+                    else:
+                        bmaje = bmaj0
+                        bmine = bmin0
+                        bpae = bpa0
+                    ret = ia.restoringbeam(channel=c, polarization=p)
+                    emsg = (
+                        f'Incorrect beam returned for channel={c}, '
+                        f'polarization={p}'
+                    )
+                    self.assertEquals(ret['major'], bmaje, emsg)
+                    self.assertEquals(ret['minor'], bmine, emsg)
+                    self.assertEquals(ret['positionangle'], bpae, emsg)
+            ia.done()
+        # test both channel and polarization negative return the expected
+        # dictionary 
+        # polarization axis non-extant or degenerate
+        for shape in ([20, 20, 5], [20, 20, 5, 1]):
+            ia.fromshape("", shape)
+            ia.setrestoringbeam(
+                major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+            )
+            ia.setrestoringbeam(
+                major=bmaj1, minor=bmin1, pa=bpa1, channel=3, polarization=0
+            )
+            ret = ia.restoringbeam(channel=-1, polarization=-1)
+            emsg = (
+                'Incorrect dictionary returned for both channel and '
+                'polarization negative'
+            )
+            self.assertEqual(ret['nChannels'], 5, emsg)
+            self.assertEqual(ret['nStokes'], 1, emsg)
+            for c in range(5):
+                if c == 3:
+                    bmaje = bmaj1
+                    bmine = bmin1
+                    bpae = bpa1
+                else:
+                    bmaje = bmaj0
+                    bmine = bmin0
+                    bpae = bpa0
+                subrec = ret['beams'][f'*{c}']['*0']
+                self.assertEquals(subrec['major'], bmaje, emsg)
+                self.assertEquals(subrec['minor'], bmine, emsg)
+                self.assertEquals(subrec['positionangle'], bpae, emsg)
+            ia.done()
+
+        # spectral axis non-extant or degenerate
+        for shape in ([20, 20, 4], [20, 20, 4, 1]):
+            ia.fromshape("", shape)
+            ia.setrestoringbeam(
+                major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+            )
+            ia.setrestoringbeam(
+                major=bmaj1, minor=bmin1, pa=bpa1, channel=0, polarization=2
+            )
+            ret = ia.restoringbeam(channel=-1, polarization=-1)
+            self.assertEqual(ret['nChannels'], 1, emsg)
+            self.assertEqual(ret['nStokes'], 4, emsg)
+            for p in range(4):
+                if p == 2:
+                    bmaje = bmaj1
+                    bmine = bmin1
+                    bpae = bpa1
+                else:
+                    bmaje = bmaj0
+                    bmine = bmin0
+                    bpae = bpa0
+                subrec = ret['beams']['*0'][f'*{p}']
+                self.assertEquals(subrec['major'], bmaje, emsg)
+                self.assertEquals(subrec['minor'], bmine, emsg)
+                self.assertEquals(subrec['positionangle'], bpae, emsg)
+            ia.done()
+
+        # nStokes and nChannels both > 1
+        ia.fromshape("", [20, 20, 4, 5])
+        ia.setrestoringbeam(
+            major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+        )
+        ia.setrestoringbeam(
+            major=bmaj1, minor=bmin1, pa=bpa1, channel=3, polarization=2
+        )
+        ret = ia.restoringbeam(channel=-1, polarization=-1)
+        self.assertEqual(ret['nChannels'], 5, emsg)
+        self.assertEqual(ret['nStokes'], 4, emsg)
+        for c in range(5):
+            for p in range(4):
+                if c == 3 and p == 2:
+                    bmaje = bmaj1
+                    bmine = bmin1
+                    bpae = bpa1
+                else:
+                    bmaje = bmaj0
+                    bmine = bmin0
+                    bpae = bpa0
+                subrec = ret['beams'][f'*{c}'][f'*{p}']
+                self.assertEquals(subrec['major'], bmaje, emsg)
+                self.assertEquals(subrec['minor'], bmine, emsg)
+                self.assertEquals(subrec['positionangle'], bpae, emsg)
+        ia.done()
+
+
+    def test_per_plane_beams_matrix_mode(self):
+        """
+        Test retrieving beams for an image with per-plane beams using
+        mode='matrix' and channel and polarization both negative
+        """
+        # alternate the axes ordering
+        ia = self._myia
+        bmaj0 = qa.quantity('5arcsec')
+        bmin0 = qa.quantity('4arcsec')
+        bpa0 = qa.quantity('40deg')
+        bmaj1 = qa.quantity('7arcsec')
+        bmin1 = qa.quantity('6arcsec')
+        bpa1 = qa.quantity('50deg')
+        ns = 4
+        nc = 5
+        for shape in ([20, 20, ns, nc], [20, 20, nc, ns]):
+            ia.fromshape("", shape)
+            ia.setrestoringbeam(
+                major=bmaj0, minor=bmin0, pa=bpa0, channel=0, polarization=0
+            )
+            ia.setrestoringbeam(
+                major=bmaj1, minor=bmin1, pa=bpa1, channel=3, polarization=2
+            )
+            ret = ia.restoringbeam(mbret='matrix')
+            self.assertEquals(ret['nChannels'], nc, 'Wrong number of channels')
+            self.assertEquals(
+                ret['nStokes'], ns, 'Wrong number of polarizations'
+            )
+            bmaje = np.full(shape[2:], bmaj0['value'])
+            bmine = np.full(shape[2:], bmin0['value'])
+            bpae = np.full(shape[2:], bpa0['value'])
+            if shape[2] == nc:
+                bmaje[3, 2] = bmaj1['value']
+                bmine[3, 2] = bmin1['value']
+                bpae[3, 2] = bpa1['value']
+            else:
+                bmaje[2, 3] = bmaj1['value']
+                bmine[2, 3] = bmin1['value']
+                bpae[2, 3] = bpa1['value']
+            bmaje = qa.quantity(bmaje, bmaj0['unit'], keepshape=True)
+            bmine = qa.quantity(bmine, bmin0['unit'], keepshape=True)
+            bpae = qa.quantity(bpae, bpa0['unit'], keepshape=True)
+            self.assertTrue(
+                (ret['major']['value'] == bmaje['value']).all(),
+                f'Incorrect major axis, got {ret["major"]}, expected {bmaje}'
+            )
+            self.assertEquals(
+                ret['major']['unit'], bmaje['unit'],
+                f'Incorrect major axis, got {ret["major"]}, expected {bmaje}'
+            )
+            self.assertTrue(
+                (ret['minor']['value'] == bmine['value']).all(),
+                f'Incorrect minor axis, got {ret["minor"]}, expected {bmine}'
+            )
+            self.assertEquals(
+                ret['minor']['unit'], bmine['unit'],
+                f'Incorrect mainor axis, got {ret["major"]}, expected {bmine}'
+            )
+            self.assertTrue(
+                (ret['pa']['value'] == bpae['value']).all(),
+                f'Incorrect pa, got {ret["pa"]}, expected {bpae}'
+            )
+            self.assertEquals(
+                ret['pa']['unit'], bpae['unit'],
+                f'Incorrect pa, got {ret["pa"]}, expected {bpae}'
+            )
+
 
 # Tests for image.rotate
 class ia_rotate_test(ImageBase):
@@ -3837,7 +4398,7 @@ class ia_rotate_test(ImageBase):
         myia.open(self.datapath + "postrot.im")
         expec = myia.getchunk()
         myia.done()
-        self.assertTrue(numpy.abs(got - expec).max() < 10e-22)
+        self.assertTrue(np.abs(got - expec).max() < 10e-22)
 
     def test_history(self):
         """Verify history is written"""
@@ -4132,11 +4693,11 @@ class ia_tofits_test(ImageBase):
                     self.assertTrue((gotpix == exppix).all())
             myia.done()
 
+
 # Tests for image.twopointcorrelation
 class ia_twopointcorrelation_test(ImageBase):
 
     def tearDown(self):
-        self._myia.done()
         data = [self.mymask, self.imagename, self.outfile]
         for f in data:
             if os.path.exists(f):

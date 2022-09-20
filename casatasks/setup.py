@@ -152,7 +152,6 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
 
 xml_files = [ 'xml/imhead.xml',
@@ -179,6 +178,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/flagmanager.xml',
               'xml/mstransform.xml',
               'xml/tclean.xml',
+              'xml/deconvolve.xml',
               'xml/immath.xml',
               'xml/vishead.xml',
               'xml/uvsub.xml',
@@ -206,7 +206,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/ft.xml',
               'xml/gaincal.xml',
               'xml/gencal.xml',
-              'xml/uvcontsub3.xml',
               'xml/testconcat.xml',
               'xml/apparentsens.xml',
               'xml/hanningsmooth.xml',
@@ -258,6 +257,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/feather.xml',
               'xml/statwt.xml',
               'xml/virtualconcat.xml',
+              'xml/uvcontsub_old.xml',
               'xml/uvcontsub.xml',
               'xml/uvmodelfit.xml',
               'xml/visstat.xml',
