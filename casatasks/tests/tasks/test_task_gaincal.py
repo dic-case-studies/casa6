@@ -29,7 +29,7 @@ import numpy as np
 import pylab as pl
 
 import casatools
-from casatasks import gaincal, mstransform, casalog
+from casatasks import gaincal, mstransform, casalog, flagdata
 tb = casatools.table()
 from casatestutils import testhelper as th
 
@@ -899,6 +899,44 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(np.all(ctspwflag==[True,False,True,True]))  # only spw 0 unflagged
         self.assertTrue(ctnrows==50)
         self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+        
+    def test_dictOutput(self):
+        """ Test that a dictionary is output by the task """
+        res = gaincal(vis=datacopy, caltable=tempCal)
+        self.assertTrue(type(res) == dict)
+
+    def test_dictOutputFlagged(self):
+        """ Test that the when an spw is flagged the final data counts are zero """
+        # Flag the spw
+        flagdata(vis=datacopy, spw='0')
+        # Run gaincal
+        res = gaincal(vis=datacopy, caltable=tempCal)
+        toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged']
+
+        for i in toCheck:
+            self.assertTrue(np.all(res['solvestats']['spw0'][i] == 0))
+        self.assertTrue(np.all(res['solvestats']['spw0']['expected'] > 0))
+
+    def test_dictOutputAntennaFlag(self):
+        """ Test that preflagging antennas shows in the output dict """
+        # Flag the antenna
+        flagdata(vis=datacopy, antenna='0')
+        # Run gaincal
+        res = gaincal(vis=datacopy, caltable=tempCal)
+        toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged', 'used_as_refant']
+
+        for i in toCheck:
+            self.assertTrue(np.all(res['solvestats']['spw0']['ant0'][i] == 0))
+        self.assertTrue(np.all(res['solvestats']['spw0']['ant0']['expected'] > 0))
+
+    def test_dictBelowMinBl(self):
+        """ Test that results will reflect ants excluded due to missing baselines """
+        flagdata(vis=datacopy, antenna='0~6')
+        res = gaincal(vis=datacopy, caltable=tempCal)
+
+        for i in range(7, 10):
+            ant = 'ant'+str(i)
+            self.assertTrue(np.all(res['solvestats']['spw0'][ant]['above_minblperant'] == 0))
 
 if __name__ == '__main__':
     unittest.main()

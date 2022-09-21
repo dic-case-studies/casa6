@@ -20,10 +20,11 @@
 ##########################################################################
 import os
 import shutil
+import numpy as np
 import unittest
 
 from casatools import ctsys
-from casatasks import bandpass
+from casatasks import bandpass, flagdata
 from casatestutils import testhelper as th
 
 ''' Python unit tests for the bandpass task
@@ -110,6 +111,48 @@ class bandpass1_test(test_base):
 
         # Compare the calibration tables
         self.assertTrue(th.compTables(msbcal, reference, ['WEIGHT']))
+
+    def test_returnDict(self):
+        """ Test that the return value is a dictionary """
+        msbcal = self.msfile + '.bcal'
+        res = bandpass(vis=self.msfile, caltable=msbcal)
+        self.assertTrue(type(res) == dict)
+
+    def test_dictOutputFlagged(self):
+        """ Test that the when an spw is flagged the final data counts are zero """
+        # Flag the spw
+        flagdata(vis=self.msfile, spw='0')
+        # Run bandpass
+        msbcal = self.msfile + '.bcal'
+        res = bandpass(vis=self.msfile, caltable=msbcal)
+        toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged']
+
+        for i in toCheck:
+            self.assertTrue(np.all(res['solvestats']['spw0'][i] == 0))
+        self.assertTrue(np.all(res['solvestats']['spw0']['expected'] > 0))
+
+    def test_dictOutputAntennaFlag(self):
+        """ Test that preflagging antennas shows in the output dict """
+        # Flag the antenna
+        flagdata(vis=self.msfile, antenna='0')
+        # Run bandpass
+        msbcal = self.msfile + '.bcal'
+        res = bandpass(vis=self.msfile, caltable=msbcal)
+        toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged', 'used_as_refant']
+
+        for i in toCheck:
+            self.assertTrue(np.all(res['solvestats']['spw0']['ant0'][i] == 0))
+        self.assertTrue(np.all(res['solvestats']['spw0']['ant0']['expected'] > 0))
+
+    def test_dictBelowMinBl(self):
+        """ Test that results will reflect ants excluded due to missing baselines """
+        flagdata(vis=self.msfile, antenna='0~24')
+        msbcal = self.msfile + '.bcal'
+        res = bandpass(vis=self.msfile, caltable=msbcal)
+
+        for i in range(25, 28):
+            ant = 'ant'+str(i)
+            self.assertTrue(np.all(res['solvestats']['spw0'][ant]['above_minblperant'] == 0))
 
 
 class bandpass2_test(test_base):
