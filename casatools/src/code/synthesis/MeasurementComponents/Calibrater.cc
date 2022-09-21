@@ -155,6 +155,51 @@ void CalCounts::addAntennaCounts(Int spw, Int NAnt, Int NPol, std::map<Int, std:
     
 }
 
+Vector<Int> CalCounts::antMapVal(Int spw, Int ant, String gate) {
+    return antennaMap_[spw][ant][gate];
+}
+
+Vector<Int> CalCounts::spwMapVal(Int spw, String gate) {
+    return spwMap_[spw][gate];
+}
+
+Vector<Int> CalCounts::totalMapVal(String gate) {
+    return totalMap_[gate];
+}
+
+void CalCounts::logRecordInfo(Int NSpw, Int NAnt, Int NPol) {
+    // Print out a summary by SPW x ANT of the return record
+    // currently only displaying one gate (data_unflagged?)
+    cout << "----- LOG INFO FOR RETUREN RECORD -----" << endl;
+    /*logSink() << "----- LOG INFO FOR RETUREN RECORD -----" << LogIO::POST;
+    for (Int spw=0; spw < NSpw; spw++) {
+        //logSink() << LogOrigin("Calibrater","") << LogIO::NORMAL
+        //<< "Arranging to calibrate MS: "
+        //<< LogIO::POST;
+        cout << "SPW: " << spw;
+        for (Int ant=0; ant<NAnt; ant++) {
+            cout << " " << antennaMap_[spw][ant]["data_unflagged"] << " ";
+        //    for (Int pol=0; pol<vi.nPolarizationIds(); pol++) {
+        //        logSink() << resRec_[spw][ant]["data_unflagged"][pol];
+            }
+        //}
+        cout << endl;
+        //logSink() << LogIO::POST;
+    }
+    //for (Int spw=0; spw < NSpw; spw++) {
+        //logSink() << LogOrigin("Calibrater","") << LogIO::NORMAL
+        //<< "Arranging to calibrate MS: "
+        //<< LogIO::POST;
+        //logSink() << LogIO::NORMAL << "SPW: " + spw << LogIO::POST;
+        //for (Int ant=0; ant<NAnt; ant++) {
+        //    for (Int pol=0; pol<NPol; pol++) {
+        //        logSink() << LogIO::NORMAL << antennaMap_[spw][ant]["data_unflagged"][pol];
+        //    }
+        //}
+        //logSink() << LogIO::POST;
+    //}*/
+}
+
 Record CalCounts::makeRecord(Int NAnt, Int NPol) {
     
     Vector<Int> totExp(NPol, 0), totUnflag(NPol, 0), totMinsnr(NPol, 0);
@@ -3808,6 +3853,49 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   
   // Compile all accumulated counts into a record
   resRec_ = calCounts->makeRecord(msmc_p->nAnt(), vi.nPolarizationIds());
+  //calCounts->logRecordInfo(msmc_p->nSpw(),msmc_p->nAnt(), vi.nPolarizationIds());
+    
+    // print a matrix to the logger
+    logSink() << "----- PER ANTENNA INFO -----" << LogIO::POST;
+    // print the antenna list
+    logSink() << "      ";
+    for (Int ant=0; ant<msmc_p->nAnt(); ant++) {
+        logSink() << " ANT: " << ant;
+    }
+    logSink() << LogIO::POST;
+    
+    for (Int spw=0; spw < msmc_p->nSpw(); spw++) {
+        
+        logSink() << LogIO::NORMAL << "SPW: " << spw;
+        
+        for (Int ant=0; ant < msmc_p->nAnt(); ant++) {
+            logSink() << " " << calCounts->antMapVal(spw, ant, "above_minsnr") << " ";
+        }
+        logSink() << LogIO::POST;
+    }
+    
+    logSink() << "----- PER SPW INFO -----" << LogIO::POST;
+    // print the result fields
+    logSink() << "      ";
+    logSink() << "expected  data_unflagged  above_minblperant  above_minsnr";
+    logSink() << LogIO::POST;
+    for (Int spw = 0; spw < msmc_p->nSpw(); spw++) {
+        logSink() << LogIO::NORMAL << "SPW: " << spw;
+        logSink() << calCounts->spwMapVal(spw, "expected") << "      ";
+        logSink() << calCounts->spwMapVal(spw, "data_unflagged") << "      ";
+        logSink() << calCounts->spwMapVal(spw, "above_minblperant") << "      ";
+        logSink() << calCounts->spwMapVal(spw, "above_minsnr");
+        logSink() << LogIO::POST;
+    }
+    
+    logSink() << "----- GLOBAL INFO -----" << LogIO::POST;
+    logSink() << "expected  data_unflagged  above_minblperant  above_minsnr";
+    logSink() << LogIO::POST;
+    logSink() << calCounts->totalMapVal("expected") << "     ";
+    logSink() << calCounts->totalMapVal("data_unflagged") << "     ";
+    logSink() << calCounts->totalMapVal("above_minblperant") << "     ";
+    logSink() << calCounts->totalMapVal("above_minsnr") << "     ";
+    logSink() << LogIO::POST;
     
   // Report nGood to logger
   logSink() << "  Found good " 

@@ -460,9 +460,21 @@ class CalCounts {
     // Methods for incrementing counts, initializing structure, and converting to record
     void addAntennaCounts(casacore::Int spw, casacore::Int NAnt, casacore::Int NPol, std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>>);
     
+    void logRecordInfo(casacore::Int NSpw, casacore::Int NAnt, casacore::Int NPol);
+    
+    casacore::Vector<casacore::Int> antMapVal(casacore::Int spw, casacore::Int ant, casacore::String);
+    
+    casacore::Vector<casacore::Int> spwMapVal(casacore::Int spw, casacore::String gate);
+    
+    casacore::Vector<casacore::Int> totalMapVal(casacore::String);
+    
     casacore::Record makeRecord(casacore::Int, casacore::Int);
     
   private:
+    
+    // Log functions and variables
+    casacore::LogIO sink_p;
+    casacore::LogIO& logSink();
     
     CalCounts(const CalCounts&) {};
     
