@@ -2893,24 +2893,7 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 	const auto &telescopePosition = msIter_p->telescopePosition();
 	const auto &currentDirection = msIter_p->phaseCenter();
 
-    thread_local static MeasFrame measFrame(epoch, telescopePosition, currentDirection);
-
-    measFrame.resetEpoch(epoch);
-
-    if (isNewMs()) {
-        // assuming that individual MS contains only one observatory information
-        // (i.e., OBSERVATION.TELESCOPE_NAME values are identical)
-        auto const telescopeNames = msIter_p->msColumns().observation().telescopeName().getColumn();
-        AlwaysAssert(allEQ(telescopeNames, telescopeNames[0]), AipsError);
-        measFrame.resetPosition(telescopePosition);
-
-        const MDirection *referenceDirection = dynamic_cast<const MDirection *>(measFrame.direction());
-        if (referenceDirection->getRef() != currentDirection.getRef()
-          || referenceDirection->getAngle("rad") != currentDirection.getAngle("rad")) {
-            // reference direction should update according to field ID
-            measFrame.resetDirection(currentDirection);
-        }
-    }
+	MeasFrame measFrame(epoch, telescopePosition, currentDirection);
 
 	MFrequency::Ref observedFrame(measurementFrequencyType, measFrame);
 
