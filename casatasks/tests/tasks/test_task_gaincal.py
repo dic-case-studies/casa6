@@ -64,6 +64,7 @@ tempCal = 'temp.cal'
 tempCal2 = 'temp2.cal'
 selectCal = 'select.cal'
 
+flagcopy = 'flagged.ms'
 datacopy = 'gaincalTestCopy.ms'
 merged_copy1 = 'merged_copy1.ms'
 merged_copy2 = 'merged_copy2.ms'
@@ -159,9 +160,15 @@ class gaincal_test(unittest.TestCase):
         gaincal(vis=datacopy, caltable=selectCal, solint='inf', field='0', refant='0',
                 smodel=[1, 0, 0, 0], scan='2', spw='2')
 
+    def setUp(self):
+        shutil.copytree(datacopy, flagcopy)
+
     def tearDown(self):
         if os.path.exists(tempCal):
             shutil.rmtree(tempCal)
+
+        if os.path.exists(flagcopy):
+            shutil.rmtree(flagcopy)
             
         if os.path.exists(tempCal2):
             shutil.rmtree(tempCal2)
@@ -908,9 +915,9 @@ class gaincal_test(unittest.TestCase):
     def test_dictOutputFlagged(self):
         """ Test that the when an spw is flagged the final data counts are zero """
         # Flag the spw
-        flagdata(vis=datacopy, spw='0')
+        flagdata(vis=flagcopy, spw='0')
         # Run gaincal
-        res = gaincal(vis=datacopy, caltable=tempCal)
+        res = gaincal(vis=flagcopy, caltable=tempCal)
         toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged']
 
         for i in toCheck:
@@ -920,9 +927,9 @@ class gaincal_test(unittest.TestCase):
     def test_dictOutputAntennaFlag(self):
         """ Test that preflagging antennas shows in the output dict """
         # Flag the antenna
-        flagdata(vis=datacopy, antenna='0')
+        flagdata(vis=flagcopy, antenna='0')
         # Run gaincal
-        res = gaincal(vis=datacopy, caltable=tempCal)
+        res = gaincal(vis=flagcopy, caltable=tempCal)
         toCheck = ['above_minblperant', 'above_minsnr', 'data_unflagged', 'used_as_refant']
 
         for i in toCheck:
@@ -931,8 +938,8 @@ class gaincal_test(unittest.TestCase):
 
     def test_dictBelowMinBl(self):
         """ Test that results will reflect ants excluded due to missing baselines """
-        flagdata(vis=datacopy, antenna='0~6')
-        res = gaincal(vis=datacopy, caltable=tempCal)
+        flagdata(vis=flagcopy, antenna='0~6')
+        res = gaincal(vis=flagcopy, caltable=tempCal)
 
         for i in range(7, 10):
             ant = 'ant'+str(i)
