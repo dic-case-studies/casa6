@@ -7,26 +7,14 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import table, ms, msmetadata
-    from casatools.platform import bytes2str
+from casatasks import casalog
+from casatools import table, ms, msmetadata
 
-    import subprocess
+import subprocess
 
-    mst_local = ms()
-    tbt_local = table()
-    msmdt_local = msmetadata()
-else:
-    from __main__ import *
-    from taskinit import *
-
-    import commands
-
-    mst_local = mstool()
-    tbt_local = tbtool()
-    msmdt_local = msmdtool()
+mst_local = ms()
+tbt_local = table()
+msmdt_local = msmetadata()
 
 class convertToMMS():
     def __init__(self,\
@@ -185,12 +173,8 @@ class convertToMMS():
                 
         cmd1 = 'grep Type '+mydir+'/table.info'
         cmd2 = 'grep SubType '+mydir+'/table.info'
-        if is_CASA6:
-            mytype = bytes2str(subprocess.check_output(cmd1)).rstrip("\n")
-            stype = bytes2str(subprocess.check_output(cmd2)).rstrip("\n")
-        else:
-            mytype = commands.getoutput(cmd1)
-            stype = commands.getoutput(cmd2)
+        mytype = subprocess.getoutput(cmd1).rstrip("\n")
+        stype = subprocess.getoutput(cmd2).rstrip("\n")
 
         # It is a cal table
         if mytype.__contains__('Calibration'):
@@ -712,15 +696,10 @@ def getDiskUsage(msfile):
     # Command line to run
     ducmd = 'du -hs {0}'.format(msfile)
 
-    if is_CASA6:
-        p = Popen(ducmd, shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
-        o, e = p.communicate()             ### previously 'sizeline = p.stdout.read()' here
-                                           ### left process running...
-        sizeline = bytes2str(o.split( )[0])
-    else:
-        p = Popen(ducmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-        sizeline = p.stdout.read()
-        _out, _err = p.communicate()
+    p = Popen(ducmd, shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    o, e = p.communicate()             ### previously 'sizeline = p.stdout.read()' here
+                                       ### left process running...
+    sizeline = o.decode( ).split( )[0])
 
     # Create a list of the output string, which looks like this:
     # ' 75M\tuidScan23.data/uidScan23.0000.ms\n'

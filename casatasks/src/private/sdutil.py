@@ -12,7 +12,6 @@ from casatasks import casalog
 from casatools import calibrater, imager, measures
 from casatools import ms as mstool
 from casatools import mstransformer, table
-from casatools.platform import bytes2str
 
 from . import flaghelper as fh
 from .mstools import write_history
@@ -60,8 +59,8 @@ def is_ms(filename):
     if (os.path.isdir(filename)
         and os.path.exists(filename + '/table.info')
             and os.path.exists(filename + '/table.dat')):
-        f = open(filename + '/table.info')
-        lines = bytes2str(f.readline())
+        f = open(filename + '/table.info',encoding=sys.getdefaultencoding( ))
+        lines = f.readline()
         f.close()
         if (lines.find('Measurement Set') != -1):
             return True
