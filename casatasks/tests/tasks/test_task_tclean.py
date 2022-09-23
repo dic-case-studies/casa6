@@ -1125,7 +1125,14 @@ class test_iterbot(testref_base):
           report = report + report2[1]
           if report2[0]==True:
                 report = report + (self.th.check_val(iterDone_vec[0], 15,valname='iterdone test1:', exact=True))[1]
-                report = report + (self.th.check_val(iterDone_vec[1], 15,valname='iterdone test2:', exact=True))[1]
+                ## See the documentation note for 'iterDone' in the table being cumulative across cycles for 
+                ## MPI runs with use_small_summaryminor=True (i.e. the default for MPI runs). 
+                ## https://casadocs.readthedocs.io/en/latest/notebooks/synthesis_imaging.html#Returned-Dictionary
+                if self.parallel:
+                     iterdone2=15+15  
+                else:
+                     iterdone2=15
+                report = report + (self.th.check_val(iterDone_vec[1], iterdone2,valname='iterdone test2:', exact=True))[1]
 
           if not self.parallel: ## This tests the default setting of USE_SMALL_SUMMARYMINOR='false' with serial runs.
                #print(ret['summaryminor'][0][0][0]['stopCode'])
