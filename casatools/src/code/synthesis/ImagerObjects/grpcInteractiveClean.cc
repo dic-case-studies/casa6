@@ -869,7 +869,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				// outlier field id
 				state.SummaryMinor( IPosition(2,15,cShp[1]+row) ) = immod;
 				// stopcode
-				state.SummaryMinor( IPosition(2,16,cShp[1]+row) ) = summary(IPosition(2,18,row));
+				state.SummaryMinor( IPosition(2,16,cShp[1]+row) ) = summary(IPosition(2,16,row));
 			}
 
 		}

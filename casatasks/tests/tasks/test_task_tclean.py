@@ -1118,6 +1118,23 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=2,niter=500,interactive=0,calcres=True,parallel=self.parallel)
           report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                   nmajordone=3) # 1 for calcres + 2 major cycle during cleaning
+ 
+          #print(ret['summaryminor'][0][0][0]['iterDone'])
+          iterDone_vec=ret['summaryminor'][0][0][0]['iterDone']
+          report2 = self.th.check_val(len(iterDone_vec), 2,valname='iterdone len:', exact=True)
+          report = report + report2[1]
+          if report2[0]==True:
+                report = report + (self.th.check_val(iterDone_vec[0], 15,valname='iterdone test1:', exact=True))[1]
+                report = report + (self.th.check_val(iterDone_vec[1], 15,valname='iterdone test2:', exact=True))[1]
+
+          if not self.parallel: ## This tests the default setting of USE_SMALL_SUMMARYMINOR='false' with serial runs.
+               #print(ret['summaryminor'][0][0][0]['stopCode'])
+               stopCode_vec=ret['summaryminor'][0][0][0]['stopCode']
+               report3 = self.th.check_val(len(stopCode_vec), 2,valname='stopcode len:', exact=True)
+               report = report + report3[1]
+               if report3[0]==True:
+                    report = report + (self.th.check_val(stopCode_vec[0], 2,valname='stopcode test1:', exact=True))[1]
+                    report = report + (self.th.check_val(stopCode_vec[1], 2,valname='stopcode test2:', exact=True))[1]
           self.assertTrue(self.check_final(report))
 
 ##############################################
