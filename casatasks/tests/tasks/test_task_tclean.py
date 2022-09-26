@@ -1128,13 +1128,13 @@ class test_iterbot(testref_base):
                 ## See the documentation note for 'iterDone' in the table being cumulative across cycles for 
                 ## MPI runs with use_small_summaryminor=True (i.e. the default for MPI runs). 
                 ## https://casadocs.readthedocs.io/en/latest/notebooks/synthesis_imaging.html#Returned-Dictionary
-                if self.parallel:
+                if ParallelTaskHelper.isMPIEnabled():
                      iterdone2=15+15  
                 else:
                      iterdone2=15
                 report = report + (self.th.check_val(iterDone_vec[1], iterdone2,valname='iterdone test2:', exact=True))[1]
 
-          if not self.parallel: ## This tests the default setting of USE_SMALL_SUMMARYMINOR='false' with serial runs.
+          if not ParallelTaskHelper.isMPIEnabled(): ## This tests the default setting of USE_SMALL_SUMMARYMINOR='false' with serial runs (full dictionary exists)
                #print(ret['summaryminor'][0][0][0]['stopCode'])
                stopCode_vec=ret['summaryminor'][0][0][0]['stopCode']
                report3 = self.th.check_val(len(stopCode_vec), 2,valname='stopcode len:', exact=True)
