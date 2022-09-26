@@ -44,7 +44,8 @@ Features tested:
   3. Solar system (Uranus) flux density calibration.
 """
 
-datapath = ctsys_resolve('unittest/setjy/')
+#datapath = ctsys_resolve('unittest/setjy/')
+datapath = '/export/home/murasame2/casadev/vlanewmodels/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -1234,7 +1235,62 @@ class test_newStandards(SetjyUnitTestBase):
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
-    
+   
+class test_newVLAmodelimages(SetjyUnitTestBase):
+    """Test new VLA model images"""
+    def setUp(self):
+        prefix = '3C48Ka'
+        msname=prefix+'.ms'
+        self.setUpMS(msname)
+        self.field='3C48'
+
+    def tearDown(self):
+        #self.resetMS()
+        pass
+ 
+    def test_3C48_KaBandModel(self):
+        # temporary location for test
+        self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C48_A.im"
+        #self.modelim p= "3C48_A.im"
+        sjran = setjy(vis=self.inpms, 
+                      field=self.field,
+                      model=self.modelim,
+                      standard='Perley-Butler 2017',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else: 
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break 
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
+        self.check_eq(sjran['0']['0']['fluxd'][0],0.71951878,0.0001)
+        self.assertTrue(ret)
+        print("ret=%s" % sjran)
+        mslocal.open(self.inpms)
+        # check a long baseline data point 
+        longbsn = mslocal.statistics(column='MODEL',
+                                     complex_value='amp',
+                                     field='3C48',
+                                     baseline='8&26',
+                                     time='2019/10/04/08:17:00.33665',
+                                            correlation='rr',
+                                            reportingaxes='field')['FIELD_ID=0']['mean']
+        mslocal.close()
+        # ToDO: turn on new value when the new model images are put into the data repo.
+        # new model
+        #self.check_eq(longbsn,  0.613553935289383,0.0001) 
+        # old model 
+        self.check_eq(longbsn, 0.6241399765014649,0.0001) 
+
+
+ 
 class test_newStandards_MMS(SetjyUnitTestBase):
     """Test simple Stnadard Scaling with MMS data"""
     # can be just mpicasa specific tests but for now it will be tested for serial
