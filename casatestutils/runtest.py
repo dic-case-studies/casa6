@@ -12,6 +12,8 @@ import json
 import datetime
 import platform
 import re
+import shlex
+
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -279,6 +281,14 @@ def read_conf(conf):
 def fetch_tests(work_dir, branch):
 
     repo_path = "https://open-bitbucket.nrao.edu/scm/casa/"
+    
+    # Test if https is restricted
+    p1 = subprocess.Popen(shlex.split("curl -k -X GET https://open-bitbucket.nrao.edu/rest/api/1.0/projects/CASA/repos/casa6"), stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(shlex.split('grep "not permitted"'), stdin=p1.stdout)
+    p2.communicate()
+    if (p2.returncode == 0):
+        repo_path = "ssh://git@open-bitbucket.nrao.edu:7999/casa/"
+    
     source_dir=work_dir + "/casasources"
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
