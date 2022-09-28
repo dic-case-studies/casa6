@@ -28,7 +28,7 @@
 #ifndef COMPONENTS_CONSTANTSPECTRUM_H
 #define COMPONENTS_CONSTANTSPECTRUM_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <components/ComponentModels/ComponentType.h>
 #include <components/ComponentModels/SpectralModel.h>
 #include <casacore/casa/Arrays/ArrayFwd.h>
@@ -163,7 +163,7 @@ public:
                       const casacore::MFrequency::Ref& refFrame) const;
  
   //original values are returned
-  virtual void sampleStokes(casacore::Vector<casacore::Vector<casacore::Double> >& scale,
+  virtual void sampleStokes(casacore::Matrix<casacore::Double>& scale,
                       const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
 			    const casacore::MFrequency::Ref& refFrame) const;
   // Return a pointer to a copy of this object upcast to a SpectralModel

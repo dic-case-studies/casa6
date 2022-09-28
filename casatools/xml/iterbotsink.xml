@@ -75,6 +75,11 @@ This is used to construct {\tt synthesisiterbot} tool.
      <description>Check using peak residual before major cycle.</description>
      <value type="bool">false</value>
      </param>
+     
+     <param name="reachedMajorLimit" type="bool">
+        <description>Let the iterbot know if we've reached our desired limit for major cycles.</description>
+        <value type="bool">false</value>
+     </param>
 
 </input>
 <returns type="int"/>
@@ -125,6 +130,10 @@ This is used to construct {\tt synthesisiterbot} tool.
      <param name="execrecord" type="record">
      <description>Pass in the output of synthesisdeconvolver.executeminorcycle()</description>
      <value type="record"/>
+     </param>
+     <param name="immod" type="int">
+       <description>Outlier field id</description>
+       <value type="int"/>
      </param>
 </input>
 <returns type="bool"/>

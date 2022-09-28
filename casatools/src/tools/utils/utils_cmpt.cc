@@ -16,18 +16,15 @@
 #include <stdcasa/version.h>
 #include <utils_cmpt.h>
 #include <tools/utils/stdBaseInterface.h>
-#if ! defined(CASATOOLS)
-#include <stdcasaXMLUtil.h>
-#else
 #include <climits>
-#endif
-#include <casa/Logging/LogIO.h>
-#include <casa/BasicSL/String.h>
-#include <casa/OS/File.h>
-#include <casa/OS/DOos.h>
-#include <tables/Tables/Table.h>
-#include <casa/System/Aipsrc.h>
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/OS/DOos.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/TableUtil.h>
+#include <casacore/casa/System/Aipsrc.h>
+#include <casacore/casa/OS/HostInfo.h>
 #ifndef NO_CRASH_REPORTER
 #include <stdcasa/StdCasa/CrashReporter.h>
 #endif
@@ -38,7 +35,6 @@
 #include <cstdlib>
 #include <casacore/casa/Quanta/UnitMap.h>
 #include <casatools/Config/State.h>
-#ifdef CASATOOLS
 #include <fftw3.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -47,7 +43,6 @@
 #include <asdmstman/AsdmStMan.h>
 #include <casacore/derivedmscal/DerivedMC/Register.h>
 #include <toolversion.h>
-#endif
 
 using namespace std;
 using namespace casacore;
@@ -68,161 +63,6 @@ utils::~utils()
      delete myConstraints;
   delete itsLog;
 }
-
-#if ! defined(CASATOOLS)
-// These parameter/XML processing routines are no longer needed with
-// CASA 6 because Cereberus is used for type checking based upon
-// generated JSON parameter descriptions...
-bool
-utils::verify(const ::casac::record& input, const ::casac::variant& xmldescriptor, bool throwexcept)
-{
-
-   bool rstat(true);
-   record *constraints(0);
-   *itsLog << LogOrigin("utils", "verify") << LogIO::NORMAL3 << "Verifying arguments....";
-   switch(xmldescriptor.type()){
-      case variant::STRING :
-	 constraints = torecord(xmldescriptor.getString());
-	  //std::cerr << "constraints record: ";
-	  //dumpRecord(std::cerr, *constraints);
-         break;
-      case variant::RECORD :
-         constraints = new record(xmldescriptor.getRecord());
-         break;
-      default :
-         rstat = false;
-         break;
-   }
-   if(rstat){
-	   rstat = stdBaseInterface::verify(const_cast<record &>(input), *constraints, *itsLog);
-           if(constraints)
-	      delete constraints;
-	   if(rstat){
-		   *itsLog << LogOrigin("utils", "verify") << LogIO::NORMAL3 << "verified." << LogIO::POST;
-	   }else{
-                if(throwexcept){
-                   throw(AipsError("Parameter verification failed"));
-                } else {
-		   *itsLog <<  LogIO::POST;
-		   *itsLog << LogOrigin("utils", "verify") << LogIO::WARN << "Some arguments failed to verify!" << LogIO::POST;
-		}
-	   }
-   }
-   //std::cerr << "return from verify is " << rstat << std::endl;
-   return rstat;
-}
-
-bool
-utils::setconstraints(const ::casac::variant& xmldescriptor)
-{
-   bool rstat(true);
-   if(myConstraints)
-	   delete myConstraints;
-   *itsLog << LogOrigin("utils", "setconstraints") << LogIO::NORMAL3 << "Setting constraints ...";
-   switch(xmldescriptor.type()){
-      case variant::STRING :
-	 myConstraints = torecord(xmldescriptor.getString());
-	 // std::cerr << "constraints record: ";
-	 // dumpRecord(std::cerr, *constraints);
-         break;
-      case variant::RECORD :
-         myConstraints = new record(xmldescriptor.getRecord());
-         break;
-      default :
-	 rstat = false;
-   }
-   *itsLog << LogIO::NORMAL3 << "Constraints set." << LogIO::POST;
-	 //std::cerr << "constraints record: ";
-	 //dumpRecord(std::cerr, *myConstraints);
-   return rstat;
-}
-
-bool
-utils::verifyparam(const ::casac::record& param)
-{
-   bool rstat(true);
-   if(myConstraints && !param.empty()){
-      //dumpRecord(std::cerr, param);
-      rec_map::iterator iter = myConstraints->begin(); // We need the underlying record...
-      /*
-      cerr << "Constraints Record " << endl;
-      dumpRecord(std::cerr, *myConstraints);
-      cerr << "Param  Record " << endl;
-      dumpRecord(std::cerr, param);
-      */
-      rstat = stdBaseInterface::verifyOne(const_cast<record &>(param), (*iter).second.asRecord(), *itsLog);
-   } else {
-	 if(param.empty()){
-            *itsLog << LogOrigin("utils", "verifyparam") << LogIO::WARN
-		 << "parameter not set, unable to verify parameter" << LogIO::POST;
-	 }else{
-            *itsLog << LogOrigin("utils", "verifyparam") << LogIO::WARN
-		 << "Constraints record not set, unable to verify parameter" << LogIO::POST;
-	 }
-   }
-   return rstat;
-}
-
-::casac::variant*
-utils::expandparam(const std::string& name , const ::casac::variant& value )
-{
-   ::casac::variant *rstat(0);
-
-   if(myConstraints){
-       rec_map::iterator iter = myConstraints->begin(); // We need the underlying record...
-       //dumpRecord(std::cerr, (*iter).second.asRecord()["parameters"].asRecord()[name].asRecord());
-       if((*iter).second.asRecord()["parameters"].asRecord().count(name) &&
-          (*iter).second.asRecord()["parameters"].asRecord()[name].asRecord().count("allowed")){
-          rstat = stdBaseInterface::expandEnum((*iter).second.asRecord()["parameters"].asRecord()[name].asRecord()["allowed"], value, *itsLog);
-       }
-       else{
-	  rstat = new variant(value);
-       }
-   } else {
-       rstat = new variant(casac::initialize_variant(""));;
-       *itsLog << LogOrigin("utils", "expandparam") << LogIO::WARN
-		 << "Constraints record not set, unable to expand parameter" << LogIO::POST;
-   }
-   return rstat;
-}
-
-::casac::record*
-utils::torecord(const std::string& input)
-{
-   stdcasaXMLUtil xmlUtils;
-   casac::record *rstat = new casac::record;
-   if(!input.find("<?xml version")){
-      xmlUtils.toCasaRecord(*rstat, input);
-   }else{
-      if(!input.find("file:///")){
-         Bool ok = xmlUtils.readXMLFile(*rstat, input.substr(7));
-	 if(!ok){
-            *itsLog << LogIO::SEVERE << "Unable to read XML file " << input << ", unable to verify input" << LogIO::POST;
-	 }
-      } else {
-         *itsLog << LogIO::SEVERE << "Defaults specified are not an XML string, unable to verify input" << LogIO::POST;
-      }
-   }
-   return rstat;
-}
-
-std::string
-utils::toxml(const ::casac::record& input, const bool asfile, const std::string& filename)
-{   string rstat;
-
-   stdcasaXMLUtil xmlUtils;
-   if(asfile){
-      std::ofstream xmlout(filename.c_str(), ios::out);
-      xmlUtils.fromCasaRecord(xmlout, input);
-      rstat = filename;
-   } else {
-      ostringstream xmlout;
-      xmlUtils.fromCasaRecord(xmlout, input);
-      rstat = xmlout.str();
-   }
-   return rstat;
-}
-#endif
 
 std::string
 utils::getrc(const std::string& rcvar)
@@ -260,8 +100,8 @@ utils::removetable(const std::vector<std::string> &tablenames)
 // Now try and blow it away.  If it's open, tabledelete won't delete it.
        String message;
        if(rstat && Table::isReadable(fileName)){
-          if (Table::canDeleteTable(message, fileName, true)) {
-             Table::deleteTable(fileName, true);
+          if (TableUtil::canDeleteTable(message, fileName, true)) {
+             TableUtil::deleteTable(fileName, true);
           } else {
              *itsLog << LogIO::WARN << "Cannot delete file " << fileName
              << " because " << message << LogIO::POST;
@@ -417,7 +257,6 @@ utils::_trigger_segfault (long faultType)
 
 static std::vector<std::string> default_data_path;
 static std::string python_path;
-#ifdef CASATOOLS
 
 long utils::maxint( ) { return INT_MAX; }
 long utils::minint( ) { return INT_MIN; }
@@ -437,15 +276,6 @@ bool utils::initialize( const std::string &pypath,
                         bool nogui,
                         bool agg,
                         bool pipeline) {
-#else
-// CASA 5
-bool utils::initialize(const std::vector<std::string> &default_path) {
-    std::string pypath;
-    std::string distro_data;
-    bool nogui=false;
-    bool agg=false;
-    bool pipeline=false;
-#endif
     static bool initialized = false;
     if ( initialized ) return false;
     default_data_path = default_path;
@@ -459,7 +289,6 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 
-#ifdef CASATOOLS
     casa::AsdmStMan::registerClass( );
     register_derivedmscal();
 
@@ -476,14 +305,12 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     }
     fftwf_plan_with_nthreads(nthreads);
     fftw_plan_with_nthreads(nthreads);
-#endif
     initialized = true;
     return true;
 }
 
 // ------------------------------------------------------------
 // -------------------- handling rundata path -----------------
-#ifdef CASATOOLS
 std::string utils::rundata( ) {
     return casatools::get_state( ).measuresDir( );
 }
@@ -491,7 +318,6 @@ std::string utils::rundata( ) {
 void utils::setrundata( const std::string &data ) {
     casatools::get_state( ).setDistroDataPath(data);
 }
-#endif
 
 // ------------------------------------------------------------
 // -------------------- handling data path --------------------
@@ -511,11 +337,9 @@ std::vector<std::string> utils::getpath( ) {
     return result;
 }
 
-#ifdef CASATOOLS
 std::string utils::getpython( ) {
     return casatools::get_state( ).pythonPath( );
 }
-#endif
 
 void utils::clearpath( ) {
     casatools::get_state( ).clearDataPath( );
@@ -549,7 +373,6 @@ std::string utils::resolve(const std::string &subdir) {
     return regrec;
 }
 
-#ifdef CASATOOLS
 bool utils::remove_service( const std::string& uri ) {
     std::list<casatools::ServiceId> servs = casatools::get_state( ).services( );
     for ( std::list<casatools::ServiceId>::const_iterator it=servs.begin( ); it != servs.end( ); ++it ) {
@@ -563,7 +386,6 @@ bool utils::remove_service( const std::string& uri ) {
     }
     return false;
 }
-#endif
 
 void utils::shutdown( ) {
     casatools::get_state( ).shutdown( );
@@ -604,26 +426,19 @@ bool utils::compare_version(const  string& comparitor,  const std::vector<long>&
 std::vector<long>
 utils::toolversion( ) {
     std::vector<long> result = {
-#ifdef CASATOOLS
         ToolVersionInfo::major( ),
         ToolVersionInfo::minor( ),
         ToolVersionInfo::patch( ),
         ToolVersionInfo::feature( ),
-#endif
     };
     return result;
 }
 
 std::string
 utils::toolversion_string( ) {
-#ifdef CASATOOLS
     return ToolVersionInfo::version( );
-#else
-    return "";
-#endif
 }
 
-#ifdef CASATOOLS
 // ------------------------------------------------------------
 // -------------------- Other configuration params ------------
 
@@ -636,6 +451,5 @@ bool utils::getagg( ) {
 bool utils::getpipeline( ) {
     return casatools::get_state( ).pipeline( );
 }
-#endif
 
 } // casac namespace

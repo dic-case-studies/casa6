@@ -5,44 +5,24 @@ import os
 import shutil
 
 import numpy as np
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatasks.private import sdutil, simutil
-    from casatools import ms as mstool
-    from casatools import msmetadata, quanta, singledishms
+from casatasks import casalog
+from casatasks.private import sdutil, simutil
+from casatools import ms as mstool
+from casatools import msmetadata, quanta, singledishms
 
-    ut = simutil.simutil()
-    qa = quanta()
-    sdms = singledishms()
+ut = simutil.simutil()
+qa = quanta()
+sdms = singledishms()
 
-    class ATMParameterConfigurator(collections.abc.Iterator):
-        def __init__(self, key, value, do_config=True):
-            data = [(key, value)] if do_config else []
-            self._iter = iter(data)
 
-        def __next__(self):
-            return next(self._iter)
+class ATMParameterConfigurator(collections.abc.Iterator):
+    def __init__(self, key, value, do_config=True):
+        data = [(key, value)] if do_config else []
+        self._iter = iter(data)
 
-else:
-    import sdutil
-    from simutil import simutil
-    from taskinit import casalog, gentools
-    from taskinit import msmdtool as msmetadata
-    from taskinit import mstool, qa
-    from taskinit import tbtool as table
-
-    ut = simutil()
-    (sdms,) = gentools(['sdms'])
-
-    class ATMParameterConfigurator(collections.Iterator):
-        def __init__(self, key, value, do_config=True):
-            data = [(key, value)] if do_config else []
-            self._iter = iter(data)
-
-        def next(self):
-            return next(self._iter)
+    def __next__(self):
+        return next(self._iter)
 
 
 @contextlib.contextmanager
@@ -65,20 +45,21 @@ def _ms_remove(path):
 
 def get_default_params():
     # Default constant: taken from atmcor_20200807.py (CSV-3320)
-    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
-    maxalt = 120        ### maxAltitude parameter for at (km)
-    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
-    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
+    atmtype = 2  # atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
+    maxalt = 120  # maxAltitude parameter for at (km)
+    lapserate = -5.6  # dTem_dh parameter for at (lapse rate; K/km)
+    scaleht = 2.0  # h0 parameter for at (water scale height; km)
 
-    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
+    # convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
+    dosmooth = False
     # set to True if spectral averaging was not employed for the spw
-    dp = 10.0   ### initATMProfile DEFAULT ###
-    dpm = 1.2   ### initATMProfile DEFAULT ###
+    dp = 10.0  # initATMProfile DEFAULT ###
+    dpm = 1.2  # initATMProfile DEFAULT ###
     return locals()
 
 
 def parse_gainfactor(gainfactor):
-    """Parse gainfactor parameter
+    """Parse gainfactor parameter.
 
     Parse gainfactor parameter.
 
@@ -149,7 +130,8 @@ def gaindict2list(msname, gaindict):
 
 
 def get_all_spws_from_main(msname):
-    """
+    """Extract all spw ids from MAIN table.
+
     Extract all spectral window ids that have any
     associated data in MS MAIN table.
 
@@ -193,7 +175,7 @@ def get_selected_spws(msname, spw):
 
 
 def parse_spw(msname, spw=''):
-    """Parse spw selection into list of spw ids
+    """Parse spw selection into list of spw ids.
 
     Parse spw selection into list of spw ids that have
     associated data in the MAIN table of given MS.
@@ -393,7 +375,8 @@ def parse_atm_list_params(user_param, user_default='', task_default=[], default_
 
     if isinstance(user_param, (list, np.ndarray)):
         try:
-            param = [parse_atm_params(p, user_default, 0, default_unit=default_unit)[0] for p in user_param]
+            param = [parse_atm_params(p, user_default, 0, default_unit=default_unit)[0]
+                     for p in user_param]
             param = [qa.convert(p, default_unit)['value'] for p in param]
         except Exception as e:
             casalog.post('ERROR during handling list input: {}'.format(e))
@@ -468,7 +451,8 @@ def get_default_antenna(msname):
         else:
             _counts = [cmd_counts[a] for a in candidate_antennas]
             min_count = min(_counts)
-            candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
+            candidate_antennas2 = [a for i, a in enumerate(candidate_antennas)
+                                   if _counts[i] == min_count]
             default_name = candidate_antennas2[0]
             default_id = ant_dict[default_name]
     casalog.post('Select {} (ID {}) as a default antenna'.format(default_name, default_id))
@@ -476,7 +460,8 @@ def get_default_antenna(msname):
 
 
 def get_default_altitude(msname, antid):
-    """ Get default altitude of the antenna
+    """Get default altitude of the antenna.
+
     decide default value of 'Altitude' for Atm Correction.
     This requires to calculate Elevation from Antenna Position Information.
     """
@@ -486,12 +471,14 @@ def get_default_altitude(msname, antid):
 
         #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
         #
-        #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point,
+        #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z)
+        #  coordinates [m] for a point,
         #  this method returns geodetic latitude and longitude [radians] and elevation [m].
         #  Elevation is measured relative to the closest point to the (latitude, longitude)
         #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
 
-        P = ut.xyz2long(X, Y, Z, 'WGS84')   # [0]:longitude, [1]:latitude, [2]:elevation (geodetic elevation)
+        # [0]:longitude, [1]:latitude, [2]:elevation (geodetic elevation)
+        P = ut.xyz2long(X, Y, Z, 'WGS84')
         geodetic_elevation = P[2]
 
         ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
@@ -506,19 +493,23 @@ def get_default_altitude(msname, antid):
 
 
 class ATMScalarParameterConfigurator(ATMParameterConfigurator):
-    def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
-        value, is_customized = parse_atm_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
+    def __init__(self, key, user_input, impl_default, default_unit,
+                 api_default='', is_mandatory=True, is_effective=True):
+        value, is_customized = parse_atm_params(
+            user_param=user_input, user_default=api_default,
+            task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
-        # TODO: remove arguments for super, i.e. just super().__init__(...) once we completely get rid of CASA5
-        super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
+        super().__init__(key=key, value=value, do_config=do_config)
 
 
 class ATMListParameterConfigurator(ATMParameterConfigurator):
-    def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
-        value, is_customized = parse_atm_list_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
+    def __init__(self, key, user_input, impl_default, default_unit,
+                 api_default='', is_mandatory=True, is_effective=True):
+        value, is_customized = parse_atm_list_params(
+            user_param=user_input, user_default=api_default,
+            task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
-        # TODO: remove arguments for super, i.e. just super().__init__(...) once we completely get rid of CASA5
-        super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
+        super().__init__(key=key, value=value, do_config=do_config)
 
 
 def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs):
@@ -605,6 +596,10 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
 
     config = dict(itertools.chain(*parameters))
 
+    # number of threads for OpenMP
+    # if config['nthreads'] is set to -1, task will decide number of threads automatically
+    config['nthreads'] = int(os.getenv('OMP_NUM_THREADS', -1))
+
     return config
 
 
@@ -650,7 +645,7 @@ def sdatmcor(
         # outfile Protected
         if os.path.exists(outfile):
             if overwrite:
-                casalog.post("Overwrite:: Overwrite specified. Once delete the existing output file. ")
+                casalog.post("Overwrite: Overwrite specified. Delete the existing output file.")
                 _ms_remove(outfile)
             else:
                 errmsg = "Specified outfile already exist."

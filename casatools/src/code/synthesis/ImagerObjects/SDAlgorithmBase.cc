@@ -25,35 +25,36 @@
 //#
 //# $Id$
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/OS/HostInfo.h>
 #include <synthesis/ImagerObjects/SDAlgorithmBase.h>
 #include <components/ComponentModels/SkyComponent.h>
 #include <components/ComponentModels/ComponentList.h>
-#include <images/Images/TempImage.h>
-#include <images/Images/SubImage.h>
-#include <images/Regions/ImageRegion.h>
-#include <casa/OS/File.h>
-#include <lattices/LEL/LatticeExpr.h>
-#include <lattices/Lattices/TiledLineStepper.h>
-#include <lattices/Lattices/LatticeStepper.h>
-#include <lattices/Lattices/LatticeIterator.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Images/SubImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
+#include <casacore/lattices/Lattices/TiledLineStepper.h>
+#include <casacore/lattices/Lattices/LatticeStepper.h>
+#include <casacore/lattices/Lattices/LatticeIterator.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
-#include <coordinates/Coordinates/StokesCoordinate.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/OS/Directory.h>
-#include <tables/Tables/TableLock.h>
+#include <casacore/coordinates/Coordinates/StokesCoordinate.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/tables/Tables/TableLock.h>
 
 #include<synthesis/ImagerObjects/SIMinorCycleController.h>
 #include <imageanalysis/ImageAnalysis/CasaImageBeamSet.h>
 
-#include <casa/sstream.h>
+#include <sstream>
+#include <casacore/casa/OS/EnvVar.h>
 
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogSink.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -106,6 +107,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        << LogIO::POST;
 
     Float itsPBMask = loopcontrols.getPBMask();
+    Int cycleStartIteration = loopcontrols.getIterDone();
 
     Float maxResidualAcrossPlanes=0.0; Int maxResChan=0,maxResPol=0;
     Float totalFluxAcrossPlanes=0.0;
@@ -118,24 +120,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
 
 	    Int startiteration = loopcontrols.getIterDone(); // TODO : CAS-8767 key off subimage index
-	    Float peakresidual=0.0;
+	    Float peakresidual=0.0, peakresidualnomask=0.0;
 	    Float modelflux=0.0;
 	    Int iterdone=0;
 
 	    ///itsMaskHandler.resetMask( itsImages ); //, (loopcontrols.getCycleThreshold()/peakresidual) );
 	    Int stopCode=0;
 
-	    Float startpeakresidual = 0.0;
+	    Float startpeakresidual = 0.0, startpeakresidualnomask = 0.0;
 	    Float startmodelflux = 0.0;
             Array<Double> robustrms;
 
-	    Bool validMask = ( itsImages->getMaskSum() > 0 );
+	    Float masksum = itsImages->getMaskSum();
+	    Bool validMask = ( masksum > 0 );
 
+	    peakresidualnomask = itsImages->getPeakResidual();
 	    if( validMask ) peakresidual = itsImages->getPeakResidualWithinMask();
-	    else peakresidual = itsImages->getPeakResidual();
+	    else peakresidual = peakresidualnomask;
 	    modelflux = itsImages->getModelFlux();
 
 	    startpeakresidual = peakresidual;
+	    startpeakresidualnomask = peakresidualnomask;
 	    startmodelflux = modelflux;
 
             //Float nsigma = 150.0; // will set by user, fixed for 3sigma for now.
@@ -211,22 +216,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }
 	    loopcontrols.setPeakResidual( peakresidual );
 	    loopcontrols.resetMinResidual(); // Set it to current initial peakresidual.
-
             
 	    stopCode = checkStop( loopcontrols,  peakresidual );
 
-
-	    // stopCode=0;
-
 	    if( validMask && stopCode==0 )
 	      {
-                
-		
-		// Record info about the start of the minor cycle iterations
-		loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-					      modelflux, peakresidual );
-		//		loopcontrols.setPeakResidual( peakresidual );
-
 		// Init the deconvolver
                  //where we write in model and residual may be
                 {
@@ -273,9 +267,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		    loopcontrols.incrementMinorCycleCount( iterdone ); // CAS-8767 : add subimageindex and merge with addSummaryMinor call later.
 		    
 		    stopCode = checkStop( loopcontrols,  peakresidual );
-		    
-		    loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-						  modelflux, peakresidual );
 
 		    /// Catch the situation where takeOneStep returns without satisfying any
 		    ///  convergence criterion. For now, takeOneStep is the entire minor cycle.
@@ -297,6 +288,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
                   finalizeDeconvolver();
                 }
+
+                // get the new peakres without a mask for the summary minor
+                peakresidualnomask = itsImages->getPeakResidual();
 
 	      }// if validmask
 	    
@@ -340,7 +334,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      }
 
 	       os << LogIO::POST;
-	    
+	       
+	    Int rank(0);
+	    String rankStr = EnvironmentVariable::get("OMPI_COMM_WORLD_RANK");
+	    if (!rankStr.empty()) {
+	      rank = stoi(rankStr);
+	    }
+
+	    int chunkId = chanid; // temporary CAS-13683 workaround
+	    if (SIMinorCycleController::useSmallSummaryminor()) { // temporary CAS-13683 workaround
+	        chunkId = chanid + nSubChans*polid;
+	    }
+	    loopcontrols.addSummaryMinor( deconvolverid, chunkId, polid, cycleStartIteration,
+	                                  startiteration, startmodelflux, startpeakresidual, startpeakresidualnomask,
+	                                  modelflux, peakresidual, peakresidualnomask, masksum, rank, stopCode);
+
 	    loopcontrols.resetCycleIter(); 
 
 	    if( peakresidual > maxResidualAcrossPlanes && stopCode!=0 )

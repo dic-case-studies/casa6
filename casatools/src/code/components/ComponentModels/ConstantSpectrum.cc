@@ -26,12 +26,12 @@
 //# $Id: ConstantSpectrum.cc 20652 2009-07-06 05:04:32Z Malte.Marquarding $
 
 #include <components/ComponentModels/ConstantSpectrum.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Containers/RecordInterface.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Containers/RecordInterface.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/BasicSL/String.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -83,15 +83,13 @@ void ConstantSpectrum::sample(Vector<Double>& scale,
   scale = 1.0;
 }
 
-  void ConstantSpectrum::sampleStokes(Vector<Vector<Double> >& iquv, 
-			      const Vector<MFrequency::MVType>& freq, 
-			      const MFrequency::Ref&) const {
-  DebugAssert(ok(), AipsError);
-  if(freq.nelements() != iquv.nelements()){
-    throw(AipsError("ConstSpectrum: frequency length does not match stokes val"));
-  }
-  
+void ConstantSpectrum::sampleStokes(
+    Matrix<Double>& iquv, const Vector<MFrequency::MVType>& freq, 
+    const MFrequency::Ref&
+) const {
+    ThrowIf(iquv.shape() != IPosition(2, freq.size(), 4), "Incorrect Matrix shape");
 }
+
 SpectralModel* ConstantSpectrum::clone() const {
   DebugAssert(ok(), AipsError);
   SpectralModel* tmpPtr = new ConstantSpectrum(*this);

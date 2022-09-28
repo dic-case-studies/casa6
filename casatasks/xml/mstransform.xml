@@ -374,7 +374,7 @@
 
 
 
-        <param type="bool" name="douvcontsub"><shortdescription>Enable continuum subtraction as in task uvcontsub</shortdescription><description>Enable continuum subtraction as in task uvcontsub</description>
+        <param type="bool" name="douvcontsub"><shortdescription>(Deprecated) Enable continuum subtraction as in task uvcontsub</shortdescription><description>Enable continuum subtraction as in task uvcontsub. Note: this parameter is deprecated and will be removed in an upcoming release. The task uvcontsub can be used as an alternative.</description>
             
             <value>False</value>
         </param>

@@ -28,10 +28,11 @@
 
 #include <casacore/ms/MSOper/MSMetaData.h>
 #include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/tables/Tables/TableUtil.h>
 #include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
 #include <msvis/MSVis/SimpleSimVi2.h>
-#include <casa/aips.h>
-#include <casa/iostream.h>
+#include <casacore/casa/aips.h>
+#include <iostream>
 
 using namespace casacore;
 
@@ -54,7 +55,7 @@ MSMetaInfoForCal::MSMetaInfoForCal(String msname) :
 
   // If the specified MS is available, make non-trivial meta-info accessors
   if (Table::isReadable(msname_) &&
-      Table::tableInfo(msname_).type()=="Measurement Set") {
+      TableUtil::tableInfo(msname_).type()=="Measurement Set") {
 
     ms_ = new MeasurementSet(msname_);
 

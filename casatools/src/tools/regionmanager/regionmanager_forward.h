@@ -1,8 +1,8 @@
 #include <stdcasa/StdCasa/CasacSupport.h>
 
 #include <imageanalysis/Regions/CasacRegionManager.h>
-#include <images/Regions/ImageRegion.h>
-#include <casa/Utilities/PtrHolder.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/casa/Utilities/PtrHolder.h>
 namespace casacore{
 
 	class LogIO;

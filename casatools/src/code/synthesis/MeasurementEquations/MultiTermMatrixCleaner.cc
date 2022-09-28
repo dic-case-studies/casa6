@@ -23,45 +23,49 @@
 //#                        Charlottesville, VA 22903-2475 USA
 //#
 //# $Id: MultiTermMatrixCleaner.cc 13656 2010-12-04 02:08:02 UrvashiRV$
+//
+// Implementation of the paper "A multi-scale multi-frequency deconvolution algorithm
+// for synthesis imaging in radio interferometry" by Rau and Cornwell
+// https://www.aanda.org/articles/aa/pdf/2011/08/aa17104-11.pdf
 
 // Same include list as in MatrixCleaner.cc
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/Cube.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/MatrixMath.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/MatrixMath.h>
 #include <casacore/casa/IO/ArrayIO.h>
-#include <casa/BasicMath/Math.h>
-#include <casa/BasicSL/Complex.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/OS/File.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/casa/BasicSL/Complex.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/Containers/Record.h>
 
-#include <lattices/LRegions/LCBox.h>
-#include <casa/Arrays/Slicer.h>
-#include <scimath/Mathematics/FFTServer.h>
-#include <casa/OS/HostInfo.h>
-#include <casa/Arrays/ArrayError.h>
-#include <casa/Arrays/ArrayIter.h>
-#include <casa/Arrays/VectorIter.h>
+#include <casacore/lattices/LRegions/LCBox.h>
+#include <casacore/casa/Arrays/Slicer.h>
+#include <casacore/scimath/Mathematics/FFTServer.h>
+#include <casacore/casa/OS/HostInfo.h>
+#include <casacore/casa/Arrays/ArrayError.h>
+#include <casacore/casa/Arrays/ArrayIter.h>
+#include <casacore/casa/Arrays/VectorIter.h>
 
 
-#include <casa/Utilities/GenSort.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Utilities/Fallible.h>
+#include <casacore/casa/Utilities/GenSort.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Utilities/Fallible.h>
 
-#include <casa/BasicSL/Constants.h>
+#include <casacore/casa/BasicSL/Constants.h>
 
-#include <casa/Logging/LogSink.h>
-#include <casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
 
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
-#include <coordinates/Coordinates/TabularCoordinate.h>
+#include <casacore/coordinates/Coordinates/TabularCoordinate.h>
 
 // Additional include files
-#include <lattices/Lattices/SubLattice.h>
-#include <scimath/Mathematics/MatrixMathLA.h>
-#include <images/Images/PagedImage.h>
+#include <casacore/lattices/Lattices/SubLattice.h>
+#include <casacore/scimath/Mathematics/MatrixMathLA.h>
+#include <casacore/images/Images/PagedImage.h>
 
 #include<synthesis/MeasurementEquations/MultiTermMatrixCleaner.h>
 
@@ -336,6 +340,7 @@ Int MultiTermMatrixCleaner::mtclean(Int maxniter, Float stopfraction, Float inpu
   if(inputgain>(Float)0.0) loopgain=inputgain;
   Int criterion=5; // This chooses among a list of 'penalty functions'
   itercount_p=0;
+  Int iterdone = 0;
  
   /* Compute all convolutions and the matrix A */
   /* If matrix is not invertible, return ! */
@@ -417,6 +422,7 @@ Int MultiTermMatrixCleaner::mtclean(Int maxniter, Float stopfraction, Float inpu
       
         /* Increment iteration count */
         totalIters_p++;
+        iterdone++;
   
         /* Check for convergence */
         convergedflag = checkConvergence(criterion,fluxlimit,loopgain);
@@ -471,7 +477,7 @@ Int MultiTermMatrixCleaner::mtclean(Int maxniter, Float stopfraction, Float inpu
   //UUU cout << "major " << totalIters_p << endl;
 
   /* Return the number of minor-cycle iterations completed in this run */
-  return(itercount_p+1);
+  return iterdone;
 }
 
 /* Indexing Rules... */
@@ -716,7 +722,14 @@ Int MultiTermMatrixCleaner::setupUserMask()
 
  /* Set the edges of the masks according to the scale size */
  // Set the values OUTSIDE the box to zero....
-  for(Int scale=0;scale<nscales_p;scale++)
+  // "The vecScaleMasks_p are used when finding the peakres for each iteration. If we subtract
+  // the (tt/scale convolved) psf from too close to the edge of the image, we could add a hard edge
+  // to the image, which would result in ringing in an fft. Therefore, we use a border to ensure
+  // that we don't pick a peakres position too close to the edge." - approximately what Urvashi said
+  // Start at 1: don't add a 1-pixel border to vecScaleMasks_p[0], because that mask is used to find
+  // the peakres in checkConvergence(), which could result in the minor cycle disagreeing with the
+  // major cycle about what the peakres value is if the peakres is at the edge.
+  for(Int scale=1;scale<nscales_p;scale++)
   {
       Int border = (Int)(scaleSizes_p[scale]*1.5);
       // bottom

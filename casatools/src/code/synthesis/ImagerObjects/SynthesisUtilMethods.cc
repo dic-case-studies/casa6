@@ -25,36 +25,36 @@
 //#
 //# $Id$
 
-#include <casa/Exceptions/Error.h>
-#include <casa/iostream.h>
-#include <casa/sstream.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <iostream>
+#include <sstream>
 
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayLogical.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
 
-#include <casa/Logging.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogSink.h>
-#include <casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
 
-#include <casa/OS/DirectoryIterator.h>
-#include <casa/OS/File.h>
-#include <casa/OS/Path.h>
+#include <casacore/casa/OS/DirectoryIterator.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/OS/Path.h>
 
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/OS/HostInfo.h>
 
-#include <images/Images/TempImage.h>
-#include <images/Images/SubImage.h>
-#include <images/Regions/ImageRegion.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Images/SubImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
 #include <imageanalysis/Utilities/SpectralImageUtil.h>
-#include <measures/Measures/MeasTable.h>
-#include <measures/Measures/MRadialVelocity.h>
-#include <ms/MSSel/MSSelection.h>
-#include <ms/MeasurementSets/MSColumns.h>
-#include <ms/MeasurementSets/MSDopplerUtil.h>
-#include <tables/Tables/Table.h>
+#include <casacore/measures/Measures/MeasTable.h>
+#include <casacore/measures/Measures/MRadialVelocity.h>
+#include <casacore/ms/MSSel/MSSelection.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
+#include <casacore/ms/MeasurementSets/MSDopplerUtil.h>
+#include <casacore/tables/Tables/Table.h>
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 #include <synthesis/TransformMachines2/Utils.h>
 
@@ -3287,7 +3287,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::vector<Double> stlchanfreq;
         chanFreq.tovector(stlchanfreq);
         std::reverse(stlchanfreq.begin(),stlchanfreq.end());
-        chanFreq=stlchanfreq;
+        chanFreq=Vector<Double>(stlchanfreq);
         chanFreqStep=-chanFreqStep;
       }
     }
@@ -3951,6 +3951,29 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 err+= "autoadjust must be a bool\n";
               }
           }
+        //param for the Asp-Clean to trigger Hogbom Clean
+        if (inrec.isDefined("fusedthreshold"))
+        {
+          if (inrec.dataType("fusedthreshold") == TpFloat || inrec.dataType("fusedthreshold") == TpDouble)
+            err += readVal(inrec, String("fusedthreshold"), fusedThreshold);
+          else 
+            err += "fusedthreshold must be a float or double";
+        }
+         if (inrec.isDefined("specmode"))
+        {
+          if(inrec.dataType("specmode") == TpString)
+            err += readVal(inrec, String("specmode"), specmode);
+          else 
+            err += "specmode must be a string";
+        }
+        //largest scale size for the Asp-Clean to overwrite the default
+        if (inrec.isDefined("largestscale"))
+        {
+          if (inrec.dataType("largestscale") == TpInt)
+            err += readVal(inrec, String("largestscale"), largestscale);
+          else 
+            err += "largestscale must be an integer";
+        }
         //params for the new automasking algorithm
         if( inrec.isDefined("sidelobethreshold"))
           {
@@ -3963,6 +3986,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 err+= "sidelobethreshold must be a float or double";
               }
           }
+
         if( inrec.isDefined("noisethreshold"))
           {
             if(inrec.dataType("noisethreshold")==TpFloat || inrec.dataType("noisethreshold")==TpDouble )
@@ -4092,6 +4116,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      }
             else {
                err+= "nsigma must be an int, float or double";
+            }
+          }
+        if( inrec.isDefined("noRequireSumwt") )
+          {
+            if (inrec.dataType("noRequireSumwt")==TpBool) {
+              err+= readVal(inrec, String("noRequireSumwt"), noRequireSumwt);
+            }
+            else {
+              err+= "noRequireSumwt must be a bool";
             }
           }
         if( inrec.isDefined("restoringbeam") )     
@@ -4225,6 +4258,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     nMask=0;
     interactive=false;
     autoAdjust=False;
+    fusedThreshold = 0.0;
+    specmode="mfs";
+    largestscale = -1;
   }
 
   Record SynthesisParamsDeconv::toRecord() const
@@ -4239,6 +4275,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("scales",scales);
     decpar.define("scalebias",scalebias);
     decpar.define("usemask",maskType);
+    decpar.define("fusedthreshold", fusedThreshold);
+    decpar.define("specmode", specmode);
+    decpar.define("largestscale", largestscale);
     if( maskList.nelements()==1 && maskList[0]=="") 
       {
         decpar.define("mask",maskString);
@@ -4272,6 +4311,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("fastnoise", fastnoise);
     decpar.define("interactive",interactive);
     decpar.define("nsigma",nsigma);
+    decpar.define("noRequireSumwt",noRequireSumwt);
 
     return decpar;
   }

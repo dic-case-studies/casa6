@@ -29,15 +29,15 @@
 #ifndef SYNTHESIS_SIMULATOR_H
 #define SYNTHESIS_SIMULATOR_H
 
-#include <casa/aips.h>
-#include <casa/Quanta/Quantum.h>
-#include <measures/Measures/MPosition.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/measures/Measures/MPosition.h>
 #include <synthesis/TransformMachines/BeamSquint.h>
 #include <synthesis/TransformMachines/VPSkyJones.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 //#include <synthesis/MeasurementComponents/EPJones.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 namespace casacore{
 
 class MeasurementSet;
@@ -210,7 +210,8 @@ public:
 	       const casacore::Float pwv,
 	       const casacore::Float deltapwv,
 	       const casacore::Float beta,
-	       const casacore::Float windspeed);
+	       const casacore::Float windspeed,
+	       const casacore::Float simintsec);
 
   // Apply antenna pointing and squint errors
   casacore::Bool setpointingerror(const casacore::String& epJTableName,

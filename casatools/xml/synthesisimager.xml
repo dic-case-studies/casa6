@@ -773,6 +773,27 @@ CORRECTED\_DATA and MODEL\_DATA columns
 
 <returns type="synthesisimstore"/>
 </method>
+    <method name="getImageName" type="function">
+        <shortdescription>Get Image Name</shortdescription>
+        <description>
+            Get the image name for the given type of image (eg "PB"), the facet index, and the taylor term.
+        </description>
+        <input>
+            <param name="facetId" type="int">
+                <description>Facet index</description>
+                <value type="int">0</value>
+            </param>
+            <param name="imageId" type="string">
+                <description>Image identifer (eg "PSF")</description>
+                <value>IMAGE</value>
+            </param>
+            <param name="taylorTerm" type="int">
+                <description>Taylor term. Only needed for mfs deconvolvers.</description>
+                <value type="int">0</value>
+            </param>
+        </input>
+        <returns type="string"/>
+    </method>
 
 
 

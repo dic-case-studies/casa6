@@ -48,6 +48,7 @@
 #include <casacore/casa/OS/HostInfo.h>
 #include <casacore/tables/Tables/RefRows.h>
 #include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/TableUtil.h>
 #include <casacore/tables/Tables/SetupNewTab.h>
 #include <casacore/tables/TaQL/TableParse.h>
 #include <casacore/tables/Tables/TableRecord.h>
@@ -127,7 +128,6 @@
 #include <synthesis/DataSampling/SynDataSampling.h>
 #include <synthesis/DataSampling/SDDataSampling.h>
 #include <synthesis/DataSampling/ImageDataSampling.h>
-#include <synthesis/DataSampling/PixonProcessor.h>
 
 #include <casacore/lattices/LRegions/LattRegionHolder.h>
 #include <casacore/lattices/Lattices/TiledLineStepper.h> 
@@ -168,12 +168,7 @@
 #include <components/ComponentModels/PointShape.h>
 #include <components/ComponentModels/DiskShape.h>
 
-#if ! defined(CASATOOLS)
-#include <casadbus/viewer/ViewerProxy.h>
-#include <casadbus/plotserver/PlotServerProxy.h>
-#include <casadbus/utilities/BusAccess.h>
-#include <casadbus/session/DBusSession.h>
-#else
+#ifdef USE_GRPC
 #include <synthesis/ImagerObjects/grpcInteractiveClean.h>
 #endif
 
@@ -192,12 +187,6 @@
 #endif
 using namespace std;
 
-
-#ifdef PABLO_IO
-#include "PabloTrace.h"
-#endif
-
-
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -206,9 +195,6 @@ Imager::Imager()
      cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
      mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(CASATOOLS)
-     viewer_p(0),
-#endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0), 
       prev_image_id_p(0), prev_mask_id_p(0), projection_p("SIN")
 {
@@ -222,10 +208,6 @@ Imager::Imager()
 
 void Imager::defaults() 
 {
-
-#ifdef PABLO_IO
-traceEvent(1,"Entering imager::defaults",25);
-#endif
 
   setimaged_p=false;
   nullSelect_p=false;
@@ -320,10 +302,6 @@ traceEvent(1,"Entering imager::defaults",25);
   mssFreqSel_p.resize();
   mssChanSel_p.resize();
   projection_p=String("SIN");
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting imager::defaults",24);
-#endif
-  
 
 }
 
@@ -333,9 +311,6 @@ Imager::Imager(MeasurementSet& theMS,  Bool compress, Bool useModel)
     ft_p(0), cft_p(0), se_p(0),
     sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
     mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(CASATOOLS)
-    viewer_p(0),
-#endif
     clean_panel_p(0), image_id_p(0), mask_id_p(0), prev_image_id_p(0), prev_mask_id_p(0),
     projection_p("SIN")
 
@@ -360,9 +335,6 @@ Imager::Imager(MeasurementSet& theMS, Bool compress)
   :  msname_p(""),  vs_p(0), rvi_p(0), wvi_p(0), ft_p(0), cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
      mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(CASATOOLS)
-     viewer_p(0),
-#endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0),
      prev_image_id_p(0), prev_mask_id_p(0), projection_p("SIN")
 {
@@ -384,9 +356,6 @@ Imager::Imager(const Imager & other)
   :  msname_p(""), vs_p(0), rvi_p(0), wvi_p(0), 
      ft_p(0), cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
-#if ! defined(CASATOOLS)
-     viewer_p(0),
-#endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0), prev_image_id_p(0), prev_mask_id_p(0)
 {
   mssel_p=0;
@@ -492,14 +461,6 @@ Imager::~Imager()
     }
     cft_p = 0;
 
-#if ! defined(CASATOOLS)
-    if ( viewer_p ) {
-      // viewer_p->close( clean_panel_p );
-      viewer_p->done();
-      delete viewer_p;
-    }
-#endif
-
   }
   catch (AipsError x){
     String mess=x.getMesg();
@@ -531,10 +492,6 @@ Imager::~Imager()
 
 Bool Imager::open(MeasurementSet& theMs, Bool /*compress*/, Bool useModelCol)
 {
-
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::open",21);
-#endif
 
   LogIO os(LogOrigin("Imager", "open()", WHERE));
   
@@ -602,25 +559,13 @@ Bool Imager::open(MeasurementSet& theMs, Bool /*compress*/, Bool useModelCol)
 
     this->unlock();
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::open",21);
-#endif
-
     return true;
   } catch (AipsError x) {
     this->unlock();
     os << LogIO::SEVERE << "Caught Exception: "<< x.getMesg() << LogIO::EXCEPTION;
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::open",21);
-#endif
-
     return false;
   } 
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::open",21);
-#endif
 
   return true;
 }
@@ -714,19 +659,8 @@ Bool Imager::setimage(const Int nx, const Int ny,
 		      const Quantity& distance)
 {
 
-
-
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::setimage",26);
-#endif
-
   if(!valid())
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::setimage",25);
-#endif
-
       return false;
     }
 
@@ -826,9 +760,6 @@ Bool Imager::setimage(const Int nx, const Int ny,
      if( whichStokes.nelements()==1 && whichStokes[0]==0 )
       {
       this->unlock();
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::setimage",25);
-#endif
       os << LogIO::SEVERE << "Stokes selection " << stokes_p << " is currently not supported." << LogIO::EXCEPTION;
       return false;
       }
@@ -871,26 +802,15 @@ Bool Imager::setimage(const Int nx, const Int ny,
     
     this->unlock();
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::setimage",25);
-#endif
-
     return true;
   } catch (AipsError x) {
     
     this->unlock();
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::setimage",25);
-#endif
     os << LogIO::SEVERE << "Caught exception: " << x.getMesg()
        << LogIO::EXCEPTION;
     return false;
   } 
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::setimage",25);
-#endif
 
   return true;
 }
@@ -1045,9 +965,6 @@ Bool Imager::defineImage(const Int nx, const Int ny,
     if( whichStokes.nelements()==1 && whichStokes[0]==0 )
       {
       this->unlock();
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::defineimage",25);
-#endif
       os << LogIO::SEVERE << "Stokes selection " << stokes_p << " is currently not supported." << LogIO::EXCEPTION;
       return false;
       }
@@ -1807,19 +1724,6 @@ Bool Imager::setvp(const Bool dovp,
                    const Bool verbose)
 {
 
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::setvp",23);
-#endif
-
-  //  if(!valid())
-  //    {
-
-  //#ifdef PABLO_IO
-  //      traceEvent(1,"Exiting Imager::setvp",22);
-  //#endif
-
-  //     return false;
-  //    }
   LogIO os(LogOrigin("Imager", "setvp()", WHERE));
   
   os << LogIO::NORMAL << "Setting voltage pattern parameters" << LogIO::POST; // Loglevel PROGRESS
@@ -1860,10 +1764,6 @@ Bool Imager::setvp(const Bool dovp,
        << parAngleInc_p.getValue("deg") << " degrees"  << LogIO::POST;
   }
 
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::setvp",22);
-#endif
-
   // muddled with the state of SkyEquation..so redo it
   destroySkyEquation();
   return true;
@@ -1888,27 +1788,12 @@ Bool Imager::setoptions(const String& ftmachine, const Long cache, const Int til
 			const Bool wbawp,
 			const Bool conjBeams)
 {
-
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::setoptions",28);
-#endif
-
   if(!valid()) 
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::setoptions",27);
-#endif
-
       return false;
     }
   if(!assertDefinedImageParameters())
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::setoptions",27);
-#endif
-
       return false;
     }
   LogIO os(LogOrigin("imager", "setoptions()", WHERE));
@@ -1969,10 +1854,6 @@ Bool Imager::setoptions(const String& ftmachine, const Long cache, const Int til
   if(gvp_p) {delete gvp_p; gvp_p=0;}
   if(cft_p) {delete cft_p; cft_p=0;}
 
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::setoptions",27);
-#endif
-
   doPointing = applyPointingOffsets;
   doPBCorr = doPointingCorrection;
 ////The set below does not seemed to be remembered later in the process it 
@@ -1990,17 +1871,12 @@ Bool Imager::setoptions(const String& ftmachine, const Long cache, const Int til
 }
 
 Bool Imager::setsdoptions(const Float scale, const Float weight, 
-			  const Int convsupport, String pointCol,
-			  const Quantity truncate,
-			  const Quantity gwidth, const Quantity jwidth,
-			  const Float minweight, const Bool clipminmax)
+                          const Int convsupport, String pointCol,
+                          const Quantity truncate,
+                          const Quantity gwidth, const Quantity jwidth,
+                          const Float minweight, const Bool clipminmax,
+                          const Bool enablecache)
 {
-
-
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::setsdoptions",28);
-#endif
-
   LogIO os(LogOrigin("imager", "setsdoptions()", WHERE));
   
   os << LogIO::NORMAL << "Setting single dish processing options" << LogIO::POST; // Loglevel PROGRESS
@@ -2022,15 +1898,12 @@ Bool Imager::setsdoptions(const Float scale, const Float weight,
   qjwidth_p=jwidth;
   minWeight_p = minweight;
   clipminmax_p = clipminmax;
+  enablecache_p = enablecache;
 
   // Destroy the FTMachine
   if(ft_p) {delete ft_p; ft_p=0;}
   if(gvp_p) {delete gvp_p; gvp_p=0;}
   if(cft_p) {delete cft_p; cft_p=0;}
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::setsdoptions",27);
-#endif
 
   return true;
 }
@@ -2359,8 +2232,8 @@ Bool Imager::feather(const String& image, const String& highRes,
     }
   
     if(noStokes){
-      Table::deleteTable(outHighRes);
-      Table::deleteTable(outLowRes);
+      TableUtil::deleteTable(outHighRes);
+      TableUtil::deleteTable(outLowRes);
     }
     return true;
   } catch (AipsError x) {
@@ -2995,17 +2868,8 @@ Bool Imager::apparentSensitivity(Double& effSensitivity,
 Bool Imager::makeimage(const String& type, const String& image,
                        const String& compleximage, const Bool verbose)
 {
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::makeimage",23);
-#endif
-  
   if(!valid()) 
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
-
       return false;
     }
   LogIO os(LogOrigin("imager", "makeimage()", WHERE));
@@ -3014,11 +2878,6 @@ Bool Imager::makeimage(const String& type, const String& image,
   try {
     if(!assertDefinedImageParameters())
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
-
 	return false;
       }
     
@@ -3136,10 +2995,6 @@ Bool Imager::makeimage(const String& type, const String& image,
       this->unlock();
       os << LogIO::SEVERE << "Unknown image type " << type << LogIO::EXCEPTION;
 
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::makeimage",22);
-#endif  
-
       return false;
     }
 
@@ -3172,11 +3027,6 @@ Bool Imager::makeimage(const String& type, const String& image,
     //if(!imagecoordinates(imagecoords, false))
     if(!imagecoordinates2(imagecoords, false))
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::makeimage",22);
-#endif  
-
 	return false;
       }
     make(imageName);
@@ -3208,11 +3058,6 @@ Bool Imager::makeimage(const String& type, const String& image,
     //if(!imagecoordinates(cimagecoords, false))
     if(!imagecoordinates2(cimagecoords, false))
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
-
 	return false;
       }
 
@@ -3236,6 +3081,10 @@ Bool Imager::makeimage(const String& type, const String& image,
     String ftmachine(ftmachine_p);
     if (!ft_p)
       createFTMachine();
+    
+    os << LogIO::DEBUG1 << "FTMachine is : " << ftmachine 
+       << " (" << ft_p << ")" << LogIO::POST;
+    
     
     // Now make the required image
     Matrix<Float> weight;
@@ -3278,18 +3127,9 @@ Bool Imager::makeimage(const String& type, const String& image,
       cImageImage.table().unmarkForDelete();
     }
     this->unlock();
-
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
-
     return true;
   } catch (AipsError x) {
     this->unlock();
-   
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
     throw(x);
     return false;
   }
@@ -3298,10 +3138,6 @@ Bool Imager::makeimage(const String& type, const String& image,
     throw(AipsError("Unknown exception caught ...imager/casa may need to be exited"));
   }
   this->unlock();
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::makeimage",22);
-#endif
 
   return true;
 }  
@@ -3717,9 +3553,6 @@ Record Imager::clean(const String& algorithm,
 		   const Vector<String>& psfnames,
                    const Bool firstrun)
 {
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::clean",22);
-#endif
   ////////////////////////
   //Double wtime0=omp_get_wtime();
   //////////////////////
@@ -3737,11 +3570,6 @@ Record Imager::clean(const String& algorithm,
 
   if(!valid())
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::clean",21);
-#endif
-
       return retval;
     }
   logSink_p.clearLocally();
@@ -3751,11 +3579,6 @@ Record Imager::clean(const String& algorithm,
   try {
     if(!assertDefinedImageParameters()) 
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::clean",21);
-#endif
-
 	return retval;
       }
     
@@ -3769,10 +3592,6 @@ Record Imager::clean(const String& algorithm,
 	  this->unlock();
 	  os << LogIO::SEVERE << "Need a name for model "
 	     << thismodel << LogIO::POST;
-
-#ifdef PABLO_IO
-	  traceEvent(1,"Exiting Imager::clean",21);
-#endif
 
 	  return retval;
 	}
@@ -3861,11 +3680,6 @@ Record Imager::clean(const String& algorithm,
 	removeTable(residualNames(thismodel));
 	if(!clone(model(thismodel), residualNames(thismodel)))
 	  {
-	    
-#ifdef PABLO_IO
-	    traceEvent(1,"Exiting Imager::clean",21);
-#endif
-
 	    return retval;
 	  }
       }
@@ -4026,10 +3840,6 @@ Record Imager::clean(const String& algorithm,
 	this->unlock();
 	os << LogIO::SEVERE << "Unknown algorithm: " << algorithm 
 	   << LogIO::POST;
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::clean",21);
-#endif
 	
 	return retval;
       }
@@ -4040,10 +3850,6 @@ Record Imager::clean(const String& algorithm,
       //    if (!se_p)
       if(!createSkyEquation(modelNames, fixed, maskNames, complist)) 
         {
-	
-#ifdef PABLO_IO
-          traceEvent(1,"Exiting Imager::clean",21);
-#endif
 	
           return retval;
         }
@@ -4080,10 +3886,6 @@ Record Imager::clean(const String& algorithm,
                                                          // log window.
     }
 
-#ifdef PABLO_IO
-    traceEvent(1,"Starting Deconvolution",23);
-#endif
-
     os << LogIO::NORMAL << (firstrun ? "Start" : "Continu")
        << "ing deconvolution" << LogIO::POST; // Loglevel PROGRESS
     if(se_p->solveSkyModel()) {
@@ -4096,10 +3898,6 @@ Record Imager::clean(const String& algorithm,
       os << LogIO::NORMAL << "Threshhold not reached yet." << LogIO::POST; // Loglevel PROGRESS
     }
     
-
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Deconvolution",21);
-#endif
 
     printbeam(sm_p, os, firstrun);
     
@@ -4126,10 +3924,6 @@ Record Imager::clean(const String& algorithm,
     
     this->unlock();
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::clean",21);
-#endif
-
     return retval;
   }
   catch (PSFZero&  x)
@@ -4145,9 +3939,6 @@ Record Imager::clean(const String& algorithm,
     destroySkyEquation();
     throw(AipsError(x.what()));
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::clean",21);
-#endif
     return retval;
   } 
 
@@ -4158,10 +3949,6 @@ Record Imager::clean(const String& algorithm,
     throw(AipsError("Unknown exception caught ...imager/casa may need to be exited"));
   }
   this->unlock();
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::clean",21);
-#endif  
 
   os << LogIO::NORMAL << "Exiting Imager::clean" << LogIO::POST; // Loglevel PROGRESS
   return retval;
@@ -4753,7 +4540,7 @@ Bool Imager::setjy(const Vector<Int>& /*fieldid*/,
 	};
 	  
 	// Delete the temporary component list and image tables
-	Table::deleteTable(tempCL);
+	TableUtil::deleteTable(tempCL);
 
       }
     }
@@ -4763,7 +4550,7 @@ Bool Imager::setjy(const Vector<Int>& /*fieldid*/,
 
   } catch (AipsError x) {
     this->unlock();
-    if(Table::canDeleteTable(tempCL)) Table::deleteTable(tempCL);
+    if(TableUtil::canDeleteTable(tempCL)) TableUtil::deleteTable(tempCL);
     os << LogIO::SEVERE << "Exception: " << x.getMesg() << LogIO::POST;
     return false;
   } 
@@ -5203,8 +4990,8 @@ Record Imager::setjy(const Vector<Int>& /*fieldid*/,
 
           //didAnything = true;
 
-          if(Table::canDeleteTable(errmsg, tempCLs[selspw]))
-            Table::deleteTable(tempCLs[selspw]);
+          if(TableUtil::canDeleteTable(errmsg, tempCLs[selspw]))
+            TableUtil::deleteTable(tempCLs[selspw]);
           else
             os << LogIO::WARN
                << "Could not rm " << tempCLs[selspw]
@@ -5240,7 +5027,7 @@ Record Imager::setjy(const Vector<Int>& /*fieldid*/,
     this->unlock();
     for(Int i = tempCLs.nelements(); i--;){
       if(tempCLs[i] != "")
-        Table::deleteTable(tempCLs[i]);
+        TableUtil::deleteTable(tempCLs[i]);
     }
     if (tmodimage) delete tmodimage; tmodimage=NULL;
     os << LogIO::SEVERE << "Exception: " << x.getMesg() << LogIO::POST;
@@ -6307,17 +6094,8 @@ Bool Imager::clone(const String& imageName, const String& newImageName)
 Bool Imager::make(const String& model)
 {
 
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::make",21);
-#endif
-
   if(!valid())
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::make",20);
-#endif
-
       return false;
     }
   LogIO os(LogOrigin("imager", "make()", WHERE));
@@ -6326,11 +6104,6 @@ Bool Imager::make(const String& model)
   try {
     if(!assertDefinedImageParameters())
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::make",20);
-#endif
-
 	return false;
       }
     
@@ -6345,37 +6118,21 @@ Bool Imager::make(const String& model)
     //if(!imagecoordinates(coords, false)) 
     if(!imagecoordinates2(coords, false)) 
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::make",20);
-#endif
 	this->unlock();
 	return false;
       }
     this->makeEmptyImage(coords, modelName, fieldid_p);
     this->unlock();
     
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::make",20);
-#endif
-
     return true;
   } catch (AipsError x) {
     this->unlock();
     os << LogIO::SEVERE << "Exception: " << x.getMesg() << LogIO::POST;
 
-#ifdef PABLO_IO
-    traceEvent(1,"Exiting Imager::make",20);
-#endif
-
     return false;    
 
   } 
   this->unlock();
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::make",20);
-#endif
 
   return true;
 }
@@ -6383,17 +6140,8 @@ Bool Imager::make(const String& model)
 // Fit the psf. If psf is blank then make the psf first.
 Bool Imager::fitpsf(const String& psf, ImageBeamSet& mbeam) {
 
-#ifdef PABLO_IO
-  traceEvent(1,"Entering Imager::fitpsf",23);
-#endif
-
   if(!valid()) 
     {
-
-#ifdef PABLO_IO
-      traceEvent(1,"Exiting Imager::fitps",22);
-#endif
-
       return false;
     }
   LogIO os(LogOrigin("imager", "fitpsf()", WHERE));
@@ -6402,10 +6150,6 @@ Bool Imager::fitpsf(const String& psf, ImageBeamSet& mbeam) {
   try {
     if(!assertDefinedImageParameters()) 
       {
-
-#ifdef PABLO_IO
-	traceEvent(1,"Exiting Imager::fitps",22);
-#endif
 	this->unlock();
 	return false;
       }
@@ -6423,10 +6167,6 @@ Bool Imager::fitpsf(const String& psf, ImageBeamSet& mbeam) {
       os << LogIO::SEVERE << "PSF image " << lpsf << " does not exist"
 	 << LogIO::POST;
 
-#ifdef PABLO_IO
-     traceEvent(1,"Exiting Imager::fitpsf",22);
-#endif
-
       return false;
     }
 
@@ -6443,26 +6183,14 @@ Bool Imager::fitpsf(const String& psf, ImageBeamSet& mbeam) {
 
     this->unlock();
     
-#ifdef PABLO_IO
-     traceEvent(1,"Exiting Imager::fitps",22);
-#endif
-
-return true;
+    return true;
   } catch (AipsError x) {
     this->unlock();
     os << LogIO::SEVERE << "Exception: " << x.getMesg() << LogIO::POST;
 
-#ifdef PABLO_IO
-     traceEvent(1,"Exiting Imager::fitps",22);
-#endif
-
      return false;
   } 
   this->unlock();
-
-#ifdef PABLO_IO
-  traceEvent(1,"Exiting Imager::fitps",22);
-#endif
 
   return true;
 }
@@ -6599,48 +6327,8 @@ Bool Imager::plotuv(const Bool rotate)
     }
     
    
-    if(rotate) {
-    
-#if ! defined(CASATOOLS)
-      PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
-      dbus::variant panel_id = plotter->panel( "UV-Coverage for "+imageName(), "U (wavelengths)", "V (wavelengths)", "UV-Plot",
-					       std::vector<int>( ), "right");
+    return false;
 
-      if ( panel_id.type( ) != dbus::variant::INT ) {
-	os << LogIO::SEVERE << "failed to start plotter" << LogIO::POST;
-	return false;
-      }
-
-      
-      plotter->scatter(dbus::af(u),dbus::af(v),"blue","unrotated","hexagon",6,-1,panel_id.getInt( ));
-      plotter->scatter(dbus::af(uRotated),dbus::af(vRotated),"red","rotated","ellipse",6,-1,panel_id.getInt( ));
-      plotter->release( panel_id.getInt( ) );
-#else
-      return false;
-#endif
-    }
-    else {
-#if ! defined(CASATOOLS)
-      PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
-      dbus::variant panel_id = plotter->panel( "UV-Coverage for "+imageName(), "U (wavelengths)", "V (wavelengths)", "UV-Plot" ,
-					       std::vector<int>( ), "right");
-
-      if ( panel_id.type( ) != dbus::variant::INT ) {
-	os << LogIO::SEVERE << "failed to start plotter" << LogIO::POST;
-	return false;
-      }
-
-      
-      plotter->scatter(dbus::af(u),dbus::af(v),"blue","uv in data","rect",6,-1,panel_id.getInt( ));
-      u=u*Float(-1.0);
-      v=v*Float(-1.0);
-      plotter->scatter(dbus::af(u),dbus::af(v),"red","conjugate","ellipse",6,-1,panel_id.getInt( ));
-      plotter->release( panel_id.getInt( ) );
-#else
-      return false;
-#endif
-    }
-    
     this->unlock();
   
   } 
@@ -6862,36 +6550,7 @@ Bool Imager::plotvis(const String& type, const Int increment)
       }
    
 
-#if ! defined(CASATOOLS)
-    PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
-    dbus::variant panel_id = plotter->panel( "Stokes I Visibility for "+imageName(),"UVDistance (wavelengths)" , "Amplitude", "Vis-Plot",
-					     std::vector<int>( ), "right", "bottom", 0, false, false);
-    
-    if ( panel_id.type( ) != dbus::variant::INT ) {
-      os << LogIO::SEVERE << "failed to start plotter" << LogIO::POST;
-      return false;
-    }
-
-    
-
-    if(type=="all"||type==""||type.contains("observed")) {
-      plotter->scatter(dbus::af(uvDistance),dbus::af(amp),"blue","observed","rect",6,-1,panel_id.getInt( ));
-      //plotter->scatter(dbus::af(u),dbus::af(v),"blue","uv in data","rect",6,-1,panel_id.getInt( ));
-      
-    }
-    if((type=="all"||type==""||type.contains("corrected")) && hasCorrected) {
-      plotter->scatter(dbus::af(uvDistance),dbus::af(correctedAmp),"red","corrected","ellipse",6,-1,panel_id.getInt( ));
-    }
-    if((type=="all"||type==""||type.contains("model")) && hasModel) {
-      plotter->scatter(dbus::af(uvDistance),dbus::af(modelAmp),"green","model","rect",6,-1,panel_id.getInt( ));
-    }
-    if((type=="all"||type==""||type.contains("residual")) && (hasCorrected && hasModel)) {
-      plotter->scatter(dbus::af(uvDistance),dbus::af(residualAmp),"yellow","residual","cross",6,-1,panel_id.getInt( ));
-    }
-    plotter->release( panel_id.getInt( ) );
-#else
     return false;
-#endif
 
     
     this->unlock();
@@ -6986,32 +6645,7 @@ Bool Imager::plotweights(const Bool gridded, const Int increment)
       //Float vmax=Float(ny_p/2)/vscale;
 
 
-#if ! defined(CASATOOLS)
-      PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
-      dbus::variant panel_id = plotter->panel( "Gridded weights for "+imageName(), "U (wavelengths)", "V (wavelengths)", "ImagingWeight-plot" );
-      if ( panel_id.type() != dbus::variant::INT ) {
-	  os << "failed to create plot panel" << LogIO::WARN << LogIO::POST;
-	  return false;
-      }
-
-      
-
-      gwt=Float(0xFFFFFF)-gwt*(Float(0xFFFFFF)/maxWeight);
-      IPosition shape = gwt.shape( );
-      //bool deleteit = false;
-      std::vector<double> data(shape[0] * shape[1]);
-      int off = 0;
-      for ( int column=0; column < shape[1]; ++column ) {
-	for ( int row=0; row < shape[0]; ++row ) {
-	  data[off++] = gwt(row,column);
-	}
-      }
-
-      plotter->raster( data, (int) shape[1], (int) shape[0] );
-      //  plotter->release( panel_id.getInt( ) );
-#else
       return false;
-#endif
     }
     else {
       
@@ -7090,21 +6724,7 @@ Bool Imager::plotweights(const Bool gridded, const Int increment)
       }
 
 
-#if ! defined(CASATOOLS)
-      PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
-      dbus::variant panel_id = plotter->panel( "Weights for "+imageName(), "UVDistance (wavelengths)", "Weights", "ImagingWeight-plot" );
-
-      if ( panel_id.type( ) != dbus::variant::INT ) {
-	os << LogIO::SEVERE << "failed to start plotter" << LogIO::POST;
-	return false;
-      }
-
-      
-      plotter->scatter(dbus::af(uvDistance),dbus::af(weights),"blue","","hexagon",4,-1,panel_id.getInt( ));
-      //plotter->release( panel_id.getInt( ) );
-#else
       return false;
-#endif
     }
     
 
@@ -7479,25 +7099,6 @@ Bool Imager::makemodelfromsd(const String& sdImage, const String& modelImage,
 }
 
 
-#if ! defined(CASATOOLS)
-class interactive_clean_callback {
-    public:
-	interactive_clean_callback( ) { }
-	casa::dbus::variant result( ) { return casa::dbus::toVariant(result_); }
-	bool callback( const DBus::Message & msg );
-    private:
-	DBus::Variant result_;
-};
-
-bool interactive_clean_callback::callback( const DBus::Message &msg ) {
-    if (msg.is_signal("edu.nrao.casa.viewer","interact")) {
-	DBus::MessageIter ri = msg.reader( );
-	::operator >>(ri,result_);
-	casa::DBusSession::instance( ).dispatcher( ).leave( );
-    }
-    return true;
-}
-#endif
 Int Imager::interactivemask(const String& image, const String& mask, 
 			    Int& niter, Int& ncycles, String& thresh, const Bool forceReload){
 
@@ -7512,162 +7113,13 @@ Int Imager::interactivemask(const String& image, const String& mask,
    else{
      clone(image, mask);
    }
-#if ! defined(CASATOOLS)
-   if ( viewer_p == 0 ) {
-     std::list<std::string> args;
-     args.push_back("--oldregions");
-     viewer_p = dbus::launch<ViewerProxy>(args);
-     if ( viewer_p == 0 ) {
-       os << LogIO::WARN << "failed to launch viewer gui" << LogIO::POST;
-       return false;
-     }
-   }
-   if ( clean_panel_p == 0) {
-     dbus::variant panel_id = viewer_p->panel( "clean" );
-     if ( panel_id.type() != dbus::variant::INT ) {
-       os << LogIO::WARN << "failed to create clean panel" << LogIO::POST;
-       return false;
-     }
-     clean_panel_p = panel_id.getInt( );
-   }
-
-   if ( image_id_p == 0 || mask_id_p == 0 || forceReload ) {
-     //Make sure image left after a "no more" is pressed is cleared
-     if(forceReload && image_id_p !=0)
-       prev_image_id_p=image_id_p;
-     if(forceReload && mask_id_p !=0)
-       prev_mask_id_p=mask_id_p;
-     if(prev_image_id_p){
-       viewer_p->unload( prev_image_id_p );
-     }
-     if(prev_mask_id_p)
-       viewer_p->unload( prev_mask_id_p );
-     prev_image_id_p=0;
-     prev_mask_id_p=0;
-     dbus::variant image_id = viewer_p->load(image, "raster", clean_panel_p);
-     if ( image_id.type() != dbus::variant::INT ) {
-       os << LogIO::WARN << "failed to load image" << LogIO::POST;
-       return false;
-     }
-     image_id_p = image_id.getInt( );
-     
-     dbus::variant mask_id = viewer_p->load(mask, "contour", clean_panel_p);
-      if ( mask_id.type() != dbus::variant::INT ) {
-	os << "failed to load mask" << LogIO::WARN << LogIO::POST;
-	return false;
-      }
-      mask_id_p = mask_id.getInt( );
-   } else {
-     //viewer_p->reload( clean_panel_p );
-     viewer_p->reload(image_id_p);
-     viewer_p->reload(mask_id_p);
-   }
-
-   
-   casa::dbus::record options;
-   options.insert("niter", niter);
-   options.insert("ncycle", ncycles);
-   options.insert("threshold", thresh);  
-   viewer_p->setoptions(options, clean_panel_p);
-   
-    interactive_clean_callback *mycb = new interactive_clean_callback( );
-    DBus::MessageSlot filter;
-    filter = new DBus::Callback<interactive_clean_callback,bool,const DBus::Message &>( mycb, &interactive_clean_callback::callback );
-    casa::DBusSession::instance( ).connection( ).add_filter( filter );
-    casa::dbus::variant res = viewer_p->start_interact( dbus::variant(), clean_panel_p);
-
-    //casa::DBusSession::instance( ).dispatcher( ).set_responsiveness(10000.0, 10.0);
-    casa::DBusSession::instance( ).dispatcher( ).enter( );
-    casa::DBusSession::instance( ).connection( ).remove_filter( filter );
-    casa::dbus::variant interact_result = mycb->result( );
-    delete mycb;
-
-
-    int result = 0;
-    if ( interact_result.type() == dbus::variant::RECORD ) {
-      const dbus::record  &rec = interact_result.getRecord( );
-      for ( dbus::record::const_iterator iter = rec.begin(); iter != rec.end(); ++iter ) {
-	if ( iter->first == "action" ) {
-	  if ( iter->second.type( ) != dbus::variant::STRING ) {
-	    os << "ill-formed action result" << LogIO::WARN << LogIO::POST;
-	    return false;
-	  } else {
-	    const std::string &action = iter->second.getString( );
-	    if ( action == "stop" )
-	      result = 2;
-	    else if ( action == "no more" )
-	      result = 1;
-	    else if ( action == "continue" )
-	      result = 0;
-	    else {
-	      os << "ill-formed action result" << LogIO::WARN << LogIO::POST;
-	      return false;
-	    }
-	  }
-	} else if ( iter->first == "ncycle" ) {
-	  if ( iter->second.type( ) != dbus::variant::INT ) {
-	    os << "ill-formed ncycle result" << LogIO::WARN << LogIO::POST;
-	    return false;
-	  } else {
-	    ncycles = iter->second.getInt( );
-	  }
-	} else if ( iter->first == "niter" ) {
-	  if ( iter->second.type( ) != dbus::variant::INT ) {
-	    os << "ill-formed niter result" << LogIO::WARN << LogIO::POST;
-	    return false;
-	  } else {
-	    niter = iter->second.getInt( );
-	  }
-	} else if ( iter->first == "threshold" ) {
-	  if ( iter->second.type( ) != dbus::variant::STRING ) {
-	    os << "ill-formed threshold result" << LogIO::WARN << LogIO::POST;
-	    return false;
-	  } else {
-	    thresh = iter->second.getString( );
-	  }
-	}
-      }
-    } else {
-      os << "failed to get a vaild result for viewer" << LogIO::WARN << LogIO::POST;
-      return false;
-    }
-    prev_image_id_p=image_id_p;
-    prev_mask_id_p=mask_id_p;
-
-    if(result==1){
-      //Keep the image up but clear the next time called
-      image_id_p=0;
-      mask_id_p=0;
-    }
-    if(result==2){
-      //clean up
-      //viewer_p->close(clean_panel_p);
-      //viewer_p->done();
-      //delete viewer_p;
-      //viewer_p=0;
-      //viewer_p->unload(image_id_p);
-      //viewer_p->unload(mask_id_p);
-      //Setting clean_panel_p to 0 seems to do the trick...the above stuff 
-      // like done causes a crash after a call again...have to understand that
-      viewer_p->unload(image_id_p);
-      viewer_p->unload(mask_id_p);
-      viewer_p->close(clean_panel_p);
-      clean_panel_p=0;
-      image_id_p=0;
-      mask_id_p=0;
-    }
-
-    // return 0 if "continue"
-    // return 1 if "no more interaction"
-    // return 2 if "stop"
-    return result;
-#else
+#ifdef USE_GRPC
    Quantity thr;
    if ( ! Quantity::read(thr,thresh) ) thr = Quantity(0,"Jy");
    float thold = (float) thr.get("Jy").getValue( );
    grpcInteractiveClean::getManager( ).setControls( niter, ncycles, thold);
-   return false;
 #endif
+   return false;
 }
 
   Record Imager::iClean(const String& algorithm, const Int niter, const Double gain, 
@@ -7823,19 +7275,6 @@ Int Imager::interactivemask(const String& image, const String& mask,
 	      }
 	    }
 	  }
-#if ! defined(CASATOOLS)
-	  ///guess we are done with the viewer
-	  if((viewer_p !=0) && (clean_panel_p != 0)){
-	    if(image_id_p !=0)
-	      viewer_p->unload(image_id_p);
-	    if(mask_id_p !=0)
-	      viewer_p->unload(mask_id_p);
-	    viewer_p->close(clean_panel_p);
-	    clean_panel_p=0;
-	    image_id_p=0;
-	    mask_id_p=0;
-	  }
-#endif
 	  
 	}
 

@@ -30,12 +30,12 @@
 #define COMPONENTS_COMPONENTLIST_H
 
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <components/ComponentModels/SkyComponent.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MFrequency.h>
-#include <casa/Containers/Block.h>
-#include <tables/Tables/Table.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MFrequency.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/tables/Tables/Table.h>
 #include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
@@ -257,6 +257,7 @@ public:
 
   // returns how many components are in the list.
   casacore::uInt nelements() const;
+  casacore::uInt size() const;
 
   // deselect the specified component. Throws an exception (casacore::AipsError) if any
   // element in the index is out of range, ie. index >= nelements().

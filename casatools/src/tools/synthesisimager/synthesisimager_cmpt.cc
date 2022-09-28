@@ -8,13 +8,13 @@
  ***/
 
 #include <iostream>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Utilities/Assert.h>
-#include <ms/MeasurementSets.h>
-#include <ms/MeasurementSets/MSHistoryHandler.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/ms/MeasurementSets.h>
+#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
+#include <casacore/casa/Logging/LogIO.h>
 
 //#include <synthesis/ImagerObjects/TmpSwitch.h>
 
@@ -536,7 +536,8 @@ bool synthesisimager::setweighting(const std::string& type,
       
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
-      itsImager->dryGridding(cfList);
+      Vector<String> const cfListV(cfList);
+      itsImager->dryGridding(cfListV);
       
     } catch  (AipsError x) {
       RETHROW(x);
@@ -558,7 +559,8 @@ bool synthesisimager::setweighting(const std::string& type,
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
       //Bool conjBeams=itsImager->getSynthesisParamsGrid().conjBeams;
-      itsImager->fillCFCache(cfList,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
+      Vector<String> const cfListV(cfList);
+      itsImager->fillCFCache(cfListV,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
       
     } catch  (AipsError x) {
       RETHROW(x);
@@ -710,6 +712,45 @@ synthesisimstore* synthesisimager::getimstore(const long id)
     RETHROW(x);
   }
   return rstat;
+}
+
+std::string synthesisimager::getImageName(const long facetId, const std::string& imageId, long taylorTerm)
+{
+    std::string rstat = "";
+    try {
+        itsImager = makeSI();
+        CountedPtr<SIImageStore> itsImStore = itsImager->imageStore(facetId);
+        if (imageId == "MASK") {
+            rstat = itsImStore->mask((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "PSF") {
+            rstat = itsImStore->psf((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "MODEL") {
+            rstat = itsImStore->model((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "RESIDUAL") {
+            rstat = itsImStore->residual((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "WEIGHT") {
+            rstat = itsImStore->weight((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "IMAGE") {
+            rstat = itsImStore->image((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "SUMWT") {
+            rstat = itsImStore->sumwt((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "GRIDWT") {
+            throw AipsError("Retrieval of gridwt image name not supported at this time.");
+        } else if (imageId == "PB") {
+            rstat = itsImStore->pb((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "FORWARDGRID") {
+            rstat = itsImStore->forwardGrid((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "BACKWARDGRID") {
+            rstat = itsImStore->backwardGrid((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "IMAGEPBCOR") {
+            rstat = itsImStore->imagepbcor((casacore::uInt)taylorTerm)->name();
+        } else {
+            throw AipsError("Image id \""+imageId+"\" not recognized.");
+        }
+    } catch  (AipsError x) {
+        RETHROW(x);
+    }
+    return rstat;
 }
 
 casac::record* synthesisimager::getcsys()

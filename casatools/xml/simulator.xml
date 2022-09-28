@@ -25,7 +25,7 @@
     In the observing phase, simulator creates a MeasurementSet and
     calculates uvw values. You first make a simulator tool, with the name
     of the MeasurementSet that you wish to construct. Next you use the
-    various set* methods to set up the observing (antenna locations,
+    various set\* methods to set up the observing (antenna locations,
     sources, spectral windows, etc.). Then you call the observe method for
     each observing scan you wish to make, or observemany to create several
     scans. You specify the source name, spectral window name, and
@@ -46,7 +46,7 @@
     or <link anchor="componentmodels">componentmodels</link>.
     
     To apply errors, first set up the various effects using the relevant
-    set* methods, and then call corrupt.
+    set\* methods, and then call corrupt.
 
     Some important details:
     - One call to observe generates one scan (all rows have the same SCAN_NUMBER).
@@ -966,10 +966,9 @@ to use.
       them to the DATA column
     - predict for any value of incremental then sets CORRECTED_DATA
       equal to DATA, and MODEL_DATA to 1
-    * predict assumes model image units are Jy/pixel, and in fact
+    - predict assumes model image units are Jy/pixel, and in fact
       will overwrite the brightness units of the image itself!
-    
-    * treatment of primary beam depends critically on parameters set in 
+    - treatment of primary beam depends critically on parameters set in 
       sm.setvp() and sm.setoptions(ftmachine) - see help sm.setvp for 
       details. For componentlists, if sm.setvp() is run prior to predict, then the spectral variation of each component in the componentlist will include the multiplicative term of the beam value for each channel frequency. So a flat spectrum component will show the frequency variation of the beam in the predicted visibilities.
     
@@ -1152,7 +1151,7 @@ to use.
       and dish diameter =7m will use a 6.25m Airy pattern.
       see help sm.setoptions for an example.
     - otherwise the PB returned by the vpmanager will be used. 
-    * heterogeneous simulation only works at present from a sky model
+    - heterogeneous simulation only works at present from a sky model
       image, NOT from sky model components. If you want to simulate a 
       heterogeneous array, please add components to an image using 
       ia.modify, and don't specify a component list in sm.predict.
@@ -1240,7 +1239,7 @@ to use.
   <shortdescription>Corrupt the data with visibility errors</shortdescription>
   
   <description>
-    Add errors specified by the set* functions (such as noise, gains,
+    Add errors specified by the set\* functions (such as noise, gains,
     polarization leakage, bandpass, etc) to the visibility data.  The
     errors are applied to the DATA and CORRECTED_DATA columns.
 
@@ -1460,6 +1459,11 @@ to use.
       <description>wind speed for screen type corruption (m/s)</description>
       <value>7.</value>
     </param>
+
+    <param name="simint" type="double">
+      <description>simulation time step interval (s)</description>
+      <value>-1.</value>
+    </param>
     
   </input>
   <returns type="bool">Bool</returns>
@@ -1552,10 +1556,11 @@ to use.
     etc.  The noise will increase with the airmass if tau is greater
     than zero.  The noise is calculated according to the Brown
     Equation (ie, R.L. Brown's calculation of MMA sensitivity,
-    3Oct95): 
-    dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
-                      T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
-                   *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)
+    3Oct95):
+    
+    ``dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
+    T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
+    *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)``
   </description>
   <input>
 
@@ -1641,23 +1646,23 @@ to use.
     For mode=simplenoise, one specifies the standard deviation &quot;sigma&quot;
     for the noise to be added to real and imaginary parts of the visibility.
     The noise in amplitude per visibility is approximately &quot;sigma&quot; although 
-      it is not Gaussian (see Thompson, Moran, and Swenson fig. 6.9)
-    and the point source noise in a Stokes I image will be 
-      ~sigma/sqrt(n_pol)/sqrt(n_baselines)/sqrt(n_integrations), 
+    it is not Gaussian (see Thompson, Moran, and Swenson fig. 6.9)
+    and the point source noise in a Stokes I image will approximately be 
+    sigma/sqrt(n_pol * n_baselines * n_integrations * n_chan), 
     where n_pol are the number of polarizations in the MS (typically 2),
     and n_integrations are the number of correlator integration times 
     in the MS (~ track time / int. time)
     
-    For mode=tsys-atm or tsys-atm, the noise will vary with dish
+    For mode=tsys-atm or tsys-manual, the noise will vary with dish
     diameter, antenna efficiency, system temperature, opacity, sky
     temperature, etc.  The noise will increase with the airmass if tau
     is greater than zero.  The noise is calculated according to the
     Brown Equation (ie, R.L. Brown's calculation of MMA sensitivity,
     3Oct95):
-    dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
-                      T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
-                   *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)
-
+    
+    ``dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
+    T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
+    *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)``
 
     For mode=tsys-atm, the sky brightness temperature is calculated
     using an atmospheric model created for the user-input PWV.  For

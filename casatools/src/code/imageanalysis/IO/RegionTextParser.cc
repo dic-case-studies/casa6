@@ -16,9 +16,9 @@
 
 #include <imageanalysis/IO/RegionTextParser.h>
 
-#include <casa/IO/RegularFileIO.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/casa/IO/RegularFileIO.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
 #include <imageanalysis/Annotations/AnnAnnulus.h>
 #include <imageanalysis/Annotations/AnnCenterBox.h>
 #include <imageanalysis/Annotations/AnnCircle.h>
@@ -32,12 +32,12 @@
 #include <imageanalysis/Annotations/AnnVector.h>
 #include <imageanalysis/IO/ParameterParser.h>
 
-#include <measures/Measures/MCDirection.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/VelocityMachine.h>
+#include <casacore/measures/Measures/MCDirection.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/VelocityMachine.h>
 
 #include <iomanip>
-#include <casa/BasicSL/STLIO.h>
+#include <casacore/casa/BasicSL/STLIO.h>
 
 #define _ORIGIN "RegionTextParser::" + String(__FUNCTION__) + ": "
 
@@ -434,14 +434,16 @@ AnnotationBase::Type RegionTextParser::_getAnnotationType(
         }
         break;
     case AnnotationBase::POLYGON:
+        // Polygon definitions can be very long with many points.
+        // Testing entire polygon string syntax causes regex seg fault.
         ThrowIf(
-            ! consumeMe.contains(startNPair),
-            preamble + "Illegal polygon specification " + consumeMe
+            ! (
+               consumeMe.contains(Regex("^ *\\[ *\\["))
+               && consumeMe.contains(Regex("\\] *\\]"))
+            ), preamble + "Illegal polygon specification " + consumeMe
         );
         {
-            Vector<Quantity> qs = _extractNQuantityPairs(
-                consumeMe, preamble
-            );
+            Vector<Quantity> qs = _extractNQuantityPairs(consumeMe, preamble);
             qDirs.resize(qs.size());
             qDirs = qs;
         }
@@ -1214,22 +1216,31 @@ Vector<Quantity> RegionTextParser::_extractTwoQuantityPairs(
 Vector<Quantity> RegionTextParser::_extractNQuantityPairs (
         String& consumeMe, const String& preamble
 ) const {
-    String pairs = consumeMe.through(startNPair);
+    String pairs = consumeMe.through(Regex("\\] *\\]"));
+    String nPairs(pairs);
     consumeMe.del(0, (Int)pairs.length() + 1);
     pairs.trim();
     // remove the left most [
     pairs.del(0, 1);
     pairs.trim();
     Vector<Quantity> qs(0);
-    while (pairs.length() > 1) {
-        std::pair<Quantity, Quantity> myqs = _extractSingleQuantityPair(pairs, preamble);
-        qs.resize(qs.size() + 2, true);
-        qs[qs.size() - 2] = myqs.first;
-        qs[qs.size() - 1] = myqs.second;
-        pairs.del(0, (Int)pairs.find(']', 0) + 1);
-        pairs.trim();
-        pairs.ltrim(',');
-        pairs.trim();
+
+    try {
+        while (pairs.length() > 1) {
+            std::pair<Quantity, Quantity> myqs = _extractSingleQuantityPair(pairs, preamble);
+            qs.resize(qs.size() + 2, true);
+            qs[qs.size() - 2] = myqs.first;
+            qs[qs.size() - 1] = myqs.second;
+            pairs.del(0, (Int)pairs.find(']', 0) + 1);
+            pairs.trim();
+            pairs.ltrim(',');
+            pairs.trim();
+        }
+    }
+    catch (const AipsError&) {
+        ThrowCc(
+            preamble + "Illegal polygon specification " + nPairs
+        );
     }
     return qs;
 }

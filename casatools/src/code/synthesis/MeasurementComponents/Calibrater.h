@@ -27,19 +27,19 @@
 #ifndef SYNTHESIS_CALIBRATER_H
 #define SYNTHESIS_CALIBRATER_H
 
-#include <casa/aips.h>
-#include <casa/OS/Timer.h>
-#include <casa/Containers/Record.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <measures/Measures/MRadialVelocity.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/OS/Timer.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/measures/Measures/MRadialVelocity.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 #include <synthesis/MeasurementComponents/VisCal.h>
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
 #include <synthesis/MeasurementComponents/VisCalGlobals.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogSink.h>
-#include <ms/MeasurementSets/MSHistoryHandler.h>
-#include <ms/MSSel/MSSelection.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
+#include <casacore/ms/MSSel/MSSelection.h>
 #include <msvis/MSVis/VisibilityProcessing.h>
 #include <msvis/MSVis/ViFrequencySelection.h>
 #include <msvis/MSVis/SimpleSimVi2.h>
@@ -301,6 +301,22 @@ class Calibrater
   // Re-initialize the calibration scratch columns
   virtual casacore::Bool initCalSet(const casacore::Int& /*calSet*/)  { throw(casacore::AipsError("Calibrater::initCalSet not implemented")); };;
 
+  // Display the state in a dictionary
+  casacore::Record returndict();
+  // Get all selected spws
+  casacore::Vector<casacore::Int> getSelectedSpws();
+  // Get all selected intents
+  casacore::Vector<casacore::String> getSelectedIntents();
+  // Get all apply tables
+  casacore::Vector<casacore::String> getApplyTables();
+  // Get solve table
+  casacore::Vector<casacore::String> getSolveTable();
+  // Get parameters from visibility iterator
+  casacore::Bool getIteratorSelection(casacore::Vector<casacore::Int>*,
+    casacore::Vector<casacore::Int>*, casacore::Vector<casacore::Int>*,
+    casacore::Vector<casacore::Int>*);
+  // Convert set to casa vector
+  casacore::Vector<casacore::Int> convertSetToVector(const set<casacore::Int>);
   // Report apply/solve state
   casacore::Bool state();
   casacore::Bool applystate();

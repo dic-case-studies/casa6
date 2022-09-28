@@ -249,12 +249,12 @@ class PyParallelCubeSynthesisImager():
             joblist.append( self.PH.runcmd("imager.runMajorMinorLoops()", node) )
         self.PH.checkJobs( joblist )
 
-    def runMajorCycle(self):
+    def runMajorCycle(self, isCleanCycle=True):
         joblist=[]
         #for node in self.listOfNodes:
         for node in self.modifiedListOfNodes:
             if self.exitflag[str(node)]==False:
-                joblist.append( self.PH.runcmd("imager.runMajorCycle()", node) )
+                joblist.append( self.PH.runcmd("imager.runMajorCycle(isCleanCycle="+isCleanCycle+")", node) )
         self.PH.checkJobs( joblist )
 
     def runMinorCycle(self):
@@ -335,6 +335,13 @@ class PyParallelCubeSynthesisImager():
         #for node in self.listOfNodes:
         for node in self.modifiedListOfNodes:
             joblist.append( self.PH.runcmd("imager.makePB()", node) )
+        self.PH.checkJobs( joblist )
+
+    def checkPB(self):
+        joblist=[]
+        #for node in self.listOfNodes:
+        for node in self.modifiedListOfNodes:
+            joblist.append( self.PH.runcmd("imager.checkPB()", node) )
         self.PH.checkJobs( joblist )
 
     def concatImages(self, type='copyvirtual'):

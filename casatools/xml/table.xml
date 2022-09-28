@@ -1,6 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
         <tool module="table" name="table">
+        <needs>tablerow</needs>
         <shortdescription>Access tables from casapy</shortdescription>
        
 <code>
@@ -1265,11 +1266,11 @@ made.  This table query command is equivalent to the Table Query Language
   WHERE OBSERVATION_ID==0
   ORDERBY ARRAY_ID
 
-See http://www.astron.nl/casacore/trunk/casacore/doc/notes/199.html for an explanation of TaQL.
+See https://casacore.github.io/casacore-notes/199.html for an explanation of TaQL.
 
 If &quot;style&quot; is not blank, &quot;using style \&lt;style\&gt; &quot; is prepended to the
 query.  See
-http://www.astron.nl/casacore/trunk/casacore/doc/notes/199.html#x1-50002.2 for
+https://casacore.github.io/casacore-notes/199.html#x1-70002.2 for
 an explanation and list of choices for style.  The default (glish) style is
 1-based, inclusive end, and Fortran ordering.  You may prefer python (0-based,
 exclusive end, and C order) style.
@@ -3111,6 +3112,60 @@ tb.showcache()
         
         </example>
         
+   </method>
+
+   <method name="row" type="function">
+     <shortdescription>Get a row accessor for this table</shortdescription>
+     <description>
+       Return a table accessor object which allows for accessing one or more rows from the table. A single
+       row is returned as a dictionary and multiple rows are returned as a list of dictionaries. The contents
+       of the dictionary by default includes all table columns, but it can be limited by using ``columnnames``
+       parameter. The ``exclude`` parameter, which is ``False`` by default, indicates whether ``columnnames``
+       lists the columns to *exclude* (``exclude=True``) or the columns to include (``exclude=False``).
+
+       The returned table accessor object can also be used to store changes to a single row using the ``put``
+       method. This accessor object remains connected to the table object that created it. Closing or deleting
+       a table object invalidates any accessor objects that it created.
+     </description>
+
+     <example>
+       ### open table
+       tb = table( )
+       tb.open( 'ngc5921_ut.ms', nomodify=False )
+
+       ### read a single row
+       print(f'row 3 is {tb.row( )[3]}')
+
+       ### contents of the DATA column from the first 5 rows
+       first_five_data = tb.row(columnnames=['DATA'])[:5]
+
+       ### ENTIRE contents of the table
+       whole_table = tb.row( )[:]
+
+       ### store a single row
+       rows = tb.row( )
+       row = rows.get(22)
+       row['DATA'].fill( 1.0/row['DATA'].size )
+       rows.put( 22, { 'DATA': row['DATA'] } )
+     </example>
+     <input>
+       <param name="columnnames" type="stringVec">
+         <description>
+           Column names to be included in (or optionally excluded from) the the
+           returned result.
+         </description>
+         <value/>
+       </param>
+
+       <param name="exclude" type="bool">
+         <description>
+           If set to true, then columnnames describes the coluns to excluded rather
+           than included.
+         </description>
+         <value>false</value>
+       </param>
+     </input>
+     <returns type="tablerow"/>
    </method>
 
 </tool>

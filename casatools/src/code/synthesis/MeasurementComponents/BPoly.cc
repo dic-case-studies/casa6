@@ -28,23 +28,24 @@
 #include <synthesis/MeasurementComponents/BPoly.h>
 #include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayLogical.h>
-#include <ms/MSOper/MSMetaData.h>
-#include <ms/MeasurementSets/MSColumns.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
+#include <casacore/ms/MSOper/MSMetaData.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
 #include <msvis/MSVis/VisBuffAccumulator.h>
 #include <msvis/MSVis/VisBuffGroupAcc.h>
-#include <casa/sstream.h>
-#include <casa/math.h>
-#include <casa/OS/Memory.h>
-#include <casa/System/PGPlotter.h>
+#include <sstream>
+#include <cmath>
+#include <casacore/casa/OS/Memory.h>
+#include <casacore/casa/System/PGPlotter.h>
 #include <synthesis/CalTables/BJonesMBuf.h>
 #include <synthesis/CalTables/BJonesMCol.h>
 #include <synthesis/CalTables/NewCalTable.h>
-#include <ms/MSSel/MSSpWindowIndex.h>
+#include <casacore/ms/MSSel/MSSpWindowIndex.h>
+#include <casacore/tables/Tables/TableUtil.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -190,8 +191,8 @@ void BJonesPoly::setSolve(const Record& solvepar)
   // Delete calTableName() if it exists and we are not appending
   //  TBD: move to SVC?
   if (!append()) {
-    if (Table::canDeleteTable(calTableName())) {
-      Table::deleteTable(calTableName());
+    if (TableUtil::canDeleteTable(calTableName())) {
+      TableUtil::deleteTable(calTableName());
     }
     //    else 
     //      throw(AipsError(calTableName()+" exists and can't delete! (plotting or browsing it?)"));

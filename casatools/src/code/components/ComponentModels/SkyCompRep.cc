@@ -29,38 +29,38 @@
 #include <components/ComponentModels/ComponentType.h>
 #include <components/ComponentModels/ConstantSpectrum.h>
 #include <components/ComponentModels/PointShape.h>
-#include <scimath/Mathematics/GaussianBeam.h>
+#include <casacore/scimath/Mathematics/GaussianBeam.h>
 #include <components/ComponentModels/GaussianShape.h>
 #include <components/ComponentModels/DiskShape.h>
 #include <components/ComponentModels/LimbDarkenedDiskShape.h>
 #include <components/ComponentModels/SkyCompRep.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/Cube.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/MatrixIter.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Containers/Record.h>
-#include <casa/Containers/RecordFieldId.h>
-#include <casa/Containers/RecordInterface.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/BasicMath/Math.h>
-#include <casa/BasicSL/Complex.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MFrequency.h>
-#include <measures/Measures/Stokes.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/Unit.h>
-#include <casa/Quanta/UnitMap.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Utilities/DataType.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/MatrixIter.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Containers/RecordFieldId.h>
+#include <casacore/casa/Containers/RecordInterface.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/casa/BasicSL/Complex.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MFrequency.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/Unit.h>
+#include <casacore/casa/Quanta/UnitMap.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Utilities/DataType.h>
 #include <components/ComponentModels/SpectralModel.h>
-#include <casa/iostream.h>
+#include <iostream>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -244,19 +244,20 @@ void SkyCompRep::sample(Cube<Double>& samples, const Unit& reqUnit,
   itsShapePtr->sample(dirScales, directions, dirRef,
  		      pixelLatSize, pixelLongSize);
 
-  Vector<Vector<Double> > freqIQUV(nFreqSamples);
-  freqIQUV.set(fluxVal);
+  Matrix<Double> freqIQUV(nFreqSamples, 4);
+  for (uInt i=0; i<nFreqSamples; ++i) {
+    freqIQUV.row(i) = fluxVal.copy();
+  }
 
   //itsSpectrumPtr->sample(freqScales, frequencies, freqRef);
   itsSpectrumPtr->sampleStokes(freqIQUV, frequencies, freqRef); 
-  for (uInt d = 0; d < nDirSamples; d++) {
+  for (uInt d=0; d<nDirSamples; ++d) {
 	  const Double thisDirScale = dirScales(d);
 	  if (thisDirScale != 0) {
-		  for (uInt f = 0; f < nFreqSamples; f++) {
-		    //const Double thisScale = thisDirScale* freqScales(f);
-		    for (uInt stok=0; stok <4; ++stok){
-		      samples(stok, d, f) += thisDirScale * freqIQUV(f)(stok);
-		    }
+		  for (uInt f=0; f<nFreqSamples; ++f) {
+		        for (uInt stok=0; stok <4; ++stok){
+		            samples(stok, d, f) += thisDirScale * freqIQUV(f, stok);
+		        }
 		  }
 	  }
   }
@@ -293,10 +294,10 @@ void SkyCompRep::visibility(Cube<DComplex>& visibilities,
   }
     */
 
-  Vector<Vector<Double> >fIQUV(frequencies.nelements());
-  fIQUV.set(iquv);
-  Vector<MVFrequency> mvFreq(frequencies.nelements());
+  Matrix<Double> fIQUV(frequencies.size(), 4);
+  Vector<MVFrequency> mvFreq(frequencies.size());
   for (uInt f = 0; f < nFreq; f++) {
+    fIQUV.row(f) = iquv.copy();
     mvFreq(f)=MVFrequency(frequencies(f));
   }
   
@@ -313,7 +314,7 @@ void SkyCompRep::visibility(Cube<DComplex>& visibilities,
   itsSpectrumPtr->sampleStokes(fIQUV, mvFreq, measRef);
   Vector<Flux<Double> > stokesFlux(nFreq);
   for (uInt f=0; f < nFreq; ++f){
-    stokesFlux(f)=Flux<Double>(fIQUV(f));
+    stokesFlux(f) = Flux<Double>(fIQUV.row(f));
     stokesFlux(f).convertPol(itsFlux.pol());
   }
   Matrix<DComplex> scales(nVis, nFreq);

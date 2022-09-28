@@ -28,7 +28,7 @@
 #ifndef COMPONENTS_SPECTRALINDEX_H
 #define COMPONENTS_SPECTRALINDEX_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <components/ComponentModels/ComponentType.h>
 #include <components/ComponentModels/SpectralModel.h>
 #include <casacore/casa/Arrays/ArrayFwd.h>
@@ -238,9 +238,11 @@ public:
                       const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
                       const casacore::MFrequency::Ref& refFrame) const;
 
-  virtual void sampleStokes(casacore::Vector<casacore::Vector<casacore::Double> >& scale,
-			    const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
-			    const casacore::MFrequency::Ref& refFrame) const;
+    virtual void sampleStokes(
+        casacore::Matrix<casacore::Double>& scale,
+        const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
+        const casacore::MFrequency::Ref& refFrame
+    ) const;
 
   // Return a pointer to a copy of this object upcast to a SpectralModel
   // object. The class that uses this function is responsible for deleting the

@@ -30,27 +30,28 @@
 
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/VisBuffAccumulator.h>
-#include <ms/MeasurementSets/MSColumns.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 
-#include <tables/Tables/Table.h>
-#include <tables/Tables/TableIter.h>
-#include <tables/TaQL/ExprNode.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/TableIter.h>
+#include <casacore/tables/Tables/TableUtil.h>
+#include <casacore/tables/TaQL/ExprNode.h>
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/OS/Memory.h>
-#include <casa/System/Aipsrc.h>
-#include <scimath/Functionals/ScalarSampledFunctional.h>
-#include <scimath/Functionals/Interpolate1D.h>
-#include <scimath/Mathematics/Combinatorics.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/OS/Memory.h>
+#include <casacore/casa/System/Aipsrc.h>
+#include <casacore/scimath/Functionals/ScalarSampledFunctional.h>
+#include <casacore/scimath/Functionals/Interpolate1D.h>
+#include <casacore/scimath/Mathematics/Combinatorics.h>
 
-#include <casa/sstream.h>
+#include <sstream>
 
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogSink.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -136,8 +137,8 @@ void EGainCurve::setApply(const Record& applypar) {
 
     // Delete the temporary gaincurve disk table (in-mem copy still ok)
     if (calTableName()==tempname &&
-	Table::canDeleteTable(calTableName()) ) {
-      Table::deleteTable(calTableName());
+	TableUtil::canDeleteTable(calTableName()) ) {
+      TableUtil::deleteTable(calTableName());
     }
 
     // Revise name that will appear in log messages, etc.

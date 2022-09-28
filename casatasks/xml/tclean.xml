@@ -52,7 +52,7 @@
                  field='0~2'; field ids 0,1,2
                  field='0,4,5~7'; field ids 0,4,5,6,7
                  field='3C286,3C295'; field named 3C286 and 3C295
-                 field = '3,4C*'; field id 3, all names starting with 4C
+                 field = '3,4C\*'; field id 3, all names starting with 4C
                  For multiple MS input, a list of field strings can be used:
                  field = ['0~2','0~4']; field ids 0-2 for the first MS and 0-4
                          for the second
@@ -191,7 +191,7 @@
                    default: '' (all)
                    example: intent='TARGET_SOURCE'
                    example: intent='TARGET_SOURCE1,TARGET_SOURCE2'
-                   example: intent='TARGET_POINTING*'
+                   example: intent='TARGET_POINTING\*'
 </description>
       <type>string</type><type>stringVec</type>
       <value type="string"/>
@@ -268,10 +268,19 @@
     <param type="any" name="imsize"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
-         example :  imsize = [350,250]
-                           imsize = 500 is equivalent to [500,500]
-         To take proper advantage of internal optimized FFT routines, the
-         number of pixels must be even and factorizable by 2,3,5 only.
+example:
+
+    imsize = [350,250]
+    imsize = 500 is equivalent to [500,500]
+    
+To take proper advantage of internal optimized FFT routines, the
+number of pixels must be even and factorizable by 2,3,5 only.
+To find the nearest optimal imsize to that desired by the user, please use the following tool method:
+
+    from casatools import synthesisutils
+    su = synthesisutils()
+    su.getOptimumSize(345) 
+    Output :  360
 </description>
       <type>int</type><type>intVec</type>
       <value type="intVec"><value>100</value></value>
@@ -564,14 +573,14 @@
                        The different types (with F = f/f0, the frequency ratio), are:
 
                        Z = (-1 + 1/F)
-                      RATIO = (F) *
+                      RATIO = (F) \*
                       RADIO = (1 - F)
                       OPTICAL == Z
                       BETA = ((1 - F2)/(1 + F2))
-                      GAMMA = ((1 + F2)/2F) *
+                      GAMMA = ((1 + F2)/2F) \*
                       RELATIVISTIC == BETA (== v/c)
                       DEFAULT == RADIO
-                      Note that the ones with an '*' have no real interpretation
+                      Note that the ones with an '\*' have no real interpretation
                       (although the calculation will proceed) if given as a velocity.
 
 </description>
@@ -582,7 +591,7 @@
      <shortdescription>List of rest frequencies</shortdescription>
 <description>List of rest frequencies or a rest frequency in a string.
                       Specify rest frequency to use for output image.
-                      *Currently it uses the first rest frequency in the list for translation of
+                      \*Currently it uses the first rest frequency in the list for translation of
                       velocities. The list will be stored in the output images.
                       Default: []; look for the rest frequency stored in the MS, if not available,
                       use center frequency of the selected channels
@@ -1213,8 +1222,8 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
     <param type="string" name="deconvolver">
-      <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)</shortdescription>
-<description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)
+      <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)</shortdescription>
+<description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)
 
                        Each of the following algorithms operate on residual images and psfs
                        from the gridder and produce output model and restored images.
@@ -1279,6 +1288,20 @@ to use the correct direction in which the antenna is pointing with respect to th
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
 
+                       asp : Adaptive Scale Pixel algorithm [Bhatnagar and Cornwell, 2004]
+                                       - Define a set of initial scales defined as 0, W, 2W 4W and 8W 
+                                         where W is a 2D Gaussian fitting width to the PSF 
+                                       - Smooth the residual image by a Gaussian beam at initial scales
+                                       - Search for the global peak (F) among these smoothed residual images
+                                       - form an active Aspen set: amplitude(F), amplitude location(x,y)
+                                       - Optimize the Aspen set by minimizing the objective function RI-Aspen*PSF, 
+                                         where RI is the residual image and * is the convulition operation. 
+                                       - Compute the model image and update the residual image
+                                       - Repeat from step 2
+				       
+				       (Note : This is an experimental version of the ASP algorithm.)
+
+
 
 
 </description>
@@ -1292,6 +1315,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>multiscale</value>
               <value>mtmfs</value>
               <value>mem</value>
+              <value>asp</value>
 
       </allowed>
     </param>
@@ -1373,7 +1397,7 @@ to use the correct direction in which the antenna is pointing with respect to th
      <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
      <description>A numerical control to bias the scales when using multi-scale or mtmfs algorithms.
                       The peak from each scale's smoothed residual is
-                      multiplied by ( 1 - smallscalebias * scale/maxscale )
+                      multiplied by ( 1 - smallscalebias \* scale/maxscale )
                       to increase or decrease the amplitude relative to other scales,
                       before the scale with the largest peak is chosen. 
                       Smallscalebias can be varied between -1.0 and 1.0. 
@@ -1383,6 +1407,49 @@ to use the correct direction in which the antenna is pointing with respect to th
 		      The effect of smallscalebias is more pronounced when using multi-scale relative to mtmfs. 
 </description>
       <value type="double">0.0</value>
+    </param>
+
+    <param type="double" name="fusedthreshold" subparam="true">
+     <shortdescription>Threshold for triggering Hogbom Clean </shortdescription>
+     <description> Threshold for triggering Hogbom Clean (number in units of Jy)
+
+                     fusedthreshold = 0.0001  : 0.1 mJy
+
+                     This is a subparameter of the Asp Clean deconvolver. When peak residual 
+                     is lower than the threshold, Asp Clean is "switched to Hogbom Clean" (i.e. only use the 0 scale for cleaning) for 
+                     the following number of iterations until it switches back to Asp Clean.
+
+                     NumberIterationsInHogbom = 50 + 2 * (exp(0.05 * NthHogbom) - 1)
+
+                     , where NthHogbom is the number of times Hogbom Clean has been triggered. 
+
+                     When the Asp Clean detects it is approaching convergence, it uses only the 0 scale for the following number of iterations for better computational efficiency. 
+
+                     NumberIterationsInHogbom = 500 + 2 * (exp(0.05 * NthHogbom) - 1)
+
+
+      </description>
+      <value type="double">0.0</value>
+    </param>
+
+    <param type="int" name="largestscale" subparam="true">
+     <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
+     <description> Largest scale (in pixels) allowed for the initial guess for the Asp Clean deconvolver.
+
+                     largestscale = 100
+
+                     The default initial scale sizes used by Asp Clean is [0, w, 2w, 4w, 8w], 
+		     where `w` is the PSF width. The default `largestscale` is -1 which indicates 
+		     users accept these initial scales. If `largestscale` is set, the initial scales 
+		     would be [0, w, ... up to the `largestscale`]. This is only an initial guess,
+		     and actual fitted scale sizes may evolve from these initial values.
+
+		     It is recommended not to set `largestscale` unless Asp Clean picks a large 
+		     scale that has no constraints from the data (the UV hole issue). 
+
+
+      </description>
+      <value type="int">-1</value>
     </param>
 
 
@@ -1554,7 +1621,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                           a well behaved PSF can help the reconstruction.
 
                        weighting='briggs' :  Gridding weights per visibility data point are given by
-                                                         'data_weight / ( A *total_wt_per_cell + B ) ' where
+                                                         'data_weight / ( A \* total_wt_per_cell + B ) ' where
                                                          A and B vary according to the 'robust' parameter.
 
                                                          robust = -2.0 maps to A=1,B=0 or uniform weighting.
@@ -1567,7 +1634,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                          imaging sensitivity.
                         weighting='briggsabs' : Experimental option.
                                                          Same as Briggs except the formula is different A=
-                                                         robust*robust and B is dependent on the
+                                                         robust\*robust and B is dependent on the
                                                          noise per visibility estimated. Giving noise='0Jy'
                                                          is a not a reasonable option.
                                                          In this mode (or formula)  robust values
@@ -1585,7 +1652,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                                    natural weighting. The peak sensitivity is also
                                                                    closer to natural weighting.
 
-                       weighting='radial' : Gridding weights are given by ' data_weight * uvdistance '
+                       weighting='radial' : Gridding weights are given by ' data_weight \* uvdistance '
                                                       This method approximately minimizes rms sidelobes
                                                       for an east-west synthesis array.
                                                       
@@ -1784,10 +1851,10 @@ to use the correct direction in which the antenna is pointing with respect to th
                                  'cyclethreshold' is computed as follows using the settings in
                                   parameters 'cyclefactor','minpsffraction','maxpsffraction','threshold' :
 
-                                psf_fraction = max_psf_sidelobe_level * 'cyclefactor'
+                                psf_fraction = max_psf_sidelobe_level \* 'cyclefactor'
                                 psf_fraction = max(psf_fraction, 'minpsffraction');
                                 psf_fraction = min(psf_fraction, 'maxpsffraction');
-                                cyclethreshold = peak_residual * psf_fraction
+                                cyclethreshold = peak_residual \* psf_fraction
                                 cyclethreshold = max( cyclethreshold, 'threshold' )
 
                                 If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
@@ -1807,7 +1874,7 @@ to use the correct direction in which the antenna is pointing with respect to th
      <shortdescription>Multiplicative factor for rms-based threshold stopping</shortdescription>
 <description>Multiplicative factor for rms-based threshold stopping
 
-                       N-sigma threshold is calculated as nsigma * rms value per image plane determined
+                       N-sigma threshold is calculated as nsigma \* rms value per image plane determined
                        from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
@@ -1939,11 +2006,48 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
                        [ For scripting purposes, replacing True/False with 1/0 will get tclean to
-                         return an imaging summary dictionary to python ]
+                         return an imaging summary dictionary to python. More info at casadocs > Synthesis Imaging > Returned Dictionary. ]
 
 </description>
       <type>bool</type><type>int</type>
       <value type="bool">False</value>
+    </param>
+    
+    <param type="int" name="nmajor">
+      <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
+      <description>The nmajor parameter limits the number of minor and major cycle sets
+                        that tclean executes. It is defined as the number of major cycles after the 
+                        initial set of minor cycle iterations. In other words, the count of nmajor does 
+                        not include the initial residual calculation that occurs when calcres=True. 
+
+                        A setting of nmajor=-1 implies no limit (default -1). 
+                        A setting of nmajor=0 implies nothing other than the initial residual calculation
+                        A setting of nmajor>0 imples that nmajor sets of minor and major cycles will 
+                        be done in addition to the initial residual calculation.  
+                               
+                        If the major cycle limit is reached, stopcode 9 will be returned. Other stopping
+                        criteria (such as threshold) could cause tclean to stop in fewer than this
+                        number of major cycles. If tclean reaches another stopping criteria, first
+                        or at the same time as nmajor, then that stopcode will be returned instead.
+                        
+                        Note however that major cycle ids in the log messages as well as in the return
+                        dictionary do begin with 1 for the initial residual calculation, when it exists. 
+
+                        Example 1 : A tclean run with 'nmajor=5' and 'calcres=True' will iterate for
+                        5 major cycles (not counting the initial residual calculation). But, the return
+                        dictionary will show 'nmajordone:6'.  If 'calcres=False', then the return
+                        dictionary will show 'nmajordone:5'.                         
+
+                        Example 2 : For both the following cases, there will be a printout in the logs 
+                        "Running Major Cycle 1" and the return value will include "nmajordone: 1", 
+                        however there is a difference in the purpose of the major cycle and the 
+                        number of minor cycles executed:
+                            Case 1; nmajor=0, calcres=True:  The major cycle done is for the creation
+                                        of the residual, and no minor cycles are executed.
+                            Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
+                                        major/minor cycle loop, and 1 minor cycle will be executed.
+      </description>
+      <value type="int">-1</value>
     </param>
 
 
@@ -2057,7 +2161,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param type="double" name="pbmask" subparam="true">
      <shortdescription>primary beam mask</shortdescription>
-<description>Sub-parameter for usemask='auto-multithresh': primary beam mask
+<description>Sub-parameter for usemask: primary beam mask
 
                        Examples : pbmask=0.0 (default, no pb mask)
                                   pbmask=0.2 (construct a mask at the 0.2 pb gain level)
@@ -2070,34 +2174,34 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     
     <param type="double" name="sidelobethreshold" subparam="true">
-           <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
+           <shortdescription>sidelobethreshold \*  the max sidelobe level \* peak residual</shortdescription>
            <value type="double">3.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold \* max_sidelobe_level \* peak residual
 
 </description>
     </param>
     <param type="double" name="noisethreshold" subparam="true">
-    <shortdescription>noisethreshold * rms in residual image + location(median) </shortdescription>
+    <shortdescription>noisethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">5.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold * rms + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold \* rms + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="lownoisethreshold" subparam="true">
-    <shortdescription>lownoisethreshold * rms in residual image + location(median) </shortdescription>
+    <shortdescription>lownoisethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">1.5</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold \* rms in residual image + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="negativethreshold" subparam="true">
-           <shortdescription>negativethreshold * rms in residual image + location(median) </shortdescription>
+           <shortdescription>negativethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">0.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold \* rms + location(=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="smoothfactor" subparam="true">
@@ -2109,14 +2213,14 @@ to use the correct direction in which the antenna is pointing with respect to th
     <param type="double" name="minbeamfrac" subparam="true">
            <shortdescription>minimum beam fraction for pruning</shortdescription>
            <value type="double">0.3</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac \* beam
                        &lt;=0.0 : No pruning
 </description>
     </param>
     <param type="double" name="cutthreshold" subparam="true">
            <shortdescription>threshold to cut the smoothed mask to create a final mask</shortdescription>
            <value type="double">0.01</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
+<description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold \* peak of the smoothed mask
 </description>
     </param>
     <param type="int" name="growiterations" subparam="true">
@@ -2598,9 +2702,11 @@ to use the correct direction in which the antenna is pointing with respect to th
        <equals type="string" value="mtmfs">
          <default param="scales"><value type="intVec"/></default>
          <default param="nterms"><value>2</value></default>
-	 <default param="smallscalebias"><value>0.0</value></default>
+	       <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals type="string" value="aasp">
+       <equals type="string" value="asp">
+         <default param="fusedthreshold"><value>0.0</value></default>
+         <default param="largestscale"><value>-1</value></default>
        </equals>
      </when>
 

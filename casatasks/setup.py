@@ -60,9 +60,9 @@ import os
 try:
     import casatools
     from casatools.config import build as tools_config
-except:
-    print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in PYTHONPATH")
-    os._exit(1)
+except ImportError as exc:
+    print(f'Exception found when importing casatools: {type(exc).__name__} {exc}')
+    sys.exit(1)
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
@@ -152,7 +152,6 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
 
 xml_files = [ 'xml/imhead.xml',
@@ -179,6 +178,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/flagmanager.xml',
               'xml/mstransform.xml',
               'xml/tclean.xml',
+              'xml/deconvolve.xml',
               'xml/immath.xml',
               'xml/vishead.xml',
               'xml/uvsub.xml',
@@ -206,7 +206,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/ft.xml',
               'xml/gaincal.xml',
               'xml/gencal.xml',
-              'xml/uvcontsub3.xml',
               'xml/testconcat.xml',
               'xml/apparentsens.xml',
               'xml/hanningsmooth.xml',
@@ -258,6 +257,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/feather.xml',
               'xml/statwt.xml',
               'xml/virtualconcat.xml',
+              'xml/uvcontsub_old.xml',
               'xml/uvcontsub.xml',
               'xml/uvmodelfit.xml',
               'xml/visstat.xml',
@@ -271,6 +271,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdpolaverage.xml',
               'xml/sdsidebandsplit.xml',
               'xml/plotprofilemap.xml',
+              'xml/imbaseline.xml',
 ]
 
 if pyversion < 3:
@@ -380,22 +381,24 @@ def generate_pyinit(moduledir,tasks):
         fd.write("except:\n")
         fd.write("  pass\n")
         # Only the mpi "client" should write the version information (otherwise the logsink will crash)
+        fd.write("import platform\n")
         fd.write('if mpi_env_found and MPIEnvironment.is_mpi_enabled:\n')
         fd.write('    if MPIEnvironment.is_mpi_client:\n')
         fd.write('        try:\n')
+        fd.write('            casalog.post("Python version " + platform.python_version())\n')
         fd.write('            casalog.post("CASA Version " + package_variant.upper() + " %s")\n' %  casatasks_version)
         fd.write('            casalog.post("MPI Enabled")\n')
         fd.write('        except:\n')
         fd.write('            print("Error: the logfile is not writable")\n')
         fd.write('else:\n')
         fd.write('    try:\n')
+        fd.write('        casalog.post("Python version " + platform.python_version())\n')
         fd.write('        casalog.post("CASA Version " + package_variant.upper() + " %s")\n' % casatasks_version)
         fd.write('    except:\n')
         fd.write('        print("Error: the logfile is not writable")\n')  
         fd.write("\n")
         fd.write("from datetime import datetime as _time\n")
         fd.write("telemetry_starttime = str(_time.now())\n")
-        fd.write("import platform\n")
         fd.write("import os\n")
         fd.write("serial_run = mpi_env_found and not MPIEnvironment.is_mpi_enabled\n")
         fd.write("mpi_run_client = mpi_env_found and MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client\n")

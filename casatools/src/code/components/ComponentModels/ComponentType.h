@@ -29,7 +29,7 @@
 #ifndef COMPONENTS_COMPONENTTYPE_H
 #define COMPONENTS_COMPONENTTYPE_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 
 //# Forward Declaration
 namespace casacore{
@@ -48,7 +48,6 @@ namespace casa {
 class SkyCompRep;
 class ComponentShape;
 class SpectralModel;
-
 
 // <summary>Enumerators common to the ComponentsModels module</summary>
 
@@ -133,6 +132,8 @@ public:
     SPECTRAL_INDEX,
     //Tabular values interpolated in between
     TABULAR_SPECTRUM,
+    // Power Logarithmic Polynomial
+    PLP,
     // an unknown spectral type
     UNKNOWN_SPECTRAL_SHAPE,
     // The number of spectral types in this enumerator

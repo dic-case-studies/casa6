@@ -13,20 +13,20 @@
 #include <iostream>
 #include <fstream>
 #include <logsink_cmpt.h>
-#include <casa/Logging/LogSink.h>
-#include <casa/Logging/LogFilter.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogFilter.h>
 #include <parallel/Logging/LogFilterParallel.h>
 #include <TSLogSink.h>
-#include <casa/Logging/NullLogSink.h>
-#include <casa/Logging/StreamLogSink.h>
+#include <casacore/casa/Logging/NullLogSink.h>
+#include <casacore/casa/Logging/StreamLogSink.h>
 #include <stdcasa/version.h>
 #include <unistd.h>
 #include <sys/param.h>
 #include <CasapyWatcher.h>
-#include <casa/OS/File.h>
-#include <casa/BasicMath/Random.h>
-#include <casa/System/Aipsrc.h>
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/casa/BasicMath/Random.h>
+#include <casacore/casa/System/Aipsrc.h>
+#include <casacore/casa/OS/HostInfo.h>
 #include <chrono>
 #include <ctime>
 #include <mutex>
@@ -127,6 +127,14 @@ bool logsink::origin(const std::string &fromwhere)
     thelogsink->setTaskName(taskname);
     LogSink().globalSink().setTaskName(taskname);
     return rstat;
+}
+
+// getorigin: Return an origin string. It returns LogOrigin->taskName
+// This value must be synchronized with LogSink.globalSink->taskName
+// by a developer (you)
+std::string logsink::getOrigin()
+{
+  return itsorigin->taskName();
 }
 
 // jagonzal: Allow to set the processor origin (normally "casa"
@@ -485,7 +493,5 @@ logsink::getNumCPUs(bool use_aipsrc)
 {
 	return HostInfo::numCPUs(use_aipsrc);
 }
-
-
 
 } // casac namespace

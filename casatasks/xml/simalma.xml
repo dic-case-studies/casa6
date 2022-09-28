@@ -263,7 +263,7 @@ calls to the other CASA tasks.
 
 
 
-    <param type="bool" name="setpointings"><shortdescription/><description/>
+    <param type="bool" name="setpointings"><shortdescription>If True, calculate a map of pointings and write *ptgfile*.</shortdescription><description>If True, calculate a map of pointings and write *ptgfile*.</description>
       
       <value>True</value>
     </param>
@@ -399,7 +399,7 @@ calls to the other CASA tasks.
       </allowed>
     </param>
 
-    <param type="bool" name="verbose"><shortdescription/><description/>
+    <param type="bool" name="verbose"><shortdescription>Print extra information to the logger and terminal.</shortdescription><description>Print extra information to the logger and terminal.</description>
       
       <value>False</value>
     </param>
