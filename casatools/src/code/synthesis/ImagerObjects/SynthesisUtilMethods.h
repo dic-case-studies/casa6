@@ -181,8 +181,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                  casacore::Quantity& filterbmaj,
                                  casacore::Quantity& filterbmin,
                                  casacore::Quantity& filterbpa, casacore::Double& fracBW, const casacore::Record& inrec);
-
-    static casacore::uLong getAllocatedMemoryInBytes();
     
 
   protected:
