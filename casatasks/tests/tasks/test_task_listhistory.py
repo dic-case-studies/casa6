@@ -107,7 +107,7 @@ class listhistory_test(unittest.TestCase):
         os.system(cmd)
         logfile = newfile
 
-        cmd=['wc', '-l', logfile]
+        cmd=f'wc -l {logfile}'
         print(cmd)
         output = subprocess.getoutput(cmd)
 
