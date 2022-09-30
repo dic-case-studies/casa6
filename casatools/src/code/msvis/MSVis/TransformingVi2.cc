@@ -3,7 +3,7 @@
 #include <casacore/measures/Measures/MDirection.h>
 #include <casacore/measures/Measures/MEpoch.h>
 #include <casacore/measures/Measures/MPosition.h>
-#include <msvis/MSVis/UtilJ.h>
+#include <stdcasa/UtilJ.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
 #include <msvis/MSVis/VisBuffer2.h>
 
@@ -443,6 +443,12 @@ Bool
 TransformingVi2::moreChunks ()  const
 {
     return getVii()->moreChunks ();
+}
+
+void
+TransformingVi2::result(casacore::Record &res) const
+{
+    return getVii()->result(res);
 }
 
 const MeasurementSet &

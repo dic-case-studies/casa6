@@ -288,14 +288,17 @@ def mstransform(
             
         if douvcontsub:
             casalog.post('Parse uvcontsub parameters')
+            casalog.post("The parameter douvcontsub of mstransform is deprecated and will "
+                         "be removed in an upcoming release. The task uvcontsub can be used "
+                         "as an alternative.", "WARN")
             config['uvcontsub'] = True
             uvcontsub_config = {}
             uvcontsub_config['fitspw'] = fitspw
             uvcontsub_config['fitorder'] = fitorder
             uvcontsub_config['want_cont'] = want_cont
-            uvcontsub_config['denoising_lib'] = denoising_lib   
-            uvcontsub_config['nthreads'] = nthreads            
-            uvcontsub_config['niter'] = niter                 
+            uvcontsub_config['denoising_lib'] = denoising_lib
+            uvcontsub_config['nthreads'] = nthreads
+            uvcontsub_config['niter'] = niter
             config['uvcontsublib'] = dict(uvcontsub_config)
         
         # Configure the tool and all the parameters
