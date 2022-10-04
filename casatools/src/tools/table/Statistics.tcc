@@ -25,12 +25,12 @@
 
 #include <tools/table/Statistics.h>
 
-#include <lattices/LatticeMath/LatticeStatistics.h>
-#include <lattices/Lattices/SubLattice.h>
+#include <casacore/lattices/LatticeMath/LatticeStatistics.h>
+#include <casacore/lattices/Lattices/SubLattice.h>
 
-#include <ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
 
-#include <tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
 
 #include <cassert>
 

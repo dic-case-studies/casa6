@@ -1,32 +1,32 @@
 #include <iostream>
 #include <tools/table/asdmCasaSaxHandler.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
 #include <xercesc/sax2/Attributes.hpp>
 
 
 //
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/Cube.h>
-#include <casa/Utilities/DataType.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/casa/Utilities/DataType.h>
 
-#include <tables/Tables/Table.h>
-#include <tables/Tables/TableProxy.h>
-#include <tables/Tables/TableColumn.h>
-#include <tables/TaQL/TableParse.h>
-#include <tables/Tables/TableLock.h>
-#include <casa/Containers/ValueHolder.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
+#include <casacore/tables/Tables/Table.h>
+#include <casacore/tables/Tables/TableProxy.h>
+#include <casacore/tables/Tables/TableColumn.h>
+#include <casacore/tables/TaQL/TableParse.h>
+#include <casacore/tables/Tables/TableLock.h>
+#include <casacore/casa/Containers/ValueHolder.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
 #include <tools/utils/stdBaseInterface.h>
-#include <tables/Tables/TableDesc.h>
-#include <tables/Tables/TableIter.h>
-#include <tables/Tables/SetupNewTab.h>
-#include <tables/Tables/ScaColDesc.h>
-#include <tables/Tables/ArrColDesc.h>
-#include <tables/DataMan/StandardStMan.h>
-#include <tables/Tables/ScalarColumn.h>
-#include <tables/Tables/ArrayColumn.h>
+#include <casacore/tables/Tables/TableDesc.h>
+#include <casacore/tables/Tables/TableIter.h>
+#include <casacore/tables/Tables/SetupNewTab.h>
+#include <casacore/tables/Tables/ScaColDesc.h>
+#include <casacore/tables/Tables/ArrColDesc.h>
+#include <casacore/tables/DataMan/StandardStMan.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ArrayColumn.h>
 #include <ctype.h>
 #include <fstream>
 

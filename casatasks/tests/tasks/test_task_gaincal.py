@@ -317,6 +317,24 @@ class gaincal_test(unittest.TestCase):
 
         self.assertTrue(np.all(spws == 2))
 
+    def test_uvrangeSelect(self):
+        '''Check that using the uv range parameter you can cut off specific antennas'''
+        gaincal(vis=datacopy, caltable=tempCal, spw='2', refant='0', uvrange='<1160', minblperant=1)
+
+        tb.open(tempCal)
+        antennas = tb.getcol('ANTENNA1')
+        flags = tb.getcol('FLAG')
+        tb.close()
+
+        flagged_ants = set()
+        expected = {5, 8}
+
+        for i in range(len(antennas)):
+            if np.all(flags[:, :, i] == True):
+                flagged_ants.add(antennas[i])
+
+        self.assertTrue(flagged_ants == expected)
+
     def test_refantDiff(self):
         '''
             test_refantDiff

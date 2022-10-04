@@ -25,40 +25,36 @@
 //#
 //# $Id$
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/OS/HostInfo.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/OS/HostInfo.h>
 #include <synthesis/ImagerObjects/SDAlgorithmBase.h>
 #include <components/ComponentModels/SkyComponent.h>
 #include <components/ComponentModels/ComponentList.h>
-#include <images/Images/TempImage.h>
-#include <images/Images/SubImage.h>
-#include <images/Regions/ImageRegion.h>
-#include <casa/OS/File.h>
-#include <lattices/LEL/LatticeExpr.h>
-#include <lattices/Lattices/TiledLineStepper.h>
-#include <lattices/Lattices/LatticeStepper.h>
-#include <lattices/Lattices/LatticeIterator.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Images/SubImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
+#include <casacore/lattices/Lattices/TiledLineStepper.h>
+#include <casacore/lattices/Lattices/LatticeStepper.h>
+#include <casacore/lattices/Lattices/LatticeIterator.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
-#include <coordinates/Coordinates/StokesCoordinate.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/OS/Directory.h>
-#include <tables/Tables/TableLock.h>
+#include <casacore/coordinates/Coordinates/StokesCoordinate.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/tables/Tables/TableLock.h>
 
 #include<synthesis/ImagerObjects/SIMinorCycleController.h>
 #include <imageanalysis/ImageAnalysis/CasaImageBeamSet.h>
 
-#include <casa/sstream.h>
+#include <sstream>
 #include <casacore/casa/OS/EnvVar.h>
 
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogSink.h>
-
-// supporting code for profileMinorCycle()
-#include <thread>
-#include <chrono>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogSink.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -156,11 +152,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             } else{
               nsigmathresh = nsigma * (Float)robustrms(IPosition(1,0)); 
             }
-
-            ContextBoundBool stopProfiling(false); // will be set to true when loop exits
-            uLong peakMem = 0;
-            std::thread profileMemThread(&SDAlgorithmBase::profileMinorCycle, this, std::ref(stopProfiling), std::ref(peakMem));
-            std::chrono::steady_clock::time_point profileStartTime = std::chrono::steady_clock::now();
               
             Float thresholdtouse;
             if (nsigma>0.0) {
@@ -349,18 +340,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    if (!rankStr.empty()) {
 	      rank = stoi(rankStr);
 	    }
-	    stopProfiling.stop();
-	    profileMemThread.join();
-	    std::chrono::steady_clock::time_point profileFinishTime = std::chrono::steady_clock::now();
-	    Float runtime = (  (Float) std::chrono::duration_cast<std::chrono::milliseconds>(profileFinishTime - profileStartTime).count()  )/1000.0;
-	    Float fpeakMem = (Float) peakMem / 1000000.0; // to MB
+
 	    int chunkId = chanid; // temporary CAS-13683 workaround
 	    if (SIMinorCycleController::useSmallSummaryminor()) { // temporary CAS-13683 workaround
 	        chunkId = chanid + nSubChans*polid;
 	    }
 	    loopcontrols.addSummaryMinor( deconvolverid, chunkId, polid, cycleStartIteration,
 	                                  startiteration, startmodelflux, startpeakresidual, startpeakresidualnomask,
-	                                  modelflux, peakresidual, peakresidualnomask, masksum, rank, fpeakMem, runtime, stopCode);
+	                                  modelflux, peakresidual, peakresidualnomask, masksum, rank, stopCode);
 
 	    loopcontrols.resetCycleIter(); 
 
@@ -384,26 +371,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
 
   }// end of deconvolve
-
-  void SDAlgorithmBase::profileMinorCycle(ContextBoundBool &stop, uLong &peakMem)
-  {
-    LogIO os( LogOrigin("SDAlgorithmBase",__FUNCTION__,WHERE) );
-    while (true)
-    {
-      for (int i = 0; i < 10; i++) // check for stop 10 times a second
-      {
-      	bool doStop = stop.getVal();
-        if (i == 1 || doStop) { // check for peak memory usage 1 times a second
-          uLong currentMem = SynthesisUtilMethods::getAllocatedMemoryInBytes();
-          if (currentMem > peakMem) { peakMem = currentMem; }
-        }
-        if (doStop) {
-          return;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
-    }
-  }
   
   Int SDAlgorithmBase::checkStop( SIMinorCycleController &loopcontrols, 
 				   Float currentresidual )
@@ -667,33 +634,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return beam;
   }
 
-*/ 
-
-  ContextBoundBool::ContextBoundBool(bool startValue)
-  {
-    itsVal = startValue;
-    itsInitialValue = startValue;
-  }
-
-  ContextBoundBool::~ContextBoundBool()
-  {
-    // This destructor is the entire reason this class exists.
-    // We need to guarantee that stop will be called when the encapsulating
-    // context around this object is closed (such as with a return or throw statement).
-    stop();
-  }
-
-  bool ContextBoundBool::getVal()
-  { // mutex context guard
-    std::lock_guard<std::mutex> lock(itsMutex);
-    return itsVal;
-  }
-
-  void ContextBoundBool::stop()
-  { // mutex context guard
-    std::lock_guard<std::mutex> lock(itsMutex);
-    itsVal = !itsInitialValue;
-  }
- 
+*/  
 } //# NAMESPACE CASA - END
 

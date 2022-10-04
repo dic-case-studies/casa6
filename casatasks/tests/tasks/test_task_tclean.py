@@ -128,7 +128,11 @@ from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelIma
 from casatasks import impbcor, split, concat
 #from casaplotms import plotms
 
+
+
 from casatestutils.imagerhelpers import TestHelpers
+
+
 
 _ia = image( )
 _vp = vpmanager( )
@@ -1096,6 +1100,50 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.74,[256,256,0,0]),(self.img+'.model', 0.54, [256,256,0,1])],firstcyclethresh=0.18661306)
 
           self.assertTrue(self.check_final(report))
+
+     def test_iterbot_nmajor_0(self):
+          """ [iterbot] Test_Iterbot_nmajor_0 : Performs zero major cycle iteration """
+          self.prepData('refim_point_onespw0.ms') # smaller dataset for a faster test
+          # create the initial residual, otherwise stopcode will be 2 for "threshold"
+          tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=0,niter=0,interactive=0,calcres=True,restoration=False,parallel=self.parallel)
+          # run tclean with nmajor=0
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=0,niter=500,interactive=0,calcres=False,restoration=True,parallel=self.parallel)
+          report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                  nmajordone=0)
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_nmajor_2(self):
+          """ [iterbot] Test_Iterbot_nmajor_2 : Performs two major cycle iterations """
+          self.prepData('refim_point_onespw0.ms') # smaller dataset for a faster test
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=2,niter=500,interactive=0,calcres=True,parallel=self.parallel)
+          report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                  nmajordone=3) # 1 for calcres + 2 major cycle during cleaning
+ 
+          #print(ret['summaryminor'][0][0][0]['iterDone'])
+          iterDone_vec=ret['summaryminor'][0][0][0]['iterDone']
+          report2 = self.th.check_val(len(iterDone_vec), 2,valname='iterdone len:', exact=True)
+          report = report + report2[1]
+          if report2[0]==True:
+                report = report + (self.th.check_val(iterDone_vec[0], 15,valname='iterdone test1:', exact=True))[1]
+                ## See the documentation note for 'iterDone' in the table being cumulative across cycles for 
+                ## MPI runs with use_small_summaryminor=True (i.e. the default for MPI runs). 
+                ## https://casadocs.readthedocs.io/en/latest/notebooks/synthesis_imaging.html#Returned-Dictionary
+                if ParallelTaskHelper.isMPIEnabled():
+                     iterdone2=15+15  
+                else:
+                     iterdone2=15
+                report = report + (self.th.check_val(iterDone_vec[1], iterdone2,valname='iterdone test2:', exact=True))[1]
+
+          if not ParallelTaskHelper.isMPIEnabled(): ## This tests the default setting of USE_SMALL_SUMMARYMINOR='false' with serial runs (full dictionary exists)
+               #print(ret['summaryminor'][0][0][0]['stopCode'])
+               stopCode_vec=ret['summaryminor'][0][0][0]['stopCode']
+               report3 = self.th.check_val(len(stopCode_vec), 2,valname='stopcode len:', exact=True)
+               report = report + report3[1]
+               if report3[0]==True:
+                    report = report + (self.th.check_val(stopCode_vec[0], 2,valname='stopcode test1:', exact=True))[1]
+                    report = report + (self.th.check_val(stopCode_vec[1], 2,valname='stopcode test2:', exact=True))[1]
+          self.assertTrue(self.check_final(report))
+
 ##############################################
 ##############################################
 ##############################################
@@ -2495,6 +2543,46 @@ class test_cube(testref_base):
           self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imnat+'.image', operator.lt))
           self.assertTrue(self.th.check_beam_compare(imbriggs_2+'.image', imbriggs0+'.image', operator.lt))
           self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imbriggs_3+'.image', operator.lt))
+    
+     # unit test cases for CAS-13660
+     def test_cube_weighting_taper(self):
+          """[cube] test_cube_weighting_taper: """
+          self.prepData('refim_point_withline.ms')
+          delmod(self.msfile)
+          im_uniform=self.img+"_uniform_notaper"
+          im_uniform_taper=self.img+"_uniform_with_taper"
+          im_natural_taper=self.img+"_natural_with_taper"
+          im_briggs_2_taper=self.img+"_briggs_with_taper"
+          ret_uniform = tclean(vis=self.msfile,imagename=im_uniform,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', restoringbeam='common', parallel=self.parallel)
+          ret_uniform_taper = tclean(vis=self.msfile,imagename=im_uniform_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', uvtaper=['50arcsec'], restoringbeam='common', parallel=self.parallel)
+          ret_natural_taper = tclean(vis=self.msfile,imagename=im_natural_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='natural', uvtaper=['500arcsec'], restoringbeam='common', parallel=self.parallel)
+          ret_briggs_2_taper=tclean(vis=self.msfile,imagename=im_briggs_2_taper,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', uvtaper=['50arcsec'], robust=-2.0, restoringbeam='common', parallel=self.parallel)
+
+          self.assertTrue(os.path.exists(im_uniform+'.image') and os.path.exists(im_uniform_taper+'.image') and os.path.exists(im_natural_taper+'.image') and  os.path.exists(im_briggs_2_taper+'.image') )
+          self.assertTrue(self.th.check_beam_compare(im_uniform+'.image', im_uniform_taper+'.image', operator.lt))
+
+          beamresult_uniform = imhead(im_uniform + '.image', mode='summary')['restoringbeam']
+          beamresult_uniform_taper = imhead(im_uniform_taper + '.image', mode='summary')['restoringbeam']
+          beamresult_natural_taper = imhead(im_natural_taper + '.image', mode='summary')['restoringbeam']
+          beamresult_briggs_2_taper = imhead(im_briggs_2_taper + '.image', mode='summary')['restoringbeam']
+
+          _, report1 = self.th.check_val(beamresult_uniform['major']['value'], 70.00, valname = 'Restoring beam major:', exact = False)
+          _, report2 = self.th.check_val(beamresult_uniform['minor']['value'], 51.07, valname='Restoring beam minor:', exact=False)
+          _, report3 = self.th.check_val(beamresult_uniform['positionangle']['value'], -83.78, valname='Restoring beam positionangle:', exact=False)
+          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 75.52, valname='Restoring beam major:',exact=False)
+          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 61.63, valname='Restoring beam minor:',exact=False)
+          _, report6 = self.th.check_val(beamresult_uniform_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
+          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 457.07, valname='Restoring beam major:',exact=False)
+          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 448.07, valname='Restoring beam minor:',exact=False)
+          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.54,valname='Restoring beam positionangle:', exact=False)
+          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 75.52,valname='Restoring beam major:', exact=False)
+          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 61.63,valname='Restoring beam minor:', exact=False)
+          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
+
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
+
+
+          
 #     def test_cube_D3(self):
 #          """ EMPTY : [cube] Test_Cube_D3 : specmode cubesrc - Doppler correct to a SOURCE ephemeris"""
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
