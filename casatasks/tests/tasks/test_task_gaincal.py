@@ -931,7 +931,7 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(type(res) == dict)
 
     def test_dictOutputFlagged(self):
-        """ Test that the when an spw is flagged the final data counts are zero """
+        """ Test that when an spw is flagged the final data counts are zero """
         # Flag the spw
         flagdata(vis=flagcopy, spw='0')
         # Run gaincal
