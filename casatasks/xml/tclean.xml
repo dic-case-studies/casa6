@@ -1591,7 +1591,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
     <param type="string" name="weighting">
-           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
+           <shortdescription>Weighting scheme (natural,uniform,briggs, superuniform, radial, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
 <description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
                        During gridding of the dirty or residual image, each visibility value is
@@ -2670,6 +2670,13 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="uvtaper"><value>[]</value></default>
        </equals>
        <equals type="string" value="uniform">
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals type="string" value="superuniform">
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals type="string" value="radial">
+         <default param="uvtaper"><value>[]</value></default>
        </equals>
        <equals type="string" value="briggs">
          <default param="robust"><value>0.5</value></default>
