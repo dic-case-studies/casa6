@@ -164,14 +164,14 @@ class gencal_antpostest(unittest.TestCase):
 
             self.assertTrue(os.path.exists(self.caltable))
             # Compare with reference file from the repository
-            # CAS-13940 - as the correction values are accumulated running the test at later time
-            # may causes the values to deviated from at the time of reference cal table generation.
-            # For this specific data set, antenna 28 on the same pad for a long time span and such
-            # situation occurs. So here do comparion of the cal tables skipping the correction 
+            # CAS-13940 - as the correction values are accumulated, running the test at later time
+            # may cause the values to deviate from the time of reference caltable generation.
+            # For this specific data set, with antenna 28 on the same pad for a long timespan such
+            # situation can occur. So here do the comparison of the caltables skipping the correction
             reference = self.reffile3
             self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT', 'OBSERVATION_ID', 'FPARAM']))
 
-            # now just compare the atennna 23, 25 entries for FPARAM...
+            # now just compare antennas 23 and 25 entries for FPARAM...
             # row 21 (=ant 23) and 23 (= ant 25) 
             _tb.open(self.caltable)
             curfparam=_tb.getcol('FPARAM').transpose()
