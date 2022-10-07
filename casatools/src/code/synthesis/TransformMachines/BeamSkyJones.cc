@@ -484,27 +484,30 @@ BeamSkyJones::apply(SkyComponent& in,
 	   Vector<Double> freqs(nchan);
 	   Bool conv;
 	   SkyComponent tmp;
+           Vector<DComplex> normFactor;
+           normFactor.assign(in.flux().value());
+           auto poltype=tmp.flux().pol();
+           for(size_t k=0; k < normFactor.size(); ++k) {
+             normFactor[k]= abs(normFactor[k]) >0.0 ? 1.0/abs(normFactor[k]) : 1.0;
+           }
 	   vb.lsrFrequency(vb.spectralWindow(), freqs,  conv);
-	   for (uInt k=0; k < nchan; ++k){
-	     tmp=in.copy();
-             Vector<DComplex> normFactor;
-             normFactor.assign(tmp.flux().value());
-             ComponentType::Polarisation poltype=tmp.flux().pol();
-             for(uInt k=0; k < normFactor.nelements(); ++k) normFactor[k]= abs(normFactor[k]) >0.0 ? 1.0/abs(normFactor[k]) : 1.0;
-
-             MVAngle res(Quantity(1, "mas"));
-             normFactor*=(tmp.sample(tmp.shape().refDirection(), res, res, MFrequency(Quantity(vb.frequency()(k), "Hz"))).value());
-             ConstantSpectrum tmpSpec;
-             tmp.setSpectrum(tmpSpec);
- 
-	     myPBMath.applyPB(in, tmp, convertDir(vb, lastDirections_p[lastUpdateIndex1_p], dirType), 
-			      Quantity(vb.frequency()(k), "Hz"), 
-			      lastParallacticAngles_p[lastUpdateIndex1_p],
-			      doSquint_p, False, threshold(), forward);
+	   for (uInt k=0; k < nchan; ++k)
+             {
+               tmp=in.copy();  
+               MVAngle res(Quantity(1, "mas"));
+               auto multFactor=normFactor*(in.sample(in.shape().refDirection(), res, res,
+                                                     MFrequency(Quantity(vb.frequency()(k), "Hz"))).value()
+                                           );
+               myPBMath.applyPB(in, tmp,
+                                convertDir(vb,lastDirections_p[lastUpdateIndex1_p], dirType),
+                                Quantity(vb.frequency()(k), "Hz"), 
+                                lastParallacticAngles_p[lastUpdateIndex1_p],
+                                doSquint_p, False, threshold(), forward
+                                );
             
              Flux<Double> tmpFlux=tmp.flux();
              tmpFlux.convertPol(poltype);            
-             tmpFlux.setValue(tmpFlux.value()*normFactor);
+             tmpFlux.setValue(tmpFlux.value()*multFactor);
 	     vals[k]=tmpFlux;             
 	     fs[k]=MVFrequency(Quantity(freqs(k), "Hz"));
 	     
