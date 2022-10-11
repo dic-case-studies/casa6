@@ -8,12 +8,34 @@ $name = basename($0);
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 chop($java=`which java`);
-$jarfile_name = "xml-casa-assembly-1.68.jar";
+$jarfile_name = "xml-casa-assembly-1.69.jar";
 
 ### install path
 $jarfile = "$path/java/$jarfile_name";
 ### development path
-if ( ! -e $jarfile ) { $jarfile = "$path/../target/scala-2.12/$jarfile_name" }
+if ( ! -e $jarfile ) {
+    my $devjarfile = "$path/../target/scala-2.12/$jarfile_name";
+    if ( -e $devjarfile ) {
+        $jarfile = $devjarfile;
+    }
+}
+if ( ! -e $jarfile ) {
+    my $cmd = "curl --create-dirs --output $jarfile https://casa.nrao.edu/download/devel/xml-casa/java/$jarfile_name 2>&1 |";
+    open( my $fh, $cmd );
+    my @output = <$fh>;
+    close( $fh );
+    if ( `file $jarfile` =~ m|HTML| ) {
+        print( "\t--------------------------------------------------------------------------\n" );
+        print( "\tcould not fetch $jarfile_name\n" );
+        print( "\t---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  --- \n" );
+        foreach ( @output ) {
+            print( "\t$_" );
+        }
+        print( "\t--------------------------------------------------------------------------\n" );
+        unlink( $jarfile );
+        exit(1);
+    }
+}
 die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
 
 @flags = ( );
