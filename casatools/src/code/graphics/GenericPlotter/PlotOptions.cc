@@ -193,7 +193,7 @@ void PlotAreaFill::setPattern( const String& descriptor ){
 	     setPattern(PlotAreaFill::MESH3);
 	 }
 	 else {
-		 cout << "Unrecognized fill pattern: "<<descriptor.c_str()<<endl;
+	     setPattern(PlotAreaFill::NOFILL);
 	 }
 }
 
