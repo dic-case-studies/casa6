@@ -500,20 +500,23 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
     Draws the legend at the top of the page, if it is the correct time to do so,
     including the overlayTimes, the 'UT' label, and the caltable name.
     """
-#    debugSloppyMatch=True
+    # debugSloppyMatch=True
     if (xframe == firstFrame):
         # draw title including caltable name
-        pb.text(xstartTitle, ystartTitle, caltableTitle, size=titlesize,
-                color='k', transform=pb.gcf().transFigure)
+        pb.text(xstartTitle, ystartTitle, caltableTitle, size=titlesize, color='k', transform=pb.gcf().transFigure)
         # support multi-fields with overlay='time'
         uTPFPS = []
         uTPFPStimerange = []
+        
         # Find all timerange integers for all fields, not just the ones that were plotted
         allTimeranges = []
         for f in range(len(uniqueTimesPerFieldPerSpw[ispwInCalTable])):
             for t in uniqueTimesPerFieldPerSpw[ispwInCalTable][f]:
                 if (t in timerangeListTimes):
                     allTimeranges.append(list(timerangeListTimes).index(t))
+        
+        allTimeranges = list(np.sort(np.unique(allTimeranges)))
+        
         for f in fieldIndicesToPlot:
             for t in uniqueTimesPerFieldPerSpw[ispwInCalTable][f]:
                 matched, mymatch = sloppyMatch(t, timerangeListTimes, solutionTimeThresholdSeconds,
@@ -521,7 +524,7 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
                 if (matched):
                     uTPFPS.append(t)
                     uTPFPStimerange.append(mymatch)
-        allTimeranges = list(np.sort(np.unique(allTimeranges)))
+        
         idx = np.argsort(uTPFPS)
         uTPFPStimerange = np.array(uTPFPStimerange)[idx]
         uTPFPS = np.sort(uTPFPS)
@@ -553,6 +556,7 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
                     myUniqueTime = uTPFPS[a]
                     if (debug):
                         print("3)setting myUniqueTime to %d" % (myUniqueTime))
+
             if (debug): print("----> Drawing legendString: %s" % (legendString))
             if ((len(fieldsToPlot) > 1 or len(timerangeList) > 1) and overlayAntennas==False):
                 # having overlayAntennas==False here will force all time labels to be black (as desired)
@@ -562,12 +566,23 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
 #                        transform=pb.gcf().transFigure)
                 if (debug):
                     print("len(uTPFPStimerange)=%d, a=%d, len(myUniqueColor)=%d" % (len(uTPFPStimerange),a,len(myUniqueColor)))
-                pb.text(x0, y0, legendString,color=overlayColors[timerangeList[allTimeranges.index(uTPFPStimerange[a])]],
-                        fontsize=mysize, transform=pb.gcf().transFigure)
+
+                uTPFPStimerangeValue = uTPFPStimerange[a]
+                try:
+                    timerangeListIndex = allTimeranges.index(uTPFPStimerangeValue)
+                except ValueError:
+                    casalogPost(debug, "uTPFPStimerangeValue = {} is not in the list allTimeranges".format(uTPFPStimerangeValue))
+                    casalogPost(debug, "Setting timerangeListIndex = 0. This will change the overlay colors index to a default value. The time labels might not look as expected.")
+                    casalogPost(debug, "It is possible that certain antennas had a slightly different timestamp.")
+                    timerangeListIndex = 0
+                
+                overlayColorsIndex = timerangeList[timerangeListIndex]
+                pb.text(x0, y0, legendString, color=overlayColors[overlayColorsIndex], fontsize=mysize, transform=pb.gcf().transFigure)
+                
                 if (debug):
                     print("done text")
             else:
-                pb.text(x0, y0, legendString,fontsize=mysize, transform=pb.gcf().transFigure)
+                pb.text(x0, y0, legendString, fontsize=mysize, transform=pb.gcf().transFigure)
 
 def lineNumber():
     """Returns the current line number in our program."""
@@ -668,7 +683,7 @@ def plural(u):
     else:
         return('')
 
-def casalogPost(debug,mystring):
+def casalogPost(debug, mystring):
     casalog.post(mystring)
     if (debug): print(mystring)
     
