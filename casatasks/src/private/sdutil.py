@@ -122,9 +122,11 @@ def callable_sdtask_decorator(func):
 
     Currently the decorator does:
 
-       1) if the task is decorated it was called from a task and the caller set a log origin by casalog.origin(),
-          then the decorator sets a caller's origin to the logger.
-          Otherwise, it reads the function name and set an origin to the logger.
+       1) set the origin of messages logged by the "sub" tasks called by the "super" task to "super"
+            For example:
+            super_casatask::casa "Msg from super task"
+            super_casatask::casa "Msg from sub-task1 called by super task"
+            super_casatask::casa "Msg from sub-task1 called by super task"
        2) handle exception
 
     So, you don't need to set origin in the task any more.
