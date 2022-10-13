@@ -1732,19 +1732,22 @@ to use the correct direction in which the antenna is pointing with respect to th
                    down relative to lower spatial frequencies to suppress artifacts
                    arising from poorly sampled areas of the uv-plane. It is equivalent to
                    smoothing the PSF obtained by other weighting schemes and can be
-                   specified either as a Gaussian in uv-space (eg. units of lambda)
-                   or as a Gaussian in the image domain (eg. angular units like arcsec).
+                   specified either as the HWHM of a Gaussian in uv-space (eg. units of lambda)
+                   or as the FWHM of a Gaussian in the image domain (eg. angular units like arcsec).
 
                    uvtaper = [bmaj, bmin, bpa]
 
-                   NOTE: the on-sky FWHM in arcsec is roughly  the uv taper/200 (klambda).
+		   Note : FWHM_uv_lambda = (4 log2) / ( pi * FWHM_lm_radians )  
+  
+		   A FWHM_lm of 100.000 arcsec maps to a HWHM_uv of 910.18 lambda
+                   A FWHM_lm of 1 arcsec maps to a HWHM_uv of 91 klambda
+		   
                    default: uvtaper=[]; no Gaussian taper applied
-                   example: uvtaper=['5klambda']  circular taper
-                                FWHM=5 kilo-lambda
-                            uvtaper=['5klambda','3klambda','45.0deg']
-                            uvtaper=['10arcsec'] on-sky FWHM 10 arcseconds
-                            uvtaper=['300.0'] default units are lambda
-                                in aperture plane
+                   example: uvtaper=['5klambda']  circular taper of  HWHM=5 kilo-lambda
+                            uvtaper=['5klambda','3klambda','45.0deg'] uv-domain HWHM
+			    uvtaper=['50arcsec','30arcsec','30.0deg'] : image domain FWHM
+                            uvtaper=['10arcsec'] : image domain FWHM 
+                            uvtaper=['300.0'] default units are lambda in aperture plane
 
 </description>
       <value type="vector">
@@ -2012,6 +2015,43 @@ to use the correct direction in which the antenna is pointing with respect to th
       <type>bool</type><type>int</type>
       <value type="bool">False</value>
     </param>
+    
+    <param type="int" name="nmajor">
+      <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
+      <description>The nmajor parameter limits the number of minor and major cycle sets
+                        that tclean executes. It is defined as the number of major cycles after the 
+                        initial set of minor cycle iterations. In other words, the count of nmajor does 
+                        not include the initial residual calculation that occurs when calcres=True. 
+
+                        A setting of nmajor=-1 implies no limit (default -1). 
+                        A setting of nmajor=0 implies nothing other than the initial residual calculation
+                        A setting of nmajor>0 imples that nmajor sets of minor and major cycles will 
+                        be done in addition to the initial residual calculation.  
+                               
+                        If the major cycle limit is reached, stopcode 9 will be returned. Other stopping
+                        criteria (such as threshold) could cause tclean to stop in fewer than this
+                        number of major cycles. If tclean reaches another stopping criteria, first
+                        or at the same time as nmajor, then that stopcode will be returned instead.
+                        
+                        Note however that major cycle ids in the log messages as well as in the return
+                        dictionary do begin with 1 for the initial residual calculation, when it exists. 
+
+                        Example 1 : A tclean run with 'nmajor=5' and 'calcres=True' will iterate for
+                        5 major cycles (not counting the initial residual calculation). But, the return
+                        dictionary will show 'nmajordone:6'.  If 'calcres=False', then the return
+                        dictionary will show 'nmajordone:5'.                         
+
+                        Example 2 : For both the following cases, there will be a printout in the logs 
+                        "Running Major Cycle 1" and the return value will include "nmajordone: 1", 
+                        however there is a difference in the purpose of the major cycle and the 
+                        number of minor cycles executed:
+                            Case 1; nmajor=0, calcres=True:  The major cycle done is for the creation
+                                        of the residual, and no minor cycles are executed.
+                            Case 2; nmajor=1, calcres=False: The major cycle is done as part of the
+                                        major/minor cycle loop, and 1 minor cycle will be executed.
+      </description>
+      <value type="int">-1</value>
+    </param>
 
 
 
@@ -2124,7 +2164,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param type="double" name="pbmask" subparam="true">
      <shortdescription>primary beam mask</shortdescription>
-<description>Sub-parameter for usemask='auto-multithresh': primary beam mask
+<description>Sub-parameter for usemask: primary beam mask
 
                        Examples : pbmask=0.0 (default, no pb mask)
                                   pbmask=0.2 (construct a mask at the 0.2 pb gain level)

@@ -332,8 +332,15 @@ def clean_args(l):
 ## https://stackoverflow.com/questions/14320220/testing-python-c-libraries-get-build-path
 def distutils_dir_name(dname):
     """Returns the name of a distutils build directory"""
-    f = "{dirname}.{platform}-{version[0]}.{version[1]}"
-    return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+    import setuptools
+    from packaging import version as pversion
+    if (pversion.parse(setuptools.__version__) < pversion.parse("62.1.0")):
+       f = "{dirname}.{platform}-{version[0]}.{version[1]}"
+       return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+    else:
+       f = "{dirname}.{platform}-{cache_tag}"
+       return f.format(dirname=dname, platform=sysconfig.get_platform(), cache_tag=sys.implementation.cache_tag)
+
 
 def distutils_shared_library_name(base):
     shared_ext = "dylib" if sys.platform == 'darwin' else "so"
@@ -1008,7 +1015,7 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                  '-DHAVE_DYSCO', '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
                                  '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST', \
-                                 '-DCASATOOLS', '-Dcasacore=casa6core', '-DCASADATA=\'"%CASAROOT%/data"\'', \
+                                 '-DUSE_GRPC', '-Dcasacore=casa6core', '-DCASADATA=\'"%CASAROOT%/data"\'', \
                                   '-DYYERROR_IS_DECLARED', '-fPIC' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
@@ -1016,21 +1023,21 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                       '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-DYYERROR_IS_DECLARED', \
+                                      '-DUSE_THREADS', '-DUSE_GRPC', '-Dcasacore=casa6core', '-DYYERROR_IS_DECLARED', \
                                       '-fPIC' ] + mpi_cxx_flags + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
+                                        '-DUSE_THREADS', '-DUSE_GRPC', '-Dcasacore=casa6core', '-fPIC' ] \
                                         + platform_cflags[sys.platform],
                        'src/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
+                                        '-DUSE_THREADS', '-DUSE_GRPC', '-Dcasacore=casa6core', '-fPIC' ] \
                                         + platform_cflags[sys.platform] }
 
 def get_ccache():
@@ -2564,6 +2571,7 @@ g_tools = None
 g_build_state = { 'lib-path': {} }
 
 def generate_casacore_version_header():
+    casacore_version_from_project = None
     with open("casacore/CMakeLists.txt") as f:
         for line in f:
             r = re.match(".*set\(PROJECT_VERSION_MAJOR (\d+)\)",line)
@@ -2577,6 +2585,15 @@ def generate_casacore_version_header():
             r = re.match(".*set\(PROJECT_VERSION_PATCH (\d+)\)",line)
             if r is not None:
                 casacore_version_patch = r.group(1)
+
+            r = re.match(".*project\(casacore VERSION (\d+)\.(\d+)\.(\d+)\)",line)
+            if r is not None:
+                casacore_version_from_project = r.group(1, 2, 3)
+
+    if casacore_version_from_project is not None:
+        casacore_version_major = casacore_version_from_project[0]
+        casacore_version_minor = casacore_version_from_project[1]
+        casacore_version_patch = casacore_version_from_project[2]
 
     print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
 

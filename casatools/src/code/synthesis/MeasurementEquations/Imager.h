@@ -72,9 +72,6 @@ class VisImagingWeight_p;
 class PBMath;
 class VPSkyJones;
 class EPJones;
-#if ! defined(CASATOOLS)
-class ViewerProxy;
-#endif
 // <summary> Class that contains functions needed for imager </summary>
 
 
@@ -268,12 +265,13 @@ class Imager
 
   // Set the single dish processing options
   casacore::Bool setsdoptions(const casacore::Float scale, const casacore::Float weight, 
-		    const casacore::Int convsupport=-1, casacore::String pointingColToUse="DIRECTION",
-		    const casacore::Quantity truncate=casacore::Quantity(),
-		    const casacore::Quantity gwidth=casacore::Quantity(),
-		    const casacore::Quantity jwidth=casacore::Quantity(),
-		    const casacore::Float minweight=0.,
-		    const casacore::Bool clipminmax=false);
+                   const casacore::Int convsupport=-1, casacore::String pointingColToUse="DIRECTION",
+                   const casacore::Quantity truncate=casacore::Quantity(),
+                   const casacore::Quantity gwidth=casacore::Quantity(),
+                   const casacore::Quantity jwidth=casacore::Quantity(),
+                   const casacore::Float minweight=0.,
+                   const casacore::Bool clipminmax=false,
+                   const casacore::Bool enablecache=false);
 
   // Set the voltage pattern
   casacore::Bool setvp(const casacore::Bool dovp,
@@ -754,6 +752,8 @@ protected:
 
   casacore::Bool clipminmax_p;
 
+  casacore::Bool enablecache_p;
+
   // special mf control parms, etc
   casacore::Float cyclefactor_p;
   casacore::Float cyclespeedup_p;
@@ -1041,9 +1041,6 @@ protected:
   VisImagingWeight imwgt_p;
 
   // viewer connection
-#if ! defined(CASATOOLS)
-  ViewerProxy *viewer_p;
-#endif
   int clean_panel_p;
   int image_id_p;
   int mask_id_p;
