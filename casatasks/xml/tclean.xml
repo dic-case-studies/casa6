@@ -1591,7 +1591,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
     <param type="string" name="weighting">
-           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
+           <shortdescription>Weighting scheme (natural,uniform,briggs, superuniform, radial, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
 <description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
                        During gridding of the dirty or residual image, each visibility value is
@@ -1644,7 +1644,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                        weighting='superuniform' : This is similar to uniform weighting except that
                                                                     the total_wt_per_cell is replaced by the
                                                                     total_wt_within_NxN_cells around the uv cell of
-                                                                    interest.  ( N = subparameter 'npixels' )
+                                                                    interest. N=7 is the default (when the 
+								    parameter 'npixels' is set to 0 with 'superuniform') 
 
                                                                    This method tends to give a PSF with inner
                                                                    sidelobes that are suppressed as in uniform
@@ -1713,9 +1714,9 @@ to use the correct direction in which the antenna is pointing with respect to th
                      npixels=2 goes from -1 to +1 and covers 3 pixels on a side.
 
                      npixels=0 implies a single pixel, which does not make sense for
-                                     superuniform weighting. Therefore, if npixels=0 it will
-                                     be forced to 6 (or a box of -3pixels to +3pixels) to cover
-                                     7 pixels on a side.
+                                     superuniform weighting. Therefore, for 'superuniform'
+				     weighting, if npixels=0 it will be forced to 6 (or a box 
+				     of -3pixels to +3pixels) to cover 7 pixels on a side.
 
 </description>
       <value type="int">0</value>
@@ -2673,6 +2674,13 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="uvtaper"><value>[]</value></default>
        </equals>
        <equals type="string" value="uniform">
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals type="string" value="superuniform">
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals type="string" value="radial">
+         <default param="uvtaper"><value>[]</value></default>
        </equals>
        <equals type="string" value="briggs">
          <default param="robust"><value>0.5</value></default>
