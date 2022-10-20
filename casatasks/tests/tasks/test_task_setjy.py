@@ -1239,23 +1239,32 @@ class test_newStandards(SetjyUnitTestBase):
 class test_newVLAmodelimages(SetjyUnitTestBase):
     """Test new VLA model images"""
     def setUp(self):
-        prefix = '3C48Ka'
-        msname=prefix+'.ms'
-        self.setUpMS(msname)
-        self.field='3C48'
+        pass
 
     def tearDown(self):
         #self.resetMS()
         pass
+
+    def prepData(self,msname="", fieldname=""):
+        if msname != "":
+            self.setUpMS(msname)
+        if fieldname !="":
+            self.field=fieldname
+          
  
     def test_3C48_KaBandModel(self):
+        self.prepData(msname='3C48Ka.ms', fieldname='3C48')
+
         # temporary location for test
+        # current
         self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C48_A.im"
+        # updated
+        #self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C48_A.im"
         #self.modelim p= "3C48_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
-                      standard='Perley-Butler 2017',
+             standard='Perley-Butler 2017',
                       usescratch=True
                       )
         ret = True
@@ -1287,7 +1296,145 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         # new model
         #self.check_eq(longbsn,  0.613553935289383,0.0001) 
         # old model 
-        self.check_eq(longbsn, 0.6241399765014649,0.0001) 
+        #self.check_eq(longbsn, 0.6241399765014649,0.0001) 
+
+    def test_3C138_KaBandModel(self):
+        self.prepData(msname='3C138Ka.ms', fieldname='3C138')
+
+        # temporary location for test
+        # current
+        #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C138_A.im"
+        # updated models
+        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C138_A.im"
+        #self.modelim = "3C138_A.im"
+        sjran = setjy(vis=self.inpms, 
+                      field=self.field,
+                      model=self.modelim,
+                      standard='Perley-Butler 2017',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else: 
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break 
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
+        self.check_eq(sjran['0']['0']['fluxd'][0],0.96944,0.0001)
+        self.assertTrue(ret)
+        print("ret=%s" % sjran)
+        mslocal.open(self.inpms)
+        # check a long baseline data point 
+        longbsn = mslocal.statistics(column='MODEL',
+                                     complex_value='amp',
+                                     field='3C138',
+                                     baseline='8&26',
+                                     time='2019/10/04/08:17:00.33665',
+                                            correlation='rr',
+                                            reportingaxes='field')['FIELD_ID=0']['mean']
+        mslocal.close()
+        # ToDO: turn on new value when the new model images are put into the data repo.
+        # new model
+        self.check_eq(longbsn, 0.842083877325058, 0.0001) 
+        # old model 
+        #self.check_eq(longbsn, 0.8425455033779145, 0.0001) 
+
+    def test_3C147_KaBandModel(self):
+        self.prepData(msname='3C147Ka.ms', fieldname='3C147')
+
+        # temporary location for test
+        # current
+        #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C147_A.im"
+        # updated models
+        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C147_A.im"
+        #self.modelim = "3C147_A.im"
+        sjran = setjy(vis=self.inpms, 
+                      field=self.field,
+                      model=self.modelim,
+                      standard='Perley-Butler 2017',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else: 
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break 
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
+        self.check_eq(sjran['0']['0']['fluxd'][0], 1.418634,0.0001)
+        self.assertTrue(ret)
+        print("ret=%s" % sjran)
+        mslocal.open(self.inpms)
+        # check a long baseline data point 
+        longbsn = mslocal.statistics(column='MODEL',
+                                     complex_value='amp',
+                                     field='3C147',
+                                     baseline='8&17',
+                                     time='2019/10/03/10:42:17.8322',
+                                            correlation='rr',
+                                            reportingaxes='field')['FIELD_ID=0']['mean']
+        mslocal.close()
+        # ToDO: turn on new value when the new model images are put into the data repo.
+        # new model
+        self.check_eq(longbsn, 1.3835243344306944, 0.0001) 
+        # old model 
+        #self.check_eq(longbsn, 1.3845574140548706, 0.0001) 
+
+    def test_3C286_KaBandModel(self):
+        self.prepData(msname='3C286Ka.ms', fieldname='3C286')
+
+        # temporary location for test
+        # current
+        #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C286_A.im"
+        # updated models
+        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C286_A.im"
+        #self.modelim = "3C286_A.im"
+        sjran = setjy(vis=self.inpms, 
+                      field=self.field,
+                      model=self.modelim,
+                      standard='Perley-Butler 2017',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else: 
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break 
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
+        self.check_eq(sjran['0']['0']['fluxd'][0], 1.920785,0.0001)
+        self.assertTrue(ret)
+        print("ret=%s" % sjran)
+        mslocal.open(self.inpms)
+        # check a long baseline data point 
+        longbsn = mslocal.statistics(column='MODEL',
+                                     complex_value='amp',
+                                     field='3C286',
+                                     baseline='8&15',
+                                     time='2019/10/03/18:30:11.3840',
+                                            correlation='rr',
+                                            reportingaxes='field')['FIELD_ID=0']['mean']
+        mslocal.close()
+        # ToDO: turn on new value when the new model images are put into the data repo.
+        # new model
+        self.check_eq(longbsn, 1.8970248341560365, 0.0001) 
+        # old model 
+        #self.check_eq(longbsn, 1.9001002073287965, 0.0001) 
 
 
  
