@@ -67,6 +67,10 @@ static bool _tablerow_initialize_numpy( ) {
 static bool numpy_initialized = _tablerow_initialize_numpy( );
 
 
+inline size_t non_zero( size_t val ) {
+    return  val <= 0 ? 5 : val;
+}
+
 namespace casac {
 
     // constructor used by from python to construct a tablerow object
@@ -183,20 +187,21 @@ namespace casac {
     PY_NUM_SCALAR( DComplex, NPY_COMPLEX128 )
 
     // convert a string to a PyObject
-    static inline PyObject *toPy( const String &s ) { return PyBytes_FromString(s.c_str( )); }
+    static inline PyObject *toPy( const String &s ) { return PyUnicode_FromString(s.c_str( )); }
+
     // convert an array of strings to a PyObject
     static inline PyObject *toPy( const Array<String> &a ) {
         auto shape = a.shape( );
-        size_t itemlen = std::accumulate( a.begin( ), a.end( ), (size_t) 0, []( size_t tally, const String &s ) { return s.size( ) > tally ? s.length( ) : tally; } );
-        size_t memlen = a.nelements( ) * itemlen;
+        size_t stringlen = std::accumulate( a.begin( ), a.end( ), (size_t) 0, []( size_t tally, const String &s ) { return s.size( ) > tally ? s.length( ) : tally; } );
+        size_t memlen = a.nelements( ) * non_zero(stringlen) * sizeof(uint32_t);
         void *mem = PyDataMem_NEW(memlen);
-        char *ptr = reinterpret_cast<char*>(mem);
+        uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
         for ( const auto &str : a ) {
-            for ( size_t i=0; i < itemlen; ++i ) {
-                *ptr++ = i < str.size( ) ? str[i] : 0;
+            for ( size_t i=0; i < non_zero(stringlen); ++i ) {
+                *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
             }
         }
-        return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NPY_STRING, nullptr, mem, itemlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+        return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
     }
 
     // convert numeric arrays to PyObjects
