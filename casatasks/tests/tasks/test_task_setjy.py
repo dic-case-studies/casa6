@@ -44,8 +44,8 @@ Features tested:
   3. Solar system (Uranus) flux density calibration.
 """
 
-#datapath = ctsys_resolve('unittest/setjy/')
-datapath = '/export/home/murasame2/casadev/vlanewmodels/'
+datapath = ctsys_resolve('unittest/setjy/')
+#datapath = '/export/home/murasame2/casadev/vlanewmodels/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -1281,7 +1281,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0],0.71951878,0.0001)
         self.assertTrue(ret)
-        print("ret=%s" % sjran)
+        #print("ret=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1294,7 +1294,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         mslocal.close()
         # ToDO: turn on new value when the new model images are put into the data repo.
         # new model
-        #self.check_eq(longbsn,  0.613553935289383,0.0001) 
+        self.check_eq(longbsn,  0.613553935289383,0.0001) 
         # old model 
         #self.check_eq(longbsn, 0.6241399765014649,0.0001) 
 
@@ -1327,7 +1327,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0],0.96944,0.0001)
         self.assertTrue(ret)
-        print("ret=%s" % sjran)
+        #print("ret=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1352,7 +1352,6 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C147_A.im"
         # updated models
         self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C147_A.im"
-        #self.modelim = "3C147_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
@@ -1373,7 +1372,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.418634,0.0001)
         self.assertTrue(ret)
-        print("ret=%s" % sjran)
+        #print("ret=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1419,7 +1418,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.920785,0.0001)
         self.assertTrue(ret)
-        print("ret=%s" % sjran)
+        #print("ret=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
