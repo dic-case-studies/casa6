@@ -39,6 +39,7 @@
 	<input>
 		<param direction="in" name="fromwhere" type="string">
 			<description> The origin of a log messages</description>
+			<value/>
 		</param>
 	</input>
   <returns type="bool"/>
@@ -50,6 +51,7 @@
 	<input>
 		<param direction="in" name="fromwhere" type="string">
 			<description>Input CASA processor origin name</description>
+			<value/>
 		</param>
 	</input>
   <returns type="bool"/>

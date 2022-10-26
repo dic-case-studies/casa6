@@ -1751,16 +1751,17 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
         }
 
         // Try to locate a pointing verifying for specified row:
-        // | POINTING.TIME - MAIN.TIME | <= 0.5*(MAIN.INTERVAL + tolerance)
+        // | POINTING.TIME - MAIN.TIME | <= 0.5*(POINTING.INTERVAL + tolerance)
 
         // Try first using a tiny tolerance
         constexpr Double useTinyTolerance = -1.0;
         pointingIndex = getIndex(act_mspc, rowTime, useTinyTolerance , rowAntenna1);
 
-        const auto foundPointing = (pointingIndex >= 0);
+        auto foundPointing = (pointingIndex >= 0);
         if (not foundPointing) {
             // Try again using tolerance = MAIN.INTERVAL
             pointingIndex = getIndex(act_mspc, rowTime, rowTimeInterval, rowAntenna1);
+            foundPointing = (pointingIndex >= 0);
         }
 
         // Making the implicit type conversion explicit. 
