@@ -1256,10 +1256,9 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
 
         # temporary location for test
         # current
-        self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C48_A.im"
         # updated
         #self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C48_A.im"
-        #self.modelim p= "3C48_A.im"
+        self.modelim = "3C48_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
@@ -1280,7 +1279,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0],0.71951878,0.0001)
         self.assertTrue(ret)
-        print("sjran=%s" % sjran)
+        #print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1304,8 +1303,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         # current
         #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C138_A.im"
         # updated models
-        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C138_A.im"
-        #self.modelim = "3C138_A.im"
+        self.modelim = "3C138_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
@@ -1327,7 +1325,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0],0.96944,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
-        print("sjran=%s" % sjran)
+        #print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1351,7 +1349,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         # current
         #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C147_A.im"
         # updated models
-        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C147_A.im"
+        self.modelim = "3C147_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
@@ -1373,7 +1371,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.418634,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
-        print("sjran=%s" % sjran)
+        #print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1397,8 +1395,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         # current
         #self.modelim = "/export/home/murasame/casa-data/nrao/VLA/CalModels/3C286_A.im"
         # updated models
-        self.modelim = "/export/home/murasame/casa-data2/nrao/VLA/CalModels/3C286_A.im"
-        #self.modelim = "3C286_A.im"
+        self.modelim = "3C286_A.im"
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
                       model=self.modelim,
@@ -1420,7 +1417,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.920785,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
-        print("sjran=%s" % sjran)
+        #print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
