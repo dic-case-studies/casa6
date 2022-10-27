@@ -1242,8 +1242,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         pass
 
     def tearDown(self):
-        #self.resetMS()
-        pass
+        self.resetMS()
 
     def prepData(self,msname="", fieldname=""):
         if msname != "":
@@ -1281,7 +1280,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
                 print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['0']['0']['fluxd'][0],0.71951878,0.0001)
         self.assertTrue(ret)
-        #print("ret=%s" % sjran)
+        print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1328,6 +1327,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0],0.96944,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
+        print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1373,6 +1373,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.418634,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
+        print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
@@ -1419,6 +1420,7 @@ class test_newVLAmodelimages(SetjyUnitTestBase):
         self.check_eq(sjran['0']['0']['fluxd'][0], 1.920785,0.0001)
         self.assertTrue(ret)
         #print("ret=%s" % sjran)
+        print("sjran=%s" % sjran)
         mslocal.open(self.inpms)
         # check a long baseline data point 
         longbsn = mslocal.statistics(column='MODEL',
