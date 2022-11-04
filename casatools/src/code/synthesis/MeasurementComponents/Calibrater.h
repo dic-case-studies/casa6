@@ -27,19 +27,19 @@
 #ifndef SYNTHESIS_CALIBRATER_H
 #define SYNTHESIS_CALIBRATER_H
 
-#include <casacore/casa/aips.h>
-#include <casacore/casa/OS/Timer.h>
-#include <casacore/casa/Containers/Record.h>
-#include <casacore/ms/MeasurementSets/MeasurementSet.h>
-#include <casacore/measures/Measures/MRadialVelocity.h>
+#include <casa/aips.h>
+#include <casa/OS/Timer.h>
+#include <casa/Containers/Record.h>
+#include <ms/MeasurementSets/MeasurementSet.h>
+#include <measures/Measures/MRadialVelocity.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 #include <synthesis/MeasurementComponents/VisCal.h>
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
 #include <synthesis/MeasurementComponents/VisCalGlobals.h>
-#include <casacore/casa/Logging/LogIO.h>
-#include <casacore/casa/Logging/LogSink.h>
-#include <casacore/ms/MeasurementSets/MSHistoryHandler.h>
-#include <casacore/ms/MSSel/MSSelection.h>
+#include <casa/Logging/LogIO.h>
+#include <casa/Logging/LogSink.h>
+#include <ms/MeasurementSets/MSHistoryHandler.h>
+#include <ms/MSSel/MSSelection.h>
 #include <msvis/MSVis/VisibilityProcessing.h>
 #include <msvis/MSVis/ViFrequencySelection.h>
 #include <msvis/MSVis/SimpleSimVi2.h>
@@ -459,6 +459,8 @@ class CalCounts {
     
     // Methods for incrementing counts, initializing structure, and converting to record
     void addAntennaCounts(casacore::Int spw, casacore::Int NAnt, casacore::Int NPol, std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>>);
+    
+    void updateRefants(casacore::Int, casacore::Int, std::map<casacore::Int, std::map<casacore::Int, casacore::Int>>);
     
     void logRecordInfo(casacore::Int NSpw, casacore::Int NAnt, casacore::Int NPol);
     

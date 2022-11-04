@@ -25,30 +25,30 @@
 //#
 //# $Id: Calibrater.cc,v 19.37 2006/03/16 01:28:09 gmoellen Exp $
 
-#include <casacore/tables/Tables/Table.h>
-#include <casacore/tables/Tables/TableRecord.h>
-#include <casacore/tables/Tables/TableDesc.h>
-#include <casacore/tables/Tables/TableLock.h>
-#include <casacore/tables/Tables/TableUtil.h>
-#include <casacore/tables/TaQL/TableParse.h>
-#include <casacore/tables/Tables/ArrColDesc.h>
-#include <casacore/tables/DataMan/TiledShapeStMan.h>
+#include <tables/Tables/Table.h>
+#include <tables/Tables/TableRecord.h>
+#include <tables/Tables/TableDesc.h>
+#include <tables/Tables/TableLock.h>
+#include <tables/Tables/TableUtil.h>
+#include <tables/TaQL/TableParse.h>
+#include <tables/Tables/ArrColDesc.h>
+#include <tables/DataMan/TiledShapeStMan.h>
 
-#include <casacore/casa/System/AipsrcValue.h>
-#include <casacore/casa/Arrays/ArrayUtil.h>
-#include <casacore/casa/Arrays/ArrayLogical.h>
-#include <casacore/casa/Arrays/ArrayPartMath.h>
+#include <casa/System/AipsrcValue.h>
+#include <casa/Arrays/ArrayUtil.h>
+#include <casa/Arrays/ArrayLogical.h>
+#include <casa/Arrays/ArrayPartMath.h>
 //#include <casa/Arrays/ArrayMath.h>
-#include <casacore/ms/MeasurementSets/MSColumns.h>
-#include <casacore/ms/MSSel/MSFieldIndex.h>
-#include <casacore/ms/MSSel/MSSelection.h>
-#include <casacore/ms/MSSel/MSSelectionTools.h>
-#include <casacore/ms/MSOper/MSMetaData.h>
-#include <casacore/casa/BasicSL/Constants.h>
-#include <casacore/casa/Exceptions/Error.h>
-#include <iostream>
-#include <sstream>
-#include <casacore/casa/OS/File.h>
+#include <ms/MeasurementSets/MSColumns.h>
+#include <ms/MSSel/MSFieldIndex.h>
+#include <ms/MSSel/MSSelection.h>
+#include <ms/MSSel/MSSelectionTools.h>
+#include <ms/MSOper/MSMetaData.h>
+#include <casa/BasicSL/Constants.h>
+#include <casa/Exceptions/Error.h>
+#include <casa/iostream.h>
+#include <casa/sstream.h>
+#include <casa/OS/File.h>
 #include <synthesis/MeasurementComponents/Calibrater.h>
 #include <synthesis/CalTables/CLPatchPanel.h>
 #include <synthesis/MeasurementComponents/CalSolVi2Organizer.h>
@@ -62,16 +62,16 @@
 #include <msvis/MSVis/VisibilityIterator2.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/ViFrequencySelection.h>
-#include <casacore/casa/Quanta/MVTime.h>
+#include <casa/Quanta/MVTime.h>
 
-#include <casacore/casa/Logging/LogMessage.h>
-#include <casacore/casa/Logging/LogIO.h>
-#include <casacore/casa/Utilities/Assert.h>
+#include <casa/Logging/LogMessage.h>
+#include <casa/Logging/LogIO.h>
+#include <casa/Utilities/Assert.h>
 
-#include <casacore/tables/Tables/SetupNewTab.h>
+#include <tables/Tables/SetupNewTab.h>
 #include <vector>
 using std::vector;
-#include <stdcasa/UtilJ.h>
+#include <msvis/MSVis/UtilJ.h>
 
 #ifdef _OPENMP
  #include <omp.h>
@@ -153,6 +153,14 @@ void CalCounts::addAntennaCounts(Int spw, Int NAnt, Int NPol, std::map<Int, std:
         totalMap_["above_minsnr"][pol] += spwMinsnr[pol];
     }
     
+}
+
+void CalCounts::updateRefants(Int NSpw, Int NAnt, std::map<Int, std::map<Int, Int>> refantMap) {
+    for (Int spw=0; spw<NSpw; spw++) {
+        for (Int ant=0; ant<NAnt; ant++) {
+            antennaMap_[spw][ant]["used_as_refant"][0] += refantMap[spw][ant];
+        }
+    }
 }
 
 Vector<Int> CalCounts::antMapVal(Int spw, Int ant, String gate) {
@@ -3773,11 +3781,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
             svc_p->formSolveSNR();
             svc_p->applySNRThreshold();
-            // accumulate from SNR NEED POL NUM
-            //std::map<Int, std::map<String, Vector<Int>>> resultMap = svc_p->getAntennaMap();
-            //resultMap = svc_p->getAntennaMap();
-            // Collect all the antenna based information (should minbl not be counted here?)
-            //calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
           }
           else
 	    svc_p->currMetaNote();
@@ -3827,52 +3830,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     //    throw(AipsError("EARLY ESCAPE!!"));
 
   } // isol
-  
-  // Compile all accumulated counts into a record
-  resRec_ = calCounts->makeRecord(msmc_p->nAnt(), vi.nPolarizationIds());
-  //calCounts->logRecordInfo(msmc_p->nSpw(),msmc_p->nAnt(), vi.nPolarizationIds());
-    
-    // print a matrix to the logger
-    logSink() << "----- PER ANTENNA INFO -----" << LogIO::POST;
-    // print the antenna list
-    logSink() << "      ";
-    for (Int ant=0; ant<msmc_p->nAnt(); ant++) {
-        logSink() << " ANT: " << ant << "   ";
-    }
-    logSink() << LogIO::POST;
-    
-    for (Int spw=0; spw < msmc_p->nSpw(); spw++) {
-        
-        logSink() << LogIO::NORMAL << "SPW: " << spw;
-        
-        for (Int ant=0; ant < msmc_p->nAnt(); ant++) {
-            logSink() << " " << calCounts->antMapVal(spw, ant, "above_minsnr") << " ";
-        }
-        logSink() << LogIO::POST;
-    }
-    
-    logSink() << "----- PER SPW INFO -----" << LogIO::POST;
-    // print the result fields
-    logSink() << "      ";
-    logSink() << " expected  data_unflagged  above_minblperant  above_minsnr";
-    logSink() << LogIO::POST;
-    for (Int spw = 0; spw < msmc_p->nSpw(); spw++) {
-        logSink() << LogIO::NORMAL << "SPW: " << spw << " ";
-        logSink() << calCounts->spwMapVal(spw, "expected") << "  ";
-        logSink() << calCounts->spwMapVal(spw, "data_unflagged") << "        ";
-        logSink() << calCounts->spwMapVal(spw, "above_minblperant") << "            ";
-        logSink() << calCounts->spwMapVal(spw, "above_minsnr");
-        logSink() << LogIO::POST;
-    }
-    
-    logSink() << "----- GLOBAL INFO -----" << LogIO::POST;
-    logSink() << "expected  data_unflagged  above_minblperant  above_minsnr";
-    logSink() << LogIO::POST;
-    logSink() << calCounts->totalMapVal("expected") << "  ";
-    logSink() << calCounts->totalMapVal("data_unflagged") << "        ";
-    logSink() << calCounts->totalMapVal("above_minblperant") << "            ";
-    logSink() << calCounts->totalMapVal("above_minsnr");
-    logSink() << LogIO::POST;
     
   // Report nGood to logger
   logSink() << "  Found good " 
@@ -3901,7 +3858,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
   if (nGood>0) {
     if (svc_p->typeName()!="BPOLY") {  // needed?                                                                           
-      // apply refant, etc.                                                                                                 
+      // apply refant, etc.
+      svc_p->clearRefantMap();
       svc_p->globalPostSolveTinker();
 
       // write to disk                                                                                                      
@@ -3912,11 +3870,59 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     logSink() << "No output calibration table written."
 	      << LogIO::POST;
   }
+    
+  // Collect and update the refants
+  std::map<Int, std::map<Int, Int>> refantMap;
+  refantMap = svc_p->getRefantMap();
+  calCounts->updateRefants(msmc_p->nSpw(), msmc_p->nAnt(), refantMap);
+  // Compile all accumulated counts into a record
+  resRec_ = calCounts->makeRecord(msmc_p->nAnt(), vi.nPolarizationIds());
+      
+  // print a matrix to the logger
+  logSink() << "----- PER ANTENNA INFO -----" << LogIO::POST;
+  // print the antenna list
+  logSink() << "      ";
+  for (Int ant=0; ant<msmc_p->nAnt(); ant++) {
+      logSink() << " ANT: " << ant << "   ";
+  }
+  logSink() << LogIO::POST;
+      
+  for (Int spw=0; spw < msmc_p->nSpw(); spw++) {
+          
+      logSink() << LogIO::NORMAL << "SPW: " << spw;
+          
+      for (Int ant=0; ant < msmc_p->nAnt(); ant++) {
+          logSink() << " " << calCounts->antMapVal(spw, ant, "above_minsnr") << " ";
+      }
+      logSink() << LogIO::POST;
+  }
+      
+  logSink() << "----- PER SPW INFO -----" << LogIO::POST;
+  // print the result fields
+  logSink() << "      ";
+  logSink() << " expected  data_unflagged  above_minblperant  above_minsnr";
+  logSink() << LogIO::POST;
+  for (Int spw = 0; spw < msmc_p->nSpw(); spw++) {
+      logSink() << LogIO::NORMAL << "SPW: " << spw << " ";
+      logSink() << calCounts->spwMapVal(spw, "expected") << "  ";
+      logSink() << calCounts->spwMapVal(spw, "data_unflagged") << "        ";
+      logSink() << calCounts->spwMapVal(spw, "above_minblperant") << "            ";
+      logSink() << calCounts->spwMapVal(spw, "above_minsnr");
+      logSink() << LogIO::POST;
+  }
+      
+  logSink() << "----- GLOBAL INFO -----" << LogIO::POST;
+  logSink() << "expected  data_unflagged  above_minblperant  above_minsnr";
+  logSink() << LogIO::POST;
+  logSink() << calCounts->totalMapVal("expected") << "  ";
+  logSink() << calCounts->totalMapVal("data_unflagged") << "        ";
+  logSink() << calCounts->totalMapVal("above_minblperant") << "            ";
+  logSink() << calCounts->totalMapVal("above_minsnr");
+  logSink() << LogIO::POST;
 
   // Fill activity record
-  //  cout << "  Expected, Attempted, Succeeded (by spw) = " << nexp << ", " << natt << ", " << nsuc << endl;                 
-  //  cout << " Expected, Attempted, Succeeded = " << sum(nexp) << ", " << sum(natt) << ", " << sum(nsuc) << endl;
-  actRec_=Record();
+  
+  actRec_ = Record();
   actRec_.define("origin","Calibrater::genericGatherAndSolve");
   actRec_.define("nExpected",nexp);
   actRec_.define("nAttempt",natt);

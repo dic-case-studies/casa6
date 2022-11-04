@@ -31,44 +31,50 @@
 
 #include <msvis/MSVis/VisBuffer.h>
 
-#include <casacore/casa/Arrays/ArrayMath.h>
-#include <casacore/casa/Arrays/MaskArrMath.h>
-#include <casacore/casa/Arrays/ArrayIter.h>
-#include <casacore/scimath/Mathematics/MatrixMathLA.h>
-#include <casacore/scimath/Fitting/LinearFit.h>
-#include <casacore/scimath/Functionals/Polynomial.h>
-#include <casacore/casa/BasicSL/String.h>
-#include <casacore/casa/Utilities/Assert.h>
-#include <casacore/casa/Quanta/MVTime.h>
-#include <casacore/casa/Exceptions/Error.h>
-#include <casacore/casa/OS/Memory.h>
-#include <casacore/casa/OS/File.h>
-#include <casacore/casa/Utilities/GenSort.h>
-#include <casacore/casa/Quanta/Quantum.h>
-#include <casacore/casa/Quanta/QuantumHolder.h>
-#include <casacore/tables/Tables/TableCopy.h>
-#include <casacore/tables/Tables/TableUtil.h>
-#include <casacore/ms/MeasurementSets/MSAntennaColumns.h>
-#include <casacore/ms/MeasurementSets/MSSpWindowColumns.h>
-#include <casacore/ms/MeasurementSets/MSFieldColumns.h>
-#include <casacore/ms/MSOper/MSMetaData.h>
+#include <casa/Arrays/ArrayMath.h>
+#include <casa/Arrays/MaskArrMath.h>
+#include <casa/Arrays/ArrayIter.h>
+#include <scimath/Mathematics/MatrixMathLA.h>
+#include <scimath/Fitting/LinearFit.h>
+#include <scimath/Functionals/Polynomial.h>
+#include <casa/BasicSL/String.h>
+#include <casa/Utilities/Assert.h>
+#include <casa/Quanta/MVTime.h>
+#include <casa/Exceptions/Error.h>
+#include <casa/OS/Memory.h>
+#include <casa/OS/File.h>
+#include <casa/Utilities/GenSort.h>
+#include <casa/Quanta/Quantum.h>
+#include <casa/Quanta/QuantumHolder.h>
+#include <tables/Tables/TableCopy.h>
+#include <tables/Tables/TableUtil.h>
+#include <ms/MeasurementSets/MSAntennaColumns.h>
+#include <ms/MeasurementSets/MSSpWindowColumns.h>
+#include <ms/MeasurementSets/MSFieldColumns.h>
+#include <ms/MSOper/MSMetaData.h>
 #include <synthesis/CalTables/CTMainColumns.h>
 #include <synthesis/CalTables/CTColumns.h>
 #include <synthesis/CalTables/CTGlobals.h>
 #include <synthesis/CalTables/CTIter.h>
 #include <synthesis/CalTables/CTInterface.h>
 #include <synthesis/MeasurementComponents/SolveDataBuffer.h>
-#include <casacore/ms/MSSel/MSSelection.h>
-#include <casacore/ms/MSSel/MSSelectionTools.h>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <casacore/casa/Containers/RecordField.h>
+#include <ms/MSSel/MSSelection.h>
+#include <ms/MSSel/MSSelectionTools.h>
+#include <casa/sstream.h>
+#include <casa/iostream.h>
+#include <casa/iomanip.h>
+#include <casa/Containers/RecordField.h>
 
-#include <casacore/casa/Logging/LogMessage.h>
-#include <casacore/casa/Logging/LogSink.h>
-#include <casacore/casa/System/Aipsrc.h>
-#include <casacore/casa/System/ProgressMeter.h>
+#if ! defined(CASATOOLS)
+#include <casadbus/plotserver/PlotServerProxy.h>
+#include <casadbus/utilities/BusAccess.h>
+#include <casadbus/session/DBusSession.h>
+#endif
+
+#include <casa/Logging/LogMessage.h>
+#include <casa/Logging/LogSink.h>
+#include <casa/System/Aipsrc.h>
+#include <casa/System/ProgressMeter.h>
 
 #include <fstream>
 
@@ -484,6 +490,7 @@ SolvableVisCal::SolvableVisCal(VisSet& vs) :
   fitWt_(0.0),
   fit_(0.0),
   antennaMap_(),
+  refantMap_(),
   solveCPar_(vs.numberSpw(),NULL),  // TBD: move inflation into ctor body
   solveRPar_(vs.numberSpw(),NULL),
   solveParOK_(vs.numberSpw(),NULL),
@@ -3673,6 +3680,15 @@ void SolvableVisCal::clearMap() {
     
 }
 
+void SolvableVisCal::clearRefantMap() {
+    // Clear or initialize values for refantMap_
+    for (Int ispw=0; ispw<nSpw(); ++ispw) {
+        for (Int iant=0; iant<nAnt(); ++iant) {
+            refantMap_[ispw][iant] = 0;
+        }
+    }
+}
+
 void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
     // Iterate over sdbs and add values to expected and data unflagged
     for (Int isdb=0;isdb<sdbs.nSDB();++isdb) {
@@ -4049,9 +4065,9 @@ void SolvableVisCal::applySNRThreshold() {
   Vector<Int> initVectorSingle(1, 0);
   
   for (Int iant=0;iant<nAnt();++iant) {
-    if (refant() == iant) {
-      antennaMap_[iant]["used_as_refant"][0] += 1;
-    }
+    //if (refant() == iant) {
+    //  antennaMap_[iant]["used_as_refant"][0] += 1;
+    //}
     for (Int ipar=0;ipar<nPar();++ipar) {
       //antennaMap_[iant]["expected"][ipar] += 1;
       if (solveParOK()(ipar,0,iant)){
@@ -5440,6 +5456,9 @@ SolvableVisJones::SolvableVisJones(VisSet& vs) :
   dJ2_(NULL),
   diffJElem_(),
   DJValid_(false)
+#if ! defined(CASATOOLS)
+  ,plotter_(NULL)
+#endif
 {
   if (prtlev()>2) cout << "SVJ::SVJ(vs)" << endl;
 }
@@ -5453,6 +5472,9 @@ SolvableVisJones::SolvableVisJones(String msname,Int MSnAnt,Int MSnSpw) :
   dJ2_(NULL),
   diffJElem_(),
   DJValid_(false)
+#if ! defined(CASATOOLS)
+  ,plotter_(NULL)
+#endif
 {
   if (prtlev()>2) cout << "SVJ::SVJ(msname,MSnAnt,MSnSpw)" << endl;
 }
@@ -5466,6 +5488,9 @@ SolvableVisJones::SolvableVisJones(const MSMetaInfoForCal& msmc) :
   dJ2_(NULL),
   diffJElem_(),
   DJValid_(False)
+#if ! defined(CASATOOLS)
+  ,plotter_(NULL)
+#endif
 {
   if (prtlev()>2) cout << "SVJ::SVJ(msmc)" << endl;
 }
@@ -5480,6 +5505,9 @@ SolvableVisJones::SolvableVisJones(const Int& nAnt) :
   dJ2_(NULL),
   diffJElem_(),
   DJValid_(false)
+#if ! defined(CASATOOLS)
+  ,plotter_(NULL)
+#endif
 {
   if (prtlev()>2) cout << "SVJ::SVJ(i,j,k)" << endl;
 }
@@ -6782,6 +6810,9 @@ void SolvableVisJones::applyRefAnt() {
       usedaltrefant|=(ichoice>0);
       currrefant=refantchoices(ichoice);
       refantchoices(1)=currrefant;  // 2nd priorty next time
+        
+      // Mark refant in activity rec
+      refantMap_[ctiter.thisSpw()][currrefant] += 1;
 
       //      cout << " currrefant = " << currrefant << " (" << ichoice << ")" << endl;
 
@@ -8183,6 +8214,11 @@ void SolvableVisJones::fluxscale(const String& outfile,
 }
 
 void SolvableVisJones::setupPlotter() {
+// setjup plotserver
+#if ! defined(CASATOOLS)
+  plotter_ = dbus::launch<PlotServerProxy>( );
+  panels_id_.resize(nSpw());
+#endif
 }
 
 void SolvableVisJones::plotHistogram(const String& title,
@@ -8193,11 +8229,19 @@ void SolvableVisJones::plotHistogram(const String& title,
   std::string legendloc = "bottom";
   std::string zoomloc = "";
   if (index==0) {
+#if ! defined(CASATOOLS)
+    panels_id_[0] = plotter_->panel( title, "ratio", "N", "Fluxscale",
+                                   std::vector<int>( ), legendloc,zoomloc,0,false,false);
+#endif
     std::vector<std::string> loc;
     loc.push_back("top");
     //plotter_->loaddock( dock_xml_p, "bottom", loc, panels_id_[0].getInt());
   }
   else {
+#if ! defined(CASATOOLS)
+    panels_id_[index] = plotter_->panel( title, "ratio", "N", "",
+    std::vector<int>( ), legendloc,zoomloc,panels_id_[index-1].getInt(),false,false);
+#endif
      
     // multirow panels
     /***
@@ -8219,6 +8263,10 @@ void SolvableVisJones::plotHistogram(const String& title,
     ***/
   }
   // plot histogram
+#if ! defined(CASATOOLS)
+  plotter_->erase( panels_id_[index].getInt() );
+  plotter_->histogram(dbus::af(data),nbins,"blue",title,panels_id_[index].getInt( ));
+#endif
 
 }
 
