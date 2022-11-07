@@ -2,7 +2,6 @@
 ## CASAtools source file (src/python/coercetype.py)
 ##
 from __future__ import absolute_import
-from .platform import str_encode
 import sys
 import os
 import numpy
@@ -129,7 +128,7 @@ class CasaCoerce:
         ###
         ### cerberus validation is not reentrant...
         ###
-        return self.ctsys._swigobj.resolve(str_encode(value))
+        return self.ctsys._swigobj.resolve(value)
 
     def expand_pathvec(self,value):
         if not isinstance(value,list):
@@ -151,7 +150,7 @@ class CasaCoerce:
         ###
         ### cerberus validation is not reentrant...
         ###
-        return [ self.ctsys._swigobj.resolve(str_encode(v)) for v in value ]
+        return [ self.ctsys._swigobj.resolve(v) for v in value ]
 
 coerce = CasaCoerce( )
 

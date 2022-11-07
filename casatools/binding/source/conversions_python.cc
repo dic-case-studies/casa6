@@ -1,9 +1,9 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-
 #include <casaswig_types.h>
 #include <swigconvert_python.h>
 #include <Python.h>
 #include <string.h>
+#include <casacore/casa/Exceptions/Error.h>
 #if USING_NUMPY_ARRAYS
 #include <numpy/arrayobject.h>
 #endif
@@ -14,8 +14,6 @@
 
 STRINGTOCOMPLEX_DEFINITION(casac::complex,stringtoccomplex)
 
-#ifndef PyInt_Check
-// support for python3
 #define PyInt_Check                     PyLong_Check
 #define PyInt_FromLong                  PyLong_FromLong
 #define PyInt_FromUnsignedLong          PyLong_FromUnsignedLong
@@ -23,18 +21,33 @@ STRINGTOCOMPLEX_DEFINITION(casac::complex,stringtoccomplex)
 #define PyInt_AsUnsignedLong            PyLong_AsUnsignedLong
 #define PyInt_Type                      PyLong_Type
 #define PyNumber_Int                    PyNumber_Long
-#define PyString_Check                  PyBytes_Check
-#define PyString_AsString               PyBytes_AsString
-#define PyString_FromString             PyUnicode_FromString
 #define MYPYSIZE                        Py_ssize_t
-#else
-#if ( (PY_MAJOR_VERSION <= 1) || (PY_MINOR_VERSION <= 4) )
-    #define MYPYSIZE int
-#else
-    #define MYPYSIZE Py_ssize_t
-#endif
-#endif
 
+//#define PyString_Check                  PyBytes_Check
+inline bool PyString_Check( PyObject *o ) {
+    return PyBytes_Check(o) || PyUnicode_Check(o);
+}
+
+inline size_t non_zero( size_t val ) {
+    return  val <= 0 ? 5 : val;
+}
+
+#define PyString_FromString             PyUnicode_FromString
+inline char *PyString_AsString( PyObject *o ) {
+    if ( PyUnicode_Check(o) ) {
+        PyObject * temp_bytes = PyUnicode_AsEncodedString( o, "UTF-8", "strict" );      // Owned reference
+        if (temp_bytes != NULL) {
+            char *result = PyBytes_AS_STRING(temp_bytes);                               // Borrowed pointer
+            result = strdup(result);
+            Py_DECREF(temp_bytes);
+            return result;
+        } else {
+            // TODO: Handle encoding error.
+            throw casacore::AipsError( "encoding unicode failed" );
+        }
+    } else if ( PyBytes_Check(o) ) return PyBytes_AS_STRING( o );
+    else throw casacore::AipsError( "could not convert python object to string" );
+}
 
 #define NODOCOMPLEX(x) (x)
 #define DOCOMPLEX(x) casac::complex(x,0)
@@ -45,8 +58,8 @@ STRINGTOCOMPLEX_DEFINITION(casac::complex,stringtoccomplex)
 // Create a numpy array description that will be passed to with PyArray_NewFromDescr.
 // PyArray_NewFromDescr will steal it.
 static PyArray_Descr *get_string_description(unsigned int size) {
-    auto string_descr = PyArray_DescrNewFromType(NPY_STRING);
-    string_descr->elsize = size;
+    auto string_descr = PyArray_DescrNewFromType(NPY_UNICODE);
+    string_descr->elsize = size*sizeof(uint32_t);
 
     return string_descr;
 }
@@ -119,6 +132,51 @@ npycomplextostring(npy_clongdouble,"(%Lf,%Lf)")
 		offset += counts[i] * strides[i];			\
 	    }								\
 	    strncpy(buf,&data[offset],itemsize);			\
+	    vec[D] = CONVERT(buf);					\
+	    for ( int j=0; j < ndims; ++j ) {				\
+		if ( ++counts[j] < dims[j] ) break;			\
+		counts[j] = 0;						\
+	    }								\
+	}								\
+    }									\
+    delete [] buf;							\
+    }
+
+#define NUMPY2VECTOR_PLACEUNI(TYPE,CONVERT)				\
+    {									\
+    uint32_t stringlen = itemsize/sizeof(uint32_t);     \
+    char *buf = new char[stringlen+1];	 				\
+    buf[stringlen] = '\0';								\
+    uint32_t *data = (uint32_t*) PyArray_DATA(obj);     \
+    if (PyArray_CHKFLAGS(obj,NPY_ARRAY_F_CONTIGUOUS)) {			\
+	for ( unsigned int D=0; D < size; ++D ) {			\
+        unsigned int S;                         \
+        for ( S=0; S < stringlen; ++S ) {        \
+            buf[S] = (char) data[D*stringlen+S]; \
+            if ( buf[S] == 0 ) break;           \
+        }                                       \
+        buf[S] = 0;                             \
+	    vec[D] =  CONVERT(buf);					\
+	}								\
+    } else {								\
+	/*** convert c-style to fortran order ***/			\
+	npy_intp counts[NPY_MAXDIMS];					\
+	npy_intp strides[NPY_MAXDIMS];					\
+	for ( int i=0; i < ndims; ++i ) {				\
+	    counts[i] = 0;						\
+	    strides[i] = PyArray_STRIDE(obj,i);				\
+	}								\
+	for ( unsigned int D=0; D < size; ++D ) {			\
+	    int offset = 0;						\
+	    for ( int i=0; i < ndims; ++i ) {				\
+		offset += counts[i] * strides[i];			\
+	    }								\
+        unsigned int S;                         \
+        for ( S=0; S < stringlen; ++S ) {   \
+            buf[S] = (char) data[offset+S]; \
+            if ( buf[S] == 0 ) break;           \
+        }                                       \
+        buf[S] = 0;                             \
 	    vec[D] = CONVERT(buf);					\
 	    for ( int j=0; j < ndims; ++j ) {				\
 		if ( ++counts[j] < dims[j] ) break;			\
@@ -253,9 +311,7 @@ void casac::numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vect
  	fprintf( stderr, "cannot handle numpy arrays of: NPY_CHAR\n" ); 		\
 	break;										\
     case NPY_UNICODE:									\
-	vec.resize(0);									\
-	shape.resize(0);								\
-	fprintf( stderr, "cannot handle numpy arrays of: NPY_UNICODE\n" );		\
+	NUMPY2VECTOR_PLACEUNI(TYPE,STRCVT)						\
 	break;										\
     case NPY_VOID:									\
 	vec.resize(0);									\
@@ -635,47 +691,46 @@ MAP_ARRAY_NUMPY(std::complex<double>, npy_cdouble, NPY_CDOUBLE,(*to).real = (*fr
 MAP_ARRAY_NUMPY(casac::complex, npy_cdouble, NPY_CDOUBLE,(*to).real = (*from).re; (*to).imag = (*from).im)
 MAP_ARRAY_NUMPY(bool, npy_bool, NPY_BOOL,*to = (npy_bool) *from)
 
+
 PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
     initialize_numpy( );
-    unsigned int size = 0;
+
+    size_t stringlen = 0;
     for ( const auto &elem : vec ) {
-        unsigned int slen = elem.size();
-        if ( slen > size )
-            size = slen;
+        size_t slen = elem.size();
+        if ( slen > stringlen )
+            stringlen = slen;
     }
-    npy_intp dim[1];
-    dim[0] = vec.size();
-    PyObject *ary = PyArray_NewFromDescr( &PyArray_Type, get_string_description(size+1), 1, dim,
-					  NULL, NULL, 1, NULL );
-    char *data = (char*) PyArray_DATA((PyArrayObject*)ary);
-    memset(data, '\0', (size+1) * vec.size());
-    for ( std::vector<std::string>::const_iterator iter = vec.begin(); iter != vec.end(); ++iter ) {
-	strcpy(data,(*iter).c_str( ));
-	data += size+1;
+    size_t memlen = vec.size( ) * non_zero(stringlen) * sizeof(uint32_t);
+    void *mem = PyDataMem_NEW(memlen);
+    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
+    for ( const auto &str : vec ) {
+        for ( size_t i=0; i < non_zero(stringlen); ++i ) {
+            *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
+        }
     }
-    return ary;
+    npy_intp shape[ ] = { (npy_intp) vec.size( ) };
+    return PyArray_New( &PyArray_Type, 1, shape, NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
     initialize_numpy( );
-    unsigned int size = 0;
+
+    size_t stringlen = 0;
     for ( const auto &elem : vec ) {
-        unsigned int slen = elem.size();
-        if ( slen > size )
-            size = slen;
+        size_t slen = elem.size();
+        if ( slen > stringlen )
+            stringlen = slen;
     }
-    npy_intp *dim = new npy_intp[shape.size()];
-    copy( shape.begin(), shape.end(), dim );
-    PyObject *ary = PyArray_NewFromDescr( &PyArray_Type, get_string_description(size+1), shape.size(), dim,
-					  NULL, NULL, 1, NULL );
-    char *data = (char*) PyArray_DATA((PyArrayObject*)ary);
-    memset(data, '\0', (size+1) * vec.size());
-    for ( std::vector<std::string>::const_iterator iter = vec.begin(); iter != vec.end(); ++iter ) {
-	strcpy(data,(*iter).c_str( ));
-	data += size+1;
+    size_t memlen = vec.size( ) * non_zero(stringlen) * sizeof(uint32_t);
+    void *mem = PyDataMem_NEW(memlen);
+    uint32_t *ptr = reinterpret_cast<uint32_t*>(mem);
+    for ( const auto &str : vec ) {
+        for ( size_t i=0; i < non_zero(stringlen); ++i ) {
+            *ptr++ = i < str.size( ) ? (unsigned char) str[i] : 0;
+        }
     }
-    delete [] dim;
-    return ary;
+    return PyArray_New( &PyArray_Type, shape.size( ), (npy_intp*) shape.data( ), NPY_UNICODE, nullptr, mem, non_zero(stringlen)*sizeof(uint32_t), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
 }
 
 #define HANDLE_NUMPY_ARRAY_CASE(NPYTYPE,CVTTYPE)				\
@@ -711,8 +766,7 @@ else if ( casac::pyarray_check(obj) ) {						\
     case NPY_CHAR:								\
 	fprintf( stderr, "cannot handle numpy arrays of: NPY_CHAR\n" );		\
 	break;									\
-    case NPY_UNICODE:								\
-	fprintf( stderr, "cannot handle numpy arrays of: NPY_UNICODE\n" );	\
+    HANDLE_NUMPY_ARRAY_CASE(NPY_UNICODE,String)					\
 	break;									\
     case NPY_VOID:								\
 	fprintf( stderr, "cannot handle numpy arrays of: NPY_VOID\n" );		\
@@ -1020,7 +1074,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CFLOAT ||                     \
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CDOUBLE ||                    \
                  PyArray_TYPE((PyArrayObject*)val) == NPY_CLONGDOUBLE ||                \
-                 PyArray_TYPE((PyArrayObject*)val) == NPY_STRING))) {                   \
+                 PyArray_TYPE((PyArrayObject*)val) == NPY_UNICODE))) {                  \
 	      rec.insert(str,pyobj2variant(val,DO_THROW));				\
             }                                                                           \
                                                                                         \

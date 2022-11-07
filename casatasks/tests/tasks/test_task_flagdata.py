@@ -321,6 +321,19 @@ class test_base(unittest.TestCase):
         os.system('rm -rf ' + self.vis + '.flagversions')
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
         
+    def setUp_shadowdata_alma_small(self):
+        '''ALMA simulation data set. 16 12m antennas, all baselines present. 2 time steps'''
+        self.vis = "sim.alma.cycle0.compact.noisy.ms"
+
+        if os.path.exists(self.vis):
+            print("The MS is already around, just unflag")
+        else:
+            print("Moving data...")
+            os.system('cp -RH ' + os.path.join(datapath, self.vis) + ' ' + self.vis)
+
+        os.system('rm -rf ' + self.vis + '.flagversions')
+        flagdata(vis=self.vis, mode='unflag', flagbackup=False)
+
     def setUp_multi(self):
         self.vis = "multiobs.ms"
 
@@ -1008,6 +1021,8 @@ class test_shadow(test_base):
             os.system('rm -rf shadowtest_part.ms*')
         if os.path.exists('shadowAPP.ms'):
             os.system('rm -rf shadowAPP.ms*')
+        if os.path.exists('shadowAPP.ms'):
+            os.system('rm -rf sim.alma.cycle0.compact.noisy.ms*')
         if os.path.exists('cas2399.txt'):
             os.system('rm -rf cas2399.txt*')
         if os.path.exists('myants.txt'):
@@ -1016,6 +1031,70 @@ class test_shadow(test_base):
             os.system('rm -rf listfile.txt*')
         if os.path.exists('withdict.txt'):
             os.system('rm -rf withdict.txt*')
+
+    def _check_uvw_match_shadow(self, vis, ant_distance=12.0, tolerance=0.0):
+        """Compare (and assert for equality) flags applied to this MS by
+        flagdata/mode='shadow' against flags derived from calculations
+        based on the UVW column of the MS. These calculations follow
+        the spec in the docs: uvdist < (ant_idstance - tolerance),
+        where the uv_dist is calculated from the MS UVW, and the sign
+        of the W is used to decide which antenna from the baseline is
+        flagged by the other one.
+
+        This is a very rudimentary re-implemenation of shadow, meant
+        to be used when shadow flagging is applied based only on
+        column UVW (when all antennas are found in the baselines
+        present in the data, without involving computeAntUVW()).
+
+        :param: vis: an MS flagged with flagdata/mode='shadow'
+        :param: vis: antenna distances ((diam1 + diam2/2) - all antennas same
+                     size assumed
+        :param: tolerance: shadow method tolerance
+
+        """
+        tbt = table()
+        try:
+            tbt.open(vis)
+            uvw = tbt.getcol('UVW')
+            flags = tbt.getcol('FLAG')
+            ant1 = tbt.getcol('ANTENNA1')
+            ant2 = tbt.getcol('ANTENNA2')
+            col_time = tbt.getcol('TIME')
+            self.assertEqual(uvw.shape[1], flags.shape[2])
+            self.assertEqual(uvw.shape[1], flags.shape[2])
+
+            # collapse dimensions 0 (pols) and 1 (channels) (should be the same as
+            # tbt.getcol('FLAG_ROW') but not using it as it is ~deprecated, albeit updated
+            # correctly by flagdata at least)
+            row_flagged = np.all(flags, (0,1))
+
+            uv_dist = np.sqrt(np.multiply(uvw[0],uvw[0]) + np.multiply(uvw[1],uvw[1]))
+            flagged_by_uvw = (uv_dist > 0) & (uv_dist < ant_distance - tolerance)
+            ant1_shadowed_uvw = flagged_by_uvw & (uvw[2] < 0)
+            ant2_shadowed_uvw = flagged_by_uvw & (uvw[2] >= 0)
+
+            # Go from shadowed antenna to all baselines that have that one (same time step)
+            # This is inefficient code - should only be used with few timesteps
+            baselines_flagged_from_ants = np.full(ant1_shadowed_uvw.shape, False)
+            for idx in np.arange(0, len(ant1_shadowed_uvw)):
+                ant_shadowed = None
+                if ant1_shadowed_uvw[idx]:
+                    ant_shadowed = ant1[idx]
+                elif ant2_shadowed_uvw[idx]:
+                    ant_shadowed = ant2[idx]
+                if ant_shadowed:
+                    for flag_idx in np.arange(0, len(ant1_shadowed_uvw)):
+                        if col_time[idx] != col_time[flag_idx]:
+                            continue
+                        if ant1[flag_idx] == ant_shadowed or ant2[flag_idx] == ant_shadowed:
+                            baselines_flagged_from_ants[flag_idx] = True
+
+            np.testing.assert_array_equal(baselines_flagged_from_ants, row_flagged,
+                                          'mismatch between flags set and flags expected '
+                                          'from UVW distances found in the MS.')
+
+        finally:
+            tbt.close()
 
     def test_CAS2399(self):
         '''flagdata: shadow by antennas not present in MS'''
@@ -1045,7 +1124,7 @@ class test_shadow(test_base):
         self.assertEqual(res['antenna']['VLA3']['flagged'], 3752)
         self.assertEqual(res['antenna']['VLA4']['flagged'], 1320)
         self.assertEqual(res['antenna']['VLA5']['flagged'], 1104)
-        
+
     def test_addantenna(self):
         '''flagdata: use antenna file in list mode'''
         if os.path.exists("myants.txt"):
@@ -1083,12 +1162,64 @@ class test_shadow(test_base):
         self.assertEqual(res['antenna']['VLA4']['flagged'], 1320)
         self.assertEqual(res['antenna']['VLA5']['flagged'], 1104)
         
+    def test_vla_without_addantenna(self):
+        '''flagdata: simple mode shadow test without adding antennas'''
+        flagdata(vis=self.vis, mode='shadow', flagbackup=False)
+
+        # Check flags
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 16116)
+        self.assertEqual(res['antenna']['VLA0']['flagged'], 7920)
+
     def test_shadow_APP(self):
         '''flagdata: flag shadowed antennas with ref frame APP'''
+        # After CAS-12555 this test no longer flags any data (computeAntUVW not used when
+        # all antennas present in baselines found in data). See test_shadow_APP_with_sel
         self.setUp_shadowdata1()
         flagdata(vis=self.vis, flagbackup=False, mode='shadow')
         res = flagdata(self.vis, mode='summary')
-        self.assertEqual(res['flagged'], 2052)
+        self.assertEqual(res['flagged'], 0)
+        # This MS is not flagged at all, and has a mix of 7m and 12m antennas. Skip:
+        # self._check_uvw_match_shadow(self.vis, 12.0)
+
+    def test_shadow_alma_small(self):
+        '''flagdata: flag shadowe antennas, compare with expected calculations based on the UVWs from the MS'''
+        # For this test we need:
+        # - an ALMA MS, without missing baselines (all antenna combinations present for all
+        #   time steps).
+        # - not too many time steps (check_uvw_match_shadow could be slow)
+        # - antennas of same size, for simplicity,
+        #
+        # 'uid___A002_X30a93d_X43e_small.ms' is not appropriate, it has missing baselines ->
+        #  triggers the 2nd block of calculations in shadow (computeAntUVW())
+
+        # all baselines present, 12m antennas
+        self.setUp_shadowdata_alma_small()
+
+        ant_diameter = 12
+        # This dataset does not really have direct shadowing.
+        # tolerance<0 induces a bit of shadowing (forces antennas apart)
+        tolerance = -6.5
+        flagdata(vis=self.vis, flagbackup=False, mode='shadow', tolerance=tolerance)
+        res = flagdata(self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 7680)
+        self.assertEqual(res['antenna']['A01']['flagged'], 7680)
+        self._check_uvw_match_shadow(self.vis, ant_diameter, tolerance)
+
+    def test_shadow_APP_with_sel(self):
+        '''flagdata: flag shadowed antennas with ref frame APP, selecting some antennas -> triggering computeAntUVW calculations'''
+        self.setUp_shadowdata1()
+        # Try to pick antennas such that the available UVW distances (shadow-code-block-1)
+        # leave enough untouched baselines for the phase-center distances
+        # (shadow-code-block-2 == computeAntUVW) to be able to flag them. CAS-12555
+        ants = 'DA61,PM02,PM03,CM07,DV18,CM06,DA59,DV20,DV24,CM12'
+        flagdata(vis=self.vis, antenna=ants, flagbackup=False, mode='shadow')
+        res = flagdata(self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 720)
+        self.assertEqual(res['total'], 6552)
+        nflags_ants = {'CM10': 360, 'CM04': 360}
+        for ant, nflags in nflags_ants.items():
+            self.assertEqual(res['antenna'][ant]['flagged'], nflags)
 
 
 class test_msselection(test_base):

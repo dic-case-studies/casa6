@@ -72,15 +72,6 @@
 #include <synthesis/ImagerObjects/SIImageStore.h>
 #include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
 
-// supporting code for getAllocatedMemoryInBytes()
-#if defined(AIPS_DARWIN) || defined(AIPS_CRAY_PGI) || __cplusplus <= 199711L
-#include <casa/OS/Memory.h>
-#else
-#include <malloc.h>
-#include <string>
-#include <stdio.h>
-#endif
-
 using namespace std;
 
 using namespace casacore;
@@ -941,39 +932,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     oos << "     "
         << MDirection::showType(direction.getRefPtr()->getType());
     return String(oos);
-  }
-
-  uLong SynthesisUtilMethods::getAllocatedMemoryInBytes()
-  {
-#if defined(AIPS_DARWIN) || defined(AIPS_CRAY_PGI) || __cplusplus <= 199711L
-    // If on mac, or if compiling with < c++11, then use the old function.
-    return (uLong) Memory::allocatedMemoryInBytes();
-#else
-    // NOTE: Don't trust mallinfo if you've ever allocated more than 2GB at once. (see mallinfo bugs section)
-    //       Prefer malloc_info() over mallinfo().
-
-    // Get the human-readable xml info dump.
-    char *buf;
-    size_t bufsize;
-    FILE *fp = open_memstream(&buf, &bufsize);
-    if (fp == NULL)
-        return 0;
-    malloc_info(0, fp);
-    fclose(fp);
-
-    // Extract the "mmap" info out. For example, there will be this line at the end of the xml when ~2GB is allocated:
-    // <total type="mmap" count="14" size="2147409920"/>
-    // I (BGB) believe that "count" is the number of mmap block structs that are holding onto the memory, and "size" is the total of those blocks.
-    // The returned value for this example would be 2147409920.
-    std::string strbuf(buf);
-    size_t totalpos = strbuf.rfind("<total type=\"mmap\" count=\"");
-    size_t startpos = strbuf.find("size=\"", totalpos); startpos += 6; // strlen("size=\"") == 6
-    size_t endpos   = strbuf.find("\"", startpos);
-    if (totalpos == std::string::npos || startpos == std::string::npos || endpos == std::string::npos)
-        return 0;
-    std::string sizestr = strbuf.substr(startpos, endpos-startpos);
-    return (uLong) std::stoul(sizestr);
-#endif
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4160,6 +4118,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                err+= "nsigma must be an int, float or double";
             }
           }
+        if( inrec.isDefined("noRequireSumwt") )
+          {
+            if (inrec.dataType("noRequireSumwt")==TpBool) {
+              err+= readVal(inrec, String("noRequireSumwt"), noRequireSumwt);
+            }
+            else {
+              err+= "noRequireSumwt must be a bool";
+            }
+          }
         if( inrec.isDefined("restoringbeam") )     
 	  {
 	    String errinfo("");
@@ -4344,6 +4311,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("fastnoise", fastnoise);
     decpar.define("interactive",interactive);
     decpar.define("nsigma",nsigma);
+    decpar.define("noRequireSumwt",noRequireSumwt);
 
     return decpar;
   }

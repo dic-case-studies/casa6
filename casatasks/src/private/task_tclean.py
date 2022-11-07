@@ -115,8 +115,8 @@ def tclean(
     scales,#=[],
     nterms,#=1,
     smallscalebias,#=0.0
-    fusedthreshold,
-    largestscale,
+    fusedthreshold,#=0.0
+    largestscale,#=-1
 
     ### restoration options
     restoration,

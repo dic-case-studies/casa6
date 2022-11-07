@@ -45,9 +45,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class SIMinorCycleController
  {
   public:
-    //   0           1          2            3              4           5       6      7                  8                9               10                11 "No Mask"      12           13         14          15         16         17       18
-    // ["iterDone", "peakRes", "modelFlux", "cycleThresh", "mapperId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "immod", "stopCode"]
-    static const casacore::Int nSummaryFields = 19;
+    //   0           1          2            3              4           5       6      7                  8                9               10                11 "No Mask"      12           13         14          15         16        
+    // ["iterDone", "peakRes", "modelFlux", "cycleThresh", "mapperId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "immod", "stopCode"]
+    static const casacore::Int nSummaryFields = 17;
 
     // make noncopyable...
     SIMinorCycleController( const SIMinorCycleController& ) = delete;
@@ -112,7 +112,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
    void addSummaryMinor(casacore::uInt deconvolverid, casacore::uInt channel, casacore::uInt polarity,
                         casacore::Int cycleStartIter, casacore::Int startIterDone, casacore::Float startmodel, casacore::Float startpeakresidual, casacore::Float startpeakresidualnomask,
-                        casacore::Float model, casacore::Float peakresidual, casacore::Float peakresidualnomask, casacore::Float masksum, casacore::Int mpiRank, casacore::Float peakMem, casacore::Float runtime, casacore::Int stopCode);
+                        casacore::Float model, casacore::Float peakresidual, casacore::Float peakresidualnomask, casacore::Float masksum, casacore::Int mpiRank, casacore::Int stopCode);
     
     /* Variables to track status inside each Deconvolver */
     casacore::Float getPeakResidual();

@@ -2,6 +2,7 @@
 import os
 import re
 import shutil
+import string
 
 import numpy
 
@@ -17,7 +18,7 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
               mode, nchan, start, width, veltype, outframe,
               gridfunction, convsupport, truncate, gwidth, jwidth,
               imsize, cell, phasecenter, projection, ephemsrcname,
-              pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
+              pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax, enablecache):
     with sdimaging_worker(**locals()) as worker:
         worker.initialize()
         worker.execute()
@@ -502,18 +503,29 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.imager.defineimage(**self.imager_param)  # self.__get_param())
         self.imager.setoptions(ftmachine='sd', gridfunction=self.gridfunction)
         self.imager.setsdoptions(
-            pointingcolumntouse=self.pointingcolumn, convsupport=self.convsupport,
-            truncate=self.truncate, gwidth=self.gwidth, jwidth=self.jwidth, minweight=0.,
-            clipminmax=self.clipminmax)
-        self.imager.makeimage(type='singledish', image=self.outfile)
-        weightfile = self.outfile + ".weight"
-        self.imager.makeimage(type='coverage', image=weightfile)
+            pointingcolumntouse=self.pointingcolumn,
+            convsupport=self.convsupport,
+            truncate=self.truncate,
+            gwidth=self.gwidth,
+            jwidth=self.jwidth,
+            minweight = 0.,
+            clipminmax=self.clipminmax,
+            enablecache=self.enablecache
+        )
+
+        # Create images
+        imgtype_suffix = {'singledish': '', 'coverage' : '.weight'}
+        for img_type, img_suffix in imgtype_suffix.items():
+            img_file = self.outfile + img_suffix
+            msg_fmt = string.Template(f"$state {img_type} image {img_file}")
+            casalog.post(msg_fmt.substitute(state="Generating"), "INFO")
+            self.imager.makeimage(type=img_type, image=img_file)
+            if not os.path.exists(img_file):
+                raise RuntimeError(msg_fmt.substitute(state="Failed to generate"))
+            casalog.post(msg_fmt.substitute(state="Generated"), "INFO")
+        # Close imager
         self.close_imager()
 
-        if not os.path.exists(self.outfile):
-            raise RuntimeError("Failed to generate output image '%s'" % self.outfile)
-        if not os.path.exists(weightfile):
-            raise RuntimeError("Failed to generate weight image '%s'" % weightfile)
         # Convert output images to proper output frame and set brightness unit (if necessary)
         my_ia = image()
         my_ia.open(self.outfile)
@@ -527,6 +539,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         my_ia.close()
 
         # CAS-12984 set brightness unit for weight image to ''
+        weightfile = self.outfile + imgtype_suffix['coverage']
         my_ia.open(weightfile)
         my_ia.setbrightnessunit('')
         my_ia.close()
@@ -866,7 +879,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.observation_table = sdutil.get_subtable_name(keys['OBSERVATION'])
         self.pointing_table = sdutil.get_subtable_name(keys['POINTING'])
         self.data_desc_table = sdutil.get_subtable_name(keys['DATA_DESCRIPTION'])
-        self.pointing_table = sdutil.get_subtable_name(keys['POINTING'])
 
     def _get_average_antenna_diameter(self, antenna):
         my_qa = quanta()
