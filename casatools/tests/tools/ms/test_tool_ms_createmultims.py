@@ -29,7 +29,6 @@ import numpy as np
 from casatools import ms
 from casatools import table
 from casatools import ctsys
-from casatools.platform import bytes2str
 
 myname = 'test_tool_ms_createmultims'
 
@@ -108,7 +107,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
         p = Popen(ducmd, shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
         o, e = p.communicate()             ### previously 'sizeline = p.stdout.read()' here
                                            ### left process running...
-        sizeline = bytes2str(o.split( )[0])
+        sizeline = o.decode().split( )[0]
 
         # Create a list of the output string, which looks like this:
         # ' 75M\tuidScan23.data/uidScan23.0000.ms\n'
