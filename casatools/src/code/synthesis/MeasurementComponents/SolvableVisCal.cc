@@ -1,4 +1,4 @@
-//# SolvableVisCal.cc: Implementation of SolvableVisCal classes
+//# SolvableVisCal.cc: Implementation of SolvableVisCal classes/Users/nschweig/CASA6/CASR-539/SolvableVisCal.cc
 //# Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -64,6 +64,12 @@
 #include <iostream>
 #include <iomanip>
 #include <casacore/casa/Containers/RecordField.h>
+
+#if ! defined(CASATOOLS)
+#include <casadbus/plotserver/PlotServerProxy.h>
+#include <casadbus/utilities/BusAccess.h>
+#include <casadbus/session/DBusSession.h>
+#endif
 
 #include <casacore/casa/Logging/LogMessage.h>
 #include <casacore/casa/Logging/LogSink.h>

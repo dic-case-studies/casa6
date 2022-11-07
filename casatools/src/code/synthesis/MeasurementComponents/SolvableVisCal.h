@@ -51,6 +51,11 @@
 #include <casacore/casa/Logging/LogSink.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <casacore/casa/OS/Timer.h>
+#if ! defined(CASATOOLS)
+#include <casadbus/plotserver/PlotServerProxy.h>
+#include <casadbus/utilities/BusAccess.h>
+#include <casadbus/session/DBusSession.h>
+#endif
 
 #include <iostream>
 #include <fstream>
