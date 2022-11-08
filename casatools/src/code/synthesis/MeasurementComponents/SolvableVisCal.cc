@@ -63,13 +63,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <casacore/casa/Containers/RecordField.h>
-
-#if ! defined(CASATOOLS)
-#include <casadbus/plotserver/PlotServerProxy.h>
-#include <casadbus/utilities/BusAccess.h>
-#include <casadbus/session/DBusSession.h>
-#endif
+#include <casacore/casa/Containers/RecordField.h
 
 #include <casacore/casa/Logging/LogMessage.h>
 #include <casacore/casa/Logging/LogSink.h>
