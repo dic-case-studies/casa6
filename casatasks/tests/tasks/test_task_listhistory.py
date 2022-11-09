@@ -29,7 +29,6 @@ import shutil
 
 import casatools
 from casatools import ctsys
-from casatools.platform import bytes2str
 from casatasks import listhistory, casalog
 
 
@@ -108,9 +107,9 @@ class listhistory_test(unittest.TestCase):
         os.system(cmd)
         logfile = newfile
 
-        cmd=['wc', '-l', logfile]
+        cmd=f'wc -l {logfile}'
         print(cmd)
-        output = bytes2str(subprocess.check_output(cmd))
+        output = subprocess.getoutput(cmd)
 
         num = int(output.split()[0])
         self.assertEqual(refnum,num)
