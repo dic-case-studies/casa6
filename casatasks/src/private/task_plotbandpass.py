@@ -500,20 +500,23 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
     Draws the legend at the top of the page, if it is the correct time to do so,
     including the overlayTimes, the 'UT' label, and the caltable name.
     """
-#    debugSloppyMatch=True
+    # debugSloppyMatch=True
     if (xframe == firstFrame):
         # draw title including caltable name
-        pb.text(xstartTitle, ystartTitle, caltableTitle, size=titlesize,
-                color='k', transform=pb.gcf().transFigure)
+        pb.text(xstartTitle, ystartTitle, caltableTitle, size=titlesize, color='k', transform=pb.gcf().transFigure)
         # support multi-fields with overlay='time'
         uTPFPS = []
         uTPFPStimerange = []
+        
         # Find all timerange integers for all fields, not just the ones that were plotted
         allTimeranges = []
         for f in range(len(uniqueTimesPerFieldPerSpw[ispwInCalTable])):
             for t in uniqueTimesPerFieldPerSpw[ispwInCalTable][f]:
                 if (t in timerangeListTimes):
                     allTimeranges.append(list(timerangeListTimes).index(t))
+        
+        allTimeranges = list(np.sort(np.unique(allTimeranges)))
+        
         for f in fieldIndicesToPlot:
             for t in uniqueTimesPerFieldPerSpw[ispwInCalTable][f]:
                 matched, mymatch = sloppyMatch(t, timerangeListTimes, solutionTimeThresholdSeconds,
@@ -521,7 +524,7 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
                 if (matched):
                     uTPFPS.append(t)
                     uTPFPStimerange.append(mymatch)
-        allTimeranges = list(np.sort(np.unique(allTimeranges)))
+        
         idx = np.argsort(uTPFPS)
         uTPFPStimerange = np.array(uTPFPStimerange)[idx]
         uTPFPS = np.sort(uTPFPS)
@@ -553,6 +556,7 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
                     myUniqueTime = uTPFPS[a]
                     if (debug):
                         print("3)setting myUniqueTime to %d" % (myUniqueTime))
+
             if (debug): print("----> Drawing legendString: %s" % (legendString))
             if ((len(fieldsToPlot) > 1 or len(timerangeList) > 1) and overlayAntennas==False):
                 # having overlayAntennas==False here will force all time labels to be black (as desired)
@@ -562,12 +566,23 @@ def drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,caltable,ti
 #                        transform=pb.gcf().transFigure)
                 if (debug):
                     print("len(uTPFPStimerange)=%d, a=%d, len(myUniqueColor)=%d" % (len(uTPFPStimerange),a,len(myUniqueColor)))
-                pb.text(x0, y0, legendString,color=overlayColors[timerangeList[allTimeranges.index(uTPFPStimerange[a])]],
-                        fontsize=mysize, transform=pb.gcf().transFigure)
+
+                uTPFPStimerangeValue = uTPFPStimerange[a]
+                try:
+                    timerangeListIndex = allTimeranges.index(uTPFPStimerangeValue)
+                except ValueError:
+                    casalogPost(debug, "uTPFPStimerangeValue = {} is not in the list allTimeranges".format(uTPFPStimerangeValue))
+                    casalogPost(debug, "Setting timerangeListIndex = 0. This will change the overlay colors index to a default value. The time labels might not look as expected.")
+                    casalogPost(debug, "It is possible that certain antennas had a slightly different timestamp.")
+                    timerangeListIndex = 0
+                
+                overlayColorsIndex = timerangeList[timerangeListIndex]
+                pb.text(x0, y0, legendString, color=overlayColors[overlayColorsIndex], fontsize=mysize, transform=pb.gcf().transFigure)
+                
                 if (debug):
                     print("done text")
             else:
-                pb.text(x0, y0, legendString,fontsize=mysize, transform=pb.gcf().transFigure)
+                pb.text(x0, y0, legendString, fontsize=mysize, transform=pb.gcf().transFigure)
 
 def lineNumber():
     """Returns the current line number in our program."""
@@ -668,7 +683,7 @@ def plural(u):
     else:
         return('')
 
-def casalogPost(debug,mystring):
+def casalogPost(debug, mystring):
     casalog.post(mystring)
     if (debug): print(mystring)
     
@@ -6783,7 +6798,7 @@ def findClosestTime(mytimes, mytime):
 def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
     """
     Queries the WEATHER and ANTENNA tables of an .ms by scan number or
-    list of scan numbers in order to return mean values of: angleToSun,
+    list of scan numbers in order to return median values of: angleToSun,
       pressure, temperature, humidity, dew point, wind speed, wind direction,
       azimuth, elevation, solarangle, solarelev, solarazim.
     If the sun is below the horizon, the solarangle returned is negated.
@@ -6878,8 +6893,8 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
         listfield = mymsmd.fieldsforscan(scan)
     [az,el] = ComputeSolarAzElForObservatory(myTimes[0], mymsmd)
     [az2,el2] = ComputeSolarAzElForObservatory(myTimes[-1], mymsmd)
-    azsun = np.mean([az,az2])
-    elsun = np.mean([el,el2])
+    azsun = np.median([az,az2])
+    elsun = np.median([el,el2])
     direction = subtable.getcol("DIRECTION")
     azeltime = subtable.getcol("TIME")
     subtable.close()
@@ -6896,21 +6911,21 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
       else:
           matchingIndices = []
       if (len(matchingIndices) > 0):  # CAS-8440
-          conditions['azimuth'] = np.mean(azimuth[matches[0]:matches2[-1]+1])
-          conditions['elevation'] = np.mean(elevation[matches[0]:matches2[-1]+1])
+          conditions['azimuth'] = np.median(azimuth[matches[0]:matches2[-1]+1])
+          conditions['elevation'] = np.median(elevation[matches[0]:matches2[-1]+1])
       elif (len(matches) > 0):        # CAS-8440
-          if verbose: print("using mean of all az/el values after time 0")
-          conditions['azimuth'] = np.mean(azimuth[matches[0]])
-          conditions['elevation'] = np.mean(elevation[matches[0]])
+          if verbose: print("using median of all az/el values after time 0")
+          conditions['azimuth'] = np.median(azimuth[matches[0]])
+          conditions['elevation'] = np.median(elevation[matches[0]])
       else:                           # CAS-8440
-          if verbose: print("using mean of all az/el values")
-          conditions['azimuth'] = np.mean(azimuth)
-          conditions['elevation'] = np.mean(elevation)
+          if verbose: print("using median of all az/el values")
+          conditions['azimuth'] = np.median(azimuth)
+          conditions['elevation'] = np.median(elevation)
       conditions['solarangle'] = angularSeparation(azsun,elsun,conditions['azimuth'],conditions['elevation'])
       conditions['solarelev'] = elsun
       conditions['solarazim'] = azsun
       if (verbose):
-          print("Using antenna = %s to retrieve mean azimuth and elevation" % (antennaName))
+          print("Using antenna = %s to retrieve median azimuth and elevation" % (antennaName))
           print("Separation from sun = %f deg" % (abs(conditions['solarangle'])))
       if (elsun<0):
         conditions['solarangle'] = -conditions['solarangle']
@@ -6933,7 +6948,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
             fieldName = fieldName[0]
 #        print("A) fieldname = ", fieldName)
 #        print("myfieldId = ", myfieldId)
-        myscantime = np.mean(mymsmd.timesforscan(scan))
+        myscantime = np.median(mymsmd.timesforscan(scan))
 #        print("Calling getRADecForField")
         mydirection = getRADecForField(vis, myfieldId, verbose)
         if (verbose): print("mydirection= %s" % (str(mydirection)))
@@ -6970,7 +6985,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
               if (type(myfieldId) == list or type(myfieldId)==type(np.ndarray(0))):
                   # If the same field name has two IDs (this happens in EVLA data)
                   myfieldId = myfieldId[0]
-              myscantime = np.mean(mymsmd.timesforscan(s))
+              myscantime = np.median(mymsmd.timesforscan(s))
               mydirection = getRADecForField(vis, myfieldId, verbose)
               telescopeName = mymsmd.observatorynames()[0]
               if (len(telescopeName) < 1):
@@ -6978,13 +6993,13 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
               myazel = computeAzElFromRADecMJD(mydirection, myscantime/86400., telescopeName)
               myaz.append(myazel[0]*180/math.pi)
               myel.append(myazel[1]*180/math.pi)
-          conditions['azimuth'] = np.mean(myaz)
-          conditions['elevation'] = np.mean(myel)
+          conditions['azimuth'] = np.median(myaz)
+          conditions['elevation'] = np.median(myel)
           conditions['solarangle'] = angularSeparation(azsun,elsun,conditions['azimuth'],conditions['elevation'])
           conditions['solarelev'] = elsun
           conditions['solarazim'] = azsun
           if (verbose):
-              print("Using antenna = %s to retrieve mean azimuth and elevation" % (antennaName))
+              print("Using antenna = %s to retrieve median azimuth and elevation" % (antennaName))
               print("Separation from sun = %f deg" % (abs(conditions['solarangle'])))
           if (elsun<0):
               conditions['solarangle'] = -conditions['solarangle']
@@ -7015,15 +7030,15 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
         pressure = mytb.getcol('PRESSURE')
         relativeHumidity = mytb.getcol('REL_HUMIDITY')
         temperature = mytb.getcol('TEMPERATURE')
-        if (np.mean(temperature) > 100):
+        if (np.median(temperature) > 100):
             # must be in units of Kelvin, so convert to C
             temperature -= 273.15        
         if 'DEW_POINT' in mytb.colnames():
             dewPoint = mytb.getcol('DEW_POINT')
-            if (np.mean(dewPoint) > 100):
+            if (np.median(dewPoint) > 100):
                 # must be in units of Kelvin, so convert to C
                 dewPoint -= 273.15        
-            if (np.mean(dewPoint) == 0):
+            if (np.median(dewPoint) == 0):
                 # assume it is not measured and use NOAA formula to compute from humidity:
                 dewPoint = ComputeDewPointCFromRHAndTempC(relativeHumidity, temperature)
         else:
@@ -7087,23 +7102,23 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
                       print("matches2[0]=%f, matches2[-1]=%d" % (matches2[0], matches2[-1]))
           else:
               conditions['readings'] = len(selectedValues)
-          conditions['pressure'] = np.mean(pressure[selectedValues])
+          conditions['pressure'] = np.median(pressure[selectedValues])
           if (conditions['pressure'] != conditions['pressure']):
               # A nan value got through, due to no selected values (should be impossible)"
               if (verbose):
                   print(">>>>>>>>>>>>>>>>>>>>>>>>  selectedValues = %s" % (str(selectedValues)))
                   print("len(matches)=%d, len(matches2)=%d" % (len(matches), len(matches2)))
                   print("matches[0]=%f, matches[-1]=%f, matches2[0]=%f, matches2[-1]=%d" % (matches[0], matches[-1], matches2[0], matches2[-1]))
-          conditions['temperature'] = np.mean(temperature[selectedValues])
-          conditions['humidity'] = np.mean(relativeHumidity[selectedValues])
+          conditions['temperature'] = np.median(temperature[selectedValues])
+          conditions['humidity'] = np.median(relativeHumidity[selectedValues])
           if dewPoint is not None:
-              conditions['dewpoint'] = np.nanmean(dewPoint[selectedValues])
-          conditions['windspeed'] = np.mean(windSpeed[selectedValues])
-          conditions['winddirection'] = (180./math.pi)*np.arctan2(np.mean(sinWindDirection[selectedValues]),np.mean(cosWindDirection[selectedValues]))
+              conditions['dewpoint'] = np.nanmedian(dewPoint[selectedValues])
+          conditions['windspeed'] = np.median(windSpeed[selectedValues])
+          conditions['winddirection'] = (180./math.pi)*np.arctan2(np.median(sinWindDirection[selectedValues]),np.median(cosWindDirection[selectedValues]))
           if (conditions['winddirection'] < 0):
               conditions['winddirection'] += 360
           if (verbose):
-              print("Mean weather values for scan %s (field %s)" % (listscan,listfield))
+              print("Median weather values for scan %s (field %s)" % (listscan,listfield))
               print("  Pressure = %.2f mb" % (conditions['pressure']))
               print("  Temperature = %.2f C" % (conditions['temperature']))
               if dewPoint is not None:
