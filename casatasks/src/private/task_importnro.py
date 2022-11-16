@@ -1,10 +1,10 @@
 import datetime
 import os
+import sys
 import shutil
 
 from casatasks import casalog
 from casatools import calibrater, ms, singledishms
-from casatools.platform import bytes2str
 
 from . import sdutil
 from .mstools import write_history
@@ -64,8 +64,7 @@ def _is_nostar(filename):
     ret = False
     if os.path.getsize(filename) >= 15136:  # size of observation header
         with open(filename, 'rb') as f:
-            if bytes2str(f.read(8).replace(b'\x00', b'')) == 'RW':
-                ret = (bytes2str(f.read(15136 - 8 + 4)[-4:].replace(b'\x00', b'')) == 'LS')
+            if f.read(8).replace(b'\x00', b'') == b'RW':
+                ret = (f.read(15136 - 8 + 4)[-4:].replace(b'\x00', b'').decode( ) == 'LS')
             f.close()
-
     return ret

@@ -58,7 +58,6 @@ from casatestutils.compare import compare_dictionaries
 
 import casatools
 from casatasks import partition, split, listobs, casalog
-from casatools.platform import bytes2str
 
 ms = casatools.ms()
 
@@ -209,21 +208,10 @@ class listobs_test_base(unittest.TestCase):
         res = listobs(vis=dataset)
         casalog.setlogfile(logpath)
 
-        if sys.version_info[0] == 3:
-            print('VERSION', ' ', sys.version_info)
-            # Check that the file can be read in python session default encoding
-            with open('testlog.log', 'r') as fout:
-                list(map(bytes2str, fout.readlines()))
-                print(list(map(bytes2str, fout.readlines())))
-
-        else:
-            # Check if the file can be decoded as ascii for python 2.7
-            with open('testlog.log', 'r') as log:
-                for data in log:
-                    try:
-                        data.decode('ASCII')
-                    except:
-                        self.fail()
+        print('VERSION', ' ', sys.version_info)
+        # Check that the file can be read in python session default encoding
+        with open('testlog.log', 'r', encoding=sys.getdefaultencoding( )) as fout:
+            fout.readlines( )
 
         self.check_return_dict(res, dataset)
 

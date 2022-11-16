@@ -4,26 +4,13 @@ from __future__ import print_function
 import datetime
 import re
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from urllib.request import urlopen
-    from urllib.error import URLError
-    from casatools import table, quanta
-    from casatasks import casalog
-    from casatools.platform import bytes2str
+from urllib.request import urlopen
+from urllib.error import URLError
+from casatools import table, quanta
+from casatasks import casalog
 
-    _tb = table( )
-    _qa = quanta( )
-else:
-    from urllib2 import urlopen
-    from urllib2 import URLError
-
-    from taskinit import *
-
-    (_tb,)=gentools(['tb'])
-
-    # to make the following code the same as the CASA6 version
-    _qa = qa
+_tb = table( )
+_qa = quanta( )
 
 ######################################################################
 def correct_ant_posns_evla (vis_name, print_offsets=False):
@@ -116,10 +103,7 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
     response.close()
     for year in range(2010,current_year+1):
         response = urlopen(URL_BASE + str(year))
-        if is_CASA6:
-            html = bytes2str(response.read())
-        else:
-            html = response.read()
+        html = response.read( ).decode( )
         response.close()
         html_lines = html.split('\n')
 
