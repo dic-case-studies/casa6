@@ -133,7 +133,7 @@ if "--stripsyms" in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.68.jar'
+xml_jar_file = 'xml-casa-assembly-1.71.jar'
 xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
 xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
 
@@ -332,8 +332,15 @@ def clean_args(l):
 ## https://stackoverflow.com/questions/14320220/testing-python-c-libraries-get-build-path
 def distutils_dir_name(dname):
     """Returns the name of a distutils build directory"""
-    f = "{dirname}.{platform}-{version[0]}.{version[1]}"
-    return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+    import setuptools
+    from packaging import version as pversion
+    if (pversion.parse(setuptools.__version__) < pversion.parse("62.1.0")):
+       f = "{dirname}.{platform}-{version[0]}.{version[1]}"
+       return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+    else:
+       f = "{dirname}.{platform}-{cache_tag}"
+       return f.format(dirname=dname, platform=sysconfig.get_platform(), cache_tag=sys.implementation.cache_tag)
+
 
 def distutils_shared_library_name(base):
     shared_ext = "dylib" if sys.platform == 'darwin' else "so"

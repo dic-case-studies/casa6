@@ -452,7 +452,6 @@ class TestImsmooth(test_base):
         pa = "0deg"
         kimage = self.tiny
         scale = -2.0
-        logorigin = "imbaseline"
 
         def compare_params(
             _kernel, _major=major, _minor=minor, _pa=pa, _kimage=kimage, _scale=scale
@@ -474,8 +473,7 @@ class TestImsmooth(test_base):
                 minor=_minor,
                 pa=_pa,
                 kimage=_kimage,
-                scale=_scale,
-                __log_origin=logorigin,
+                scale=_scale
             )
             param = _ImsmoothParams(
                 infile, outfile, _kernel, _major, _minor, _pa, _kimage, _scale
@@ -650,7 +648,6 @@ class TestSdsmooth(test_base):
         datacolumn = DATACOLUMN
         kernel = ("none", "gaussian", "boxcar")
         kwidth = 5
-        logorigin = "imbaseline"
 
         def compare_params(_kernel):
             valid_params = dict(
@@ -667,8 +664,7 @@ class TestSdsmooth(test_base):
                 datacolumn=datacolumn,
                 kernel=_kernel,
                 kwidth=kwidth,
-                outfile=outfile,
-                __log_origin=logorigin,
+                outfile=outfile
             )
             params = _SdsmoothParams(
                 infile=infile,
@@ -849,7 +845,6 @@ class TestSdbaseline(test_base):
         blparam = self.blparam
         clipniter = 11
         clipthresh = 3.0
-        logorigin = "imbaseline"
 
         def compare_params(_maskmode, _blfunc):
             valid_param = dict(
@@ -890,8 +885,7 @@ class TestSdbaseline(test_base):
                 clipthresh=clipthresh,
                 clipniter=clipniter,
                 blparam=blparam,
-                outfile=outfile,
-                __log_origin=logorigin,
+                outfile=outfile
             )
             params = _SdbaselineParams(
                 infile=infile,

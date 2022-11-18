@@ -164,8 +164,23 @@ class gencal_antpostest(unittest.TestCase):
 
             self.assertTrue(os.path.exists(self.caltable))
             # Compare with reference file from the repository
+            # CAS-13940 - as the correction values are accumulated, running the test at later time
+            # may cause the values to deviate from the time of reference caltable generation.
+            # For this specific data set, with antenna 28 on the same pad for a long timespan such
+            # situation can occur. So here do the comparison of the caltables skipping the correction
             reference = self.reffile3
-            self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT', 'OBSERVATION_ID']))
+            self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT', 'OBSERVATION_ID', 'FPARAM']))
+
+            # now just compare antennas 23 and 25 entries for FPARAM...
+            # row 21 (=ant 23) and 23 (= ant 25) 
+            _tb.open(self.caltable)
+            curfparam=_tb.getcol('FPARAM').transpose()
+            _tb.close()
+            _tb.open(reference)
+            reffparam=_tb.getcol('FPARAM').transpose()
+            _tb.close()
+            self.assertTrue((curfparam[21]==reffparam[21]).all())
+            self.assertTrue((curfparam[23]==reffparam[23]).all())
 
         except URLError as err:
             print("Cannot access %s , skip this test" % evlabslncorrURL)

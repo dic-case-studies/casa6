@@ -66,9 +66,6 @@ class TableBase(unittest.TestCase):
         self.tb.close( )
         self.tb.done( )
         self.ia.done()
-        tb = table()
-        self.assertTrue(len(tb.showcache()) == 0)
-        tb.done()
         if os.path.exists(self.scratch_path):
             shutil.rmtree( self.scratch_path, onerror=self.remove_readonly )
 

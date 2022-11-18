@@ -36,7 +36,7 @@ class LogsinkTest(unittest.TestCase):
         """Check the initial value of logsink.origin by getorigin."""
         self.assertEqual(casatools.logsink().getOrigin(), '')
 
-    def __getorigin_subtest(self, test_cases):
+    def __getorigin_success_subtest(self, test_cases):
         """Run subtest of getorigin with test cases.
 
         Parameters
@@ -50,9 +50,22 @@ class LogsinkTest(unittest.TestCase):
                 casalog.origin(input_origin)
                 self.assertEqual(casalog.getOrigin(), expected)
 
+    def __getorigin_failure_subtest(self, test_cases):
+        """Run subtest of getorigin with test cases.
+
+        Parameters
+        ----------
+        test_cases : list of tuple of {str, numeric, None}
+            List of test cases. Each test case is a tuple of origin and expected value.
+        """
+        casalog = casatools.logsink()
+        for input_origin in test_cases:
+            with self.subTest(origin=input_origin), self.assertRaises(TypeError):
+                casalog.origin(input_origin)
+
     def test_getorigin_set_strings(self):
         """Check that the string values set logsink.origin can get correctly by getorigin."""
-        self.__getorigin_subtest(
+        self.__getorigin_success_subtest(
             [
                 ('test', 'test'),
                 ('test\n', 'test\n')
@@ -61,21 +74,25 @@ class LogsinkTest(unittest.TestCase):
 
     def test_getorigin_set_nullvalues(self):
         """Check that the null values set logsink.origin can get correctly by getorigin."""
-        self.__getorigin_subtest(
+        self.__getorigin_success_subtest(
             [
                 ('\0', ''),
-                (None, 'None'),
                 ('', '')
+            ]
+        )
+        self.__getorigin_failure_subtest(
+            [
+                None,
             ]
         )
 
     def test_getorigin_set_num(self):
         """Check that the numeric values set logsink.origin can get correctly by getorigin."""
-        self.__getorigin_subtest(
+        self.__getorigin_failure_subtest(
             [
-                (1, '1'),
-                (np.pi, str(np.pi)),
-                (1 + 1j, str(1 + 1j))
+                1,
+                np.pi,
+                1 + 1j,
             ]
         )
 
