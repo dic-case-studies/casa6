@@ -1,14 +1,19 @@
 import functools
+import inspect
+
 from casatasks import casalog
 
 
 def log_origin_setter(func):
     """
-    This is a decorator function for a task calls other tasks.
+    This is a decorator function for a casatask calling other casatasks.
 
-    if it get the parameter '__log_origin', read it and set origin to the casalog.
-    otherwise it reads the function name and set origin to the logger.
-    So you don't need to set origin in the task any more.
+    This decorator is intended to be used on a "super" casatask calling "sub" casatasks.
+    Its effect is to set the origin of messages logged by the "sub" tasks called by the "super" task to "super"
+    For example:
+    super_casatask::casa "Msg from super task"
+    super_casatask::casa "Msg from sub-task1 called by super task"
+    super_casatask::casa "Msg from sub-task1 called by super task"
 
     Usage:
 
@@ -17,19 +22,22 @@ def log_origin_setter(func):
         pass
 
     def othertask(..)
-        kwargs['__log_origin'] = 'othertask'
         sometask(*args, **kwargs)  # logged "othertask::..."
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        caller = kwargs.pop('__log_origin', func.__name__)
-        casalog.origin(caller)
+        __set_origin(inspect.stack(), casalog.getOrigin(), func.__name__)
 
         retval = func(*args, **kwargs)
-
-        if caller != func.__name__:
-            kwargs['__log_origin'] = caller
 
         return retval
 
     return wrapper
+
+
+def __set_origin(callstack, origin, funcname):
+    for frame_info in callstack:
+        if frame_info.function == origin:
+            casalog.origin(origin)
+            return
+    casalog.origin(funcname)
