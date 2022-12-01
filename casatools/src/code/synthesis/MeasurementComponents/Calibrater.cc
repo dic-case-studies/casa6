@@ -64,7 +64,6 @@
 #include <msvis/MSVis/ViFrequencySelection.h>
 #include <casacore/casa/Quanta/MVTime.h>
 #include <casacore/casa/Logging/LogMessage.h>
-#include <casacore/casa/Logging/LogMessage.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <casacore/casa/Utilities/Assert.h>
 
