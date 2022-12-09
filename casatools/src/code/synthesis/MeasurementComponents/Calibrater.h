@@ -424,6 +424,8 @@ class Calibrater
 
   // Activity record
   casacore::Record actRec_;
+  // Results record
+  casacore::Record resRec_;
 
  private:
   // Copy constructor and assignment operator are forbidden
@@ -439,6 +441,56 @@ class Calibrater
   void setCalFilterConfiguration(casacore::String const &type,
       casacore::Record const &config);
 
+};
+
+// CalCounting objects
+
+class CalCounts {
+    
+  public:
+    // Constructor
+    CalCounts();
+    
+    // Destructor
+    virtual ~CalCounts();
+    
+    // initialize the shapes
+    void initCounts(casacore::Int NSpw, casacore::Int NAnt, casacore::Int NPol);
+    
+    // Methods for incrementing counts, initializing structure, and converting to record
+    void addAntennaCounts(casacore::Int spw, casacore::Int NAnt, casacore::Int NPol, std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>>);
+    
+    void updateRefants(casacore::Int, casacore::Int, std::map<casacore::Int, std::map<casacore::Int, casacore::Int>>);
+    
+    void logRecordInfo(casacore::Int NSpw, casacore::Int NAnt, casacore::Int NPol);
+    
+    casacore::Vector<casacore::Int> antMapVal(casacore::Int spw, casacore::Int ant, casacore::String);
+    
+    casacore::Vector<casacore::Int> spwMapVal(casacore::Int spw, casacore::String gate);
+    
+    casacore::Vector<casacore::Int> totalMapVal(casacore::String);
+    
+    casacore::Record makeRecord(casacore::Int, casacore::Int);
+    
+  private:
+    
+    // Log functions and variables
+    casacore::LogIO sink_p;
+    casacore::LogIO& logSink();
+    
+    CalCounts(const CalCounts&) {};
+    
+    casacore::Int nSpw, nAnt, nPol;
+    
+    // Map by spw of maps by ant
+    //       SPW                     ANT                     KEY               COUNT
+    std::map<casacore::Int, std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>>> antennaMap_;
+    
+    // Map of keys for each spw
+    std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>> spwMap_;
+    // Map of the whole ms
+    std::map<casacore::String, casacore::Vector<casacore::Int>> totalMap_;
+    
 };
 
 // Preserve old-fashioned Calibrater here:

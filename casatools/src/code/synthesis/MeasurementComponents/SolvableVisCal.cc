@@ -1,4 +1,4 @@
-//# SolvableVisCal.cc: Implementation of SolvableVisCal classes
+//# SolvableVisCal.cc: Implementation of SolvableVisCal classes/Users/nschweig/CASA6/CASR-539/SolvableVisCal.cc
 //# Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -483,6 +483,8 @@ SolvableVisCal::SolvableVisCal(VisSet& vs) :
   dataInterval_(0.0),
   fitWt_(0.0),
   fit_(0.0),
+  antennaMap_(),
+  refantMap_(),
   solveCPar_(vs.numberSpw(),NULL),  // TBD: move inflation into ctor body
   solveRPar_(vs.numberSpw(),NULL),
   solveParOK_(vs.numberSpw(),NULL),
@@ -3657,6 +3659,85 @@ Bool SolvableVisCal::verifyConstraints(VisBuffGroupAcc& vbag) {
 
 }
 
+void SolvableVisCal::clearMap() {
+    // Clear or initalize values for the antennaMap_
+    Vector<Int> initVector(nPar(), 0);
+    Vector<Int> singleVector(1, 0);
+    
+    for (Int iant=0; iant<nAnt(); ++iant) {
+        antennaMap_[iant]["expected"] = initVector;
+        antennaMap_[iant]["data_unflagged"] = initVector;
+        antennaMap_[iant]["above_minblperant"] = initVector;
+        antennaMap_[iant]["above_minsnr"] = initVector;
+        antennaMap_[iant]["used_as_refant"] = singleVector;
+    }
+    
+}
+
+void SolvableVisCal::clearRefantMap() {
+    // Clear or initialize values for refantMap_
+    for (Int ispw=0; ispw<nSpw(); ++ispw) {
+        for (Int iant=0; iant<nAnt(); ++iant) {
+            refantMap_[ispw][iant] = 0;
+        }
+    }
+}
+
+void SolvableVisCal::expectedUnflagged(SDBList& sdbs) {
+    // Iterate over sdbs and add values to expected and data unflagged
+    for (Int isdb=0;isdb<sdbs.nSDB();++isdb) {
+        SolveDataBuffer& sdb(sdbs(isdb));
+        
+        Int nRow(sdb.nRows());
+        Int nCorr(sdb.nCorrelations());
+        for (Int irow=0;irow<nRow;++irow) {
+            const Int& a1(sdb.antenna1()(irow));
+            const Int& a2(sdb.antenna2()(irow));
+            
+            if (a1!=a2) {
+                for (int par=0;par<nPar();par++) {
+                  antennaMap_[a1]["expected"][par] = 1;
+                  antennaMap_[a2]["expected"][par] = 1;
+                }
+            }
+            // Do cal type-dependent setting of "data_unflagged" counts
+            
+            switch (this->type()) {
+            case VisCal::G:
+            case VisCal::K:
+            case VisCal::B: {  // nPar=2 (gain-like)
+                // Set each pol by flags from appropriate parallel-hand corr
+                if (nfalse(sdb.flagCube()(0,Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][0] =
+                  antennaMap_[a2]["data_unflagged"][0] = 1;
+                }
+                if (nfalse(sdb.flagCube()(nCorr-1,Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][1] =
+                  antennaMap_[a2]["data_unflagged"][1] = 1;
+                }
+                break;
+            }
+            case VisCal::T: {  // nPar=1 (gain-like)
+                // Set single pol by flags from all parallel-hand correlations
+                Int nsl(nCorr>1?2:1), isl(nCorr>2?3:1);
+                if (nfalse(sdb.flagCube()(Slice(0,nsl,isl),Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"][0] =
+                  antennaMap_[a2]["data_unflagged"][0] = 1;
+                }
+                break;
+            }
+            default: {
+                // Set all pols by flags from all correlations (any unflagged is ok)
+                if (nfalse(sdb.flagCube()(Slice(),Slice(),irow))>0) {
+                  antennaMap_[a1]["data_unflagged"].set(1);
+                  antennaMap_[a2]["data_unflagged"].set(1);
+                }
+            }
+            }
+        }
+    }
+}
+
 Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
 
   // TBD: handle multi-channel infocusFlag properly
@@ -3691,6 +3772,8 @@ Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
   // Recursively apply threshold on baselines per antenna
   Vector<Bool> antOK(nAnt(),True);  // nominally OK
   Vector<Int> blperant(nAnt(),0);
+  Vector<Int> initVector(nPar(), 0);
+    
   Int iant=0;
   while (iant<nAnt()) {
     if (antOK(iant)) {   // avoid reconsidering already bad ones
@@ -3720,6 +3803,9 @@ Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
     if (antOK(iant)) {
       // set solution good
       solveParOK().xyPlane(iant) = True;
+      for (Int ipar=0; ipar<nPar();++ipar) {
+        antennaMap_[iant]["above_minblperant"][ipar] = 1;
+      }
     }
     else {
       // This ant not ok, set soln to zero
@@ -3967,14 +4053,29 @@ void SolvableVisCal::formSolveSNR() {
 void SolvableVisCal::applySNRThreshold() {
 
   Int nOk1(ntrue(solveParOK()));
+    
+  std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>> resultMap;
+  Vector<Int> initVector(nPar(), 0);
+  Vector<Int> initVectorSingle(1, 0);
   
-  for (Int iant=0;iant<nAnt();++iant)
-    for (Int ipar=0;ipar<nPar();++ipar)
-      if (solveParOK()(ipar,0,iant))
-	solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
+  for (Int iant=0;iant<nAnt();++iant) {
+    //if (refant() == iant) {
+    //  antennaMap_[iant]["used_as_refant"][0] += 1;
+    //}
+    for (Int ipar=0;ipar<nPar();++ipar) {
+      //antennaMap_[iant]["expected"][ipar] += 1;
+      if (solveParOK()(ipar,0,iant)){
+	    solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
+        //antennaMap_[iant]["data_unflagged"][ipar] += 1;
+        if (solveParOK()(ipar,0,iant)) {antennaMap_[iant]["above_minsnr"][ipar] = 1;};
+      }
+    }
+  }
   
+  //cout << pexp << endl;
+    
   Int nOk2(ntrue(solveParOK()));
-  Int nFail=nOk1-nOk2;    
+  Int nFail=nOk1-nOk2;
   
   if (false) {
     // Report some stuff re SNR
@@ -6691,6 +6792,9 @@ void SolvableVisJones::applyRefAnt() {
       usedaltrefant|=(ichoice>0);
       currrefant=refantchoices(ichoice);
       refantchoices(1)=currrefant;  // 2nd priorty next time
+        
+      // Mark refant in activity rec
+      refantMap_[ctiter.thisSpw()][currrefant] += 1;
 
       //      cout << " currrefant = " << currrefant << " (" << ichoice << ")" << endl;
 

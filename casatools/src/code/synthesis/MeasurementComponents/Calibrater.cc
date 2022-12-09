@@ -63,7 +63,6 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/ViFrequencySelection.h>
 #include <casacore/casa/Quanta/MVTime.h>
-
 #include <casacore/casa/Logging/LogMessage.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <casacore/casa/Utilities/Assert.h>
@@ -88,6 +87,130 @@ using namespace casa::vpf;
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
+CalCounts::CalCounts():
+  antennaMap_(),
+  spwMap_(),
+  totalMap_()
+{}
+
+void CalCounts::initCounts(Int NSpw, Int NAnt, Int NPol) {
+    Vector<Int> polShape(NPol, 0);
+    Vector<Int> singleVector(1, 0);
+    
+    totalMap_["expected"] = polShape;
+    totalMap_["data_unflagged"] = polShape;
+    totalMap_["above_minblperant"] = polShape;
+    totalMap_["above_minsnr"] = polShape;
+    
+    for (Int spw=0; spw<NSpw; spw++) {
+      // Init spw map keys
+      spwMap_[spw]["expected"] = polShape;
+      spwMap_[spw]["data_unflagged"] = polShape;
+      spwMap_[spw]["above_minblperant"] = polShape;
+      spwMap_[spw]["above_minsnr"] = polShape;
+      for (Int ant=0; ant<NAnt; ant++) {
+          // Init antenna map keys
+          antennaMap_[spw][ant]["expected"] = polShape;
+          antennaMap_[spw][ant]["data_unflagged"] = polShape;
+          antennaMap_[spw][ant]["above_minblperant"] = polShape;
+          antennaMap_[spw][ant]["above_minsnr"] = polShape;
+          antennaMap_[spw][ant]["used_as_refant"] = singleVector;
+      }
+    }
+}
+
+void CalCounts::addAntennaCounts(Int spw, Int NAnt, Int NPol, std::map<Int, std::map<String, Vector<Int>>> resultMap) {
+    // Add the results to the antenna Map
+    Vector<Int> spwExp(NPol, 0), spwUnflag(NPol, 0), spwMinsnr(NPol, 0);
+    
+    for (Int ant=0; ant<NAnt; ant++) {
+        if (resultMap.find(ant) == resultMap.end()) {continue;};
+        // add if used as refant
+        antennaMap_[spw][ant]["used_as_refant"][0] += resultMap[ant]["used_as_refant"][0];
+        for (Int pol=0; pol<NPol; pol++) {
+            antennaMap_[spw][ant]["expected"][pol] += resultMap[ant]["expected"][pol];
+            antennaMap_[spw][ant]["data_unflagged"][pol] += resultMap[ant]["data_unflagged"][pol];
+            antennaMap_[spw][ant]["above_minblperant"][pol] += resultMap[ant]["above_minblperant"][pol];
+            antennaMap_[spw][ant]["above_minsnr"][pol] += resultMap[ant]["above_minsnr"][pol];
+            // if any antenna value is good add to spw total
+            if (resultMap[ant]["expected"][pol] == 1) {spwExp[pol] = 1;};
+            if (resultMap[ant]["data_unflagged"][pol] == 1) {spwUnflag[pol] = 1;};
+            if (resultMap[ant]["above_minblperant"][pol] == 1) {spwMinsnr[pol] = 1;};
+            if (resultMap[ant]["above_minsnr"][pol] == 1) {spwMinsnr[pol] = 1;};
+        }
+    }
+    // Add the totals to the spw Map
+    for (Int pol=0; pol<NPol; pol++) {
+        spwMap_[spw]["expected"][pol] += spwExp[pol];
+        spwMap_[spw]["data_unflagged"][pol] += spwUnflag[pol];
+        spwMap_[spw]["above_minblperant"][pol] += spwMinsnr[pol];
+        spwMap_[spw]["above_minsnr"][pol] += spwMinsnr[pol];
+        // Acumulate total overall values
+        totalMap_["expected"][pol] += spwExp[pol];
+        totalMap_["data_unflagged"][pol] += spwUnflag[pol];
+        totalMap_["above_minblperant"][pol] += spwMinsnr[pol];
+        totalMap_["above_minsnr"][pol] += spwMinsnr[pol];
+    }
+    
+}
+
+void CalCounts::updateRefants(Int NSpw, Int NAnt, std::map<Int, std::map<Int, Int>> refantMap) {
+    for (Int spw=0; spw<NSpw; spw++) {
+        for (Int ant=0; ant<NAnt; ant++) {
+            antennaMap_[spw][ant]["used_as_refant"][0] += refantMap[spw][ant];
+        }
+    }
+}
+
+Vector<Int> CalCounts::antMapVal(Int spw, Int ant, String gate) {
+    return antennaMap_[spw][ant][gate];
+}
+
+Vector<Int> CalCounts::spwMapVal(Int spw, String gate) {
+    return spwMap_[spw][gate];
+}
+
+Vector<Int> CalCounts::totalMapVal(String gate) {
+    return totalMap_[gate];
+}
+
+Record CalCounts::makeRecord(Int NAnt, Int NPol) {
+    
+    Vector<Int> totExp(NPol, 0), totUnflag(NPol, 0), totMinsnr(NPol, 0);
+    
+    nSpw = spwMap_.size();
+    Record containerRec = Record();
+    Record resultRec = Record();
+    
+    resultRec.define("expected", totalMap_["expected"]);
+    resultRec.define("data_unflagged", totalMap_["data_unflagged"]);
+    resultRec.define("above_minblperant", totalMap_["above_minblperant"]);
+    resultRec.define("above_minsnr", totalMap_["above_minsnr"]);
+    
+    for (Int spw=0; spw<nSpw; spw++) {
+        Record spwRec = Record();
+        spwRec.define("expected", spwMap_[spw]["expected"]);
+        spwRec.define("data_unflagged", spwMap_[spw]["data_unflagged"]);
+        spwRec.define("above_minblperant", spwMap_[spw]["above_minblperant"]);
+        spwRec.define("above_minsnr", spwMap_[spw]["above_minsnr"]);
+        for (Int ant=0; ant<NAnt; ant++) {
+            Record subRec = Record();
+            subRec.define("expected", antennaMap_[spw][ant]["expected"]);
+            subRec.define("data_unflagged", antennaMap_[spw][ant]["data_unflagged"]);
+            subRec.define("above_minblperant", antennaMap_[spw][ant]["above_minblperant"]);
+            subRec.define("above_minsnr", antennaMap_[spw][ant]["above_minsnr"]);
+            subRec.define("used_as_refant", antennaMap_[spw][ant]["used_as_refant"]);
+            spwRec.defineRecord(RecordFieldId("ant"+to_string(ant)), subRec);
+        }
+        resultRec.defineRecord(RecordFieldId("spw"+to_string(spw)), spwRec);
+    }
+    containerRec.defineRecord(RecordFieldId("solvestats"), resultRec);
+    
+    return containerRec;
+}
+
+CalCounts::~CalCounts() {}
+
 Calibrater::Calibrater(): 
   ms_p(0), 
   mssel_p(0), 
@@ -102,6 +225,7 @@ Calibrater::Calibrater():
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(false),
   ssvp_p()
 {
@@ -123,6 +247,7 @@ Calibrater::Calibrater(String msname):
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(false),
   ssvp_p()
 {
@@ -163,6 +288,7 @@ Calibrater::Calibrater(const vi::SimpleSimVi2Parameters& ssvp):
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(true),
   ssvp_p(ssvp)
 {
@@ -1144,7 +1270,9 @@ Bool Calibrater::getIteratorSelection(Vector<Int>* observationlist, Vector<Int>*
 
  Record Calibrater::returndict()
 {
+  // Create record and subrecrds for selection data
   Record rec;
+  Record selectVisRec;
 
   Vector<Int> selscanlist;
   Vector<Int> selfieldlist;
@@ -1152,16 +1280,27 @@ Bool Calibrater::getIteratorSelection(Vector<Int>* observationlist, Vector<Int>*
   Vector<Int> selobslist;
 
   getIteratorSelection(&selobslist, &selscanlist, &selfieldlist, &selantlist);
+     
+  // Define sub-record for selection parameters
+  selectVisRec.define("antennas", selantlist);
+  selectVisRec.define("field", selfieldlist);
+  selectVisRec.define("spw", getSelectedSpws());
+  selectVisRec.define("scan", selscanlist);
+  selectVisRec.define("observation", selobslist);
+  selectVisRec.define("intents", getSelectedIntents());
   
   // Create a record with current calibrater state information
-  rec.define("antennas", selantlist);
-  rec.define("field", selfieldlist);
-  rec.define("spw", getSelectedSpws());
-  rec.define("scan", selscanlist);
-  rec.define("observation", selobslist);
-  rec.define("intents", getSelectedIntents());
-  rec.define("apply tables", getApplyTables());
-  rec.define("solve table", getSolveTable());
+  //rec.define("antennas", selantlist);
+  //rec.define("field", selfieldlist);
+  //rec.define("spw", getSelectedSpws());
+  //rec.define("scan", selscanlist);
+  //rec.define("observation", selobslist);
+  //rec.define("intents", getSelectedIntents());
+  rec.defineRecord("selectvis", selectVisRec);
+  rec.define("apply_tables", getApplyTables());
+  rec.define("solve_tables", getSolveTable());
+    
+  rec.merge(resRec_);
   
   return rec;
 }
@@ -3283,6 +3422,11 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   Double time0=omp_get_wtime();
 #endif
 
+  // Create record to store results
+  resRec_ = Record();
+  Record attemptRec;
+  attemptRec = Record();
+    
   // Condition solint values 
   svc_p->reParseSolintForVI2();
 
@@ -3486,8 +3630,15 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   svc_p->createMemCalTable2();
 
   Vector<Float> spwwts(msmc_p->nSpw(),-1.0);
-  Vector<Int64> nexp(msmc_p->nSpw(),0), natt(msmc_p->nSpw(),0),nsuc(msmc_p->nSpw(),0);
-
+  Vector<Int64> nexp(msmc_p->nSpw(),0), natt(msmc_p->nSpw(),0),nsuc(msmc_p->nSpw(),0), nbelowsnr(msmc_p->nSpw(),0), nbelowbl(msmc_p->nSpw(),0);
+    
+  // Start Collecting counts
+  CalCounts* calCounts = new CalCounts();
+  calCounts->initCounts(msmc_p->nSpw(),msmc_p->nAnt(), svc_p->nPar());
+  // Set up results record
+  std::map<Int, std::map<String, Vector<Int>>> resultMap;
+  
+    
 #ifdef _OPENMP
   Tsetup+=(omp_get_wtime()-time0);
 #endif
@@ -3522,7 +3673,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
       for (vi.origin();
 	   vi.more();
 	   ++ivb,vi.next()) {
-
+          
 	// Add this VB to the SDBList                                                                                       
 #ifdef _OPENMP
 	Double Tadd0=omp_get_wtime();
@@ -3571,14 +3722,20 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
     // Expecting a solution                                                                                                 
     nexp(thisSpw)+=1;
+    // Initialize the antennaMap_ in svc
+    svc_p->clearMap();
+    // Get expected and data unflagged accumulation
+    svc_p->expectedUnflagged(sdbs);
+      
 
 #ifdef _OPENMP
     Tgather+=(omp_get_wtime()-time0);
     time0=omp_get_wtime();
 #endif
 
-    if (sdbs.Ok()) {
 
+    if (sdbs.Ok()) {
+        
       // Some unflagged data, so Attempting a solution                                                                      
       natt(thisSpw)+=1;
 
@@ -3617,7 +3774,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
           // Execute the solve                                                                                              
           Bool goodsol=vcs.solve(*ve_p,*svc_p,sdbs);
-
 
           if (goodsol) {
             totalGoodSol=True;
@@ -3662,6 +3818,9 @@ casacore::Bool Calibrater::genericGatherAndSolve()
       svc_p->currMetaNote();
     }
     //cout << endl;
+    // Get all the antenna value counts
+    resultMap = svc_p->getAntennaMap();
+    calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), svc_p->nPar(), resultMap);
 
 #ifdef _OPENMP
     Tsolve+=(omp_get_wtime()-time0);
@@ -3669,9 +3828,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     
     //    throw(AipsError("EARLY ESCAPE!!"));
 
-
-  } // isol                                                                                                                 
-
+  } // isol
+    
   // Report nGood to logger
   logSink() << "  Found good " 
 	    << svc_p->typeName() << " solutions in "
@@ -3699,7 +3857,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
   if (nGood>0) {
     if (svc_p->typeName()!="BPOLY") {  // needed?                                                                           
-      // apply refant, etc.                                                                                                 
+      // apply refant, etc.
+      svc_p->clearRefantMap();
       svc_p->globalPostSolveTinker();
 
       // write to disk                                                                                                      
@@ -3710,15 +3869,65 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     logSink() << "No output calibration table written."
 	      << LogIO::POST;
   }
+    
+  // Collect and update the refants
+  std::map<Int, std::map<Int, Int>> refantMap;
+  refantMap = svc_p->getRefantMap();
+  calCounts->updateRefants(msmc_p->nSpw(), msmc_p->nAnt(), refantMap);
+  // Compile all accumulated counts into a record
+  resRec_ = calCounts->makeRecord(msmc_p->nAnt(), vi.nPolarizationIds());
+      
+  // print a matrix to the logger
+  logSink() << "----- PER ANTENNA INFO -----" << LogIO::POST;
+  // print the antenna list
+  logSink() << "      ";
+  for (Int ant=0; ant<msmc_p->nAnt(); ant++) {
+      logSink() << " ANT: " << ant << "   ";
+  }
+  logSink() << LogIO::POST;
+      
+  for (Int spw=0; spw < msmc_p->nSpw(); spw++) {
+          
+      logSink() << LogIO::NORMAL << "SPW: " << spw;
+          
+      for (Int ant=0; ant < msmc_p->nAnt(); ant++) {
+          logSink() << " " << calCounts->antMapVal(spw, ant, "above_minsnr") << " ";
+      }
+      logSink() << LogIO::POST;
+  }
+      
+  logSink() << "----- PER SPW INFO -----" << LogIO::POST;
+  // print the result fields
+  logSink() << "      ";
+  logSink() << " expected  data_unflagged  above_minblperant  above_minsnr";
+  logSink() << LogIO::POST;
+  for (Int spw = 0; spw < msmc_p->nSpw(); spw++) {
+      logSink() << LogIO::NORMAL << "SPW: " << spw << " ";
+      logSink() << calCounts->spwMapVal(spw, "expected") << "  ";
+      logSink() << calCounts->spwMapVal(spw, "data_unflagged") << "        ";
+      logSink() << calCounts->spwMapVal(spw, "above_minblperant") << "            ";
+      logSink() << calCounts->spwMapVal(spw, "above_minsnr");
+      logSink() << LogIO::POST;
+  }
+      
+  logSink() << "----- GLOBAL INFO -----" << LogIO::POST;
+  logSink() << "expected  data_unflagged  above_minblperant  above_minsnr";
+  logSink() << LogIO::POST;
+  logSink() << calCounts->totalMapVal("expected") << "  ";
+  logSink() << calCounts->totalMapVal("data_unflagged") << "        ";
+  logSink() << calCounts->totalMapVal("above_minblperant") << "            ";
+  logSink() << calCounts->totalMapVal("above_minsnr");
+  logSink() << LogIO::POST;
 
   // Fill activity record
-  //  cout << "  Expected, Attempted, Succeeded (by spw) = " << nexp << ", " << natt << ", " << nsuc << endl;                 
-  //  cout << " Expected, Attempted, Succeeded = " << sum(nexp) << ", " << sum(natt) << ", " << sum(nsuc) << endl;
-  actRec_=Record();
+  
+  actRec_ = Record();
   actRec_.define("origin","Calibrater::genericGatherAndSolve");
   actRec_.define("nExpected",nexp);
   actRec_.define("nAttempt",natt);
   actRec_.define("nSucceed",nsuc);
+    
+  //cout << nexp << ", " << natt << ", " << nsuc << endl;
 
   { 
     Record solveRec=svc_p->solveActionRec();
