@@ -233,7 +233,9 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
         
 	
         makeTempImage(subpsf, psfName_p, chanBeg, chanEnd);
-        makeTempImage(subresid, residualName_p, chanBeg, chanEnd);
+        ///Have to lock residual now that deconvolver task now will want to writeback residual
+        ///tclean does not need writeback for residual  so it is unnecessary step for now.
+        makeTempImage(subresid, residualName_p, chanBeg, chanEnd, True);
         makeTempImage(submodel, modelName_p, chanBeg, chanEnd, True);
         makeTempImage(submask, maskName_p, chanBeg, chanEnd, True);
         //       PagedImage<Float> model(modelName_p, TableLock::UserLocking);
