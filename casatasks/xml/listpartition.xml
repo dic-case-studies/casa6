@@ -1,7 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 <task type="function" name="listpartition" category="information">
-       <shortdescription>List the summary of a multi-MS data set in the logger or in a file</shortdescription>
+       <shortdescription>Get the summary of a multi-MS data set and print in the logger or in a file</shortdescription>
        <description>
        Lists the following properties of a multi-measurement set:
        sub-MS name, scan list, spw list, list of number of channels per spw, 

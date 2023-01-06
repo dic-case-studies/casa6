@@ -3,7 +3,7 @@
 
 <task type="function" name="rmfit" category="analysis">
 
-<shortdescription>Calculate rotation measure.</shortdescription>
+<shortdescription>Calculate rotation measure</shortdescription>
 
 <input>
     <param type="any" name="imagename" mustexist="true"><shortdescription>Name(s) of the input image(s). Must be specified.</shortdescription><description>Name(s) of the input image(s). Must be specified.</description>

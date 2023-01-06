@@ -1,7 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd                              file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <task type="function" name="visstat" category="information">
-        <shortdescription>Displays statistical information from a MeasurementSet, or from a Multi-MS</shortdescription>
+        <shortdescription>Calculates statistical information from a MeasurementSet</shortdescription>
 
         <input>
             <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of MeasurementSet or Multi-MS</shortdescription><description>Name of MeasurementSet or Multi-MS</description>

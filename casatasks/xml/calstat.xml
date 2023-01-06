@@ -1,7 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 <task category="information, calibration" name="calstat" type="function">
-<shortdescription>Displays statistical information on a calibration table</shortdescription>
+<shortdescription>Calculates statistical information on a calibration table</shortdescription>
   <description>
 This task returns statistical information about a column in a
 calibration table. The following values are computed: mean value, sum
