@@ -56,7 +56,6 @@ Others
 debug = False
 
 def get_task_arg_default( func, arg ):
-    print(arg)
     spec = inspect.getfullargspec(func.__call__)
 
     if arg not in spec.args:

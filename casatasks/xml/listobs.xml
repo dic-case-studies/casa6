@@ -1,7 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 <task type="function" name="listobs" category="information">
-    <shortdescription>List the summary of a data set in the logger or in a file</shortdescription>
+    <shortdescription>Get the summary of a MeasurementSet and list it in the logger or in a file</shortdescription>
     <description>
        List the summary information of a data set in the logger or in a file, based on
        a data selection. Only rows can be selected and printed. No in-row selection is

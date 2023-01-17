@@ -160,9 +160,32 @@ def gaincal(vis=None,caltable=None,
         mycb.solve()
 
         reportsolvestats(mycb.activityrec());
+        
+        results_dict = mycb.returndict()
+        # Temp special handling of gaintype K
+        if (gaintype=='K'):
+            results_dict = resultsDictGaintypeExcept(results_dict)
 
     finally:
         mycb.close()
+        
+    return results_dict
+
+def resultsDictGaintypeExcept(results_dict):
+    # For each level of the dict set all to data_unflagged counts
+    for i in results_dict["solvestats"]:
+        results_dict["solvestats"]["above_minsnr"] = results_dict["solvestats"]["data_unflagged"]
+        results_dict["solvestats"]["above_minblperant"] = results_dict["solvestats"]["data_unflagged"]
+        
+        if i.startswith("spw"):
+            for j in results_dict["solvestats"][i]:
+                results_dict["solvestats"][i]["above_minsnr"] = results_dict["solvestats"][i]["data_unflagged"]
+                results_dict["solvestats"][i]["above_minblperant"] = results_dict["solvestats"][i]["data_unflagged"]
+                
+                if j.startswith("ant"):
+                    results_dict["solvestats"][i][j]["above_minsnr"] = results_dict["solvestats"][i][j]["data_unflagged"]
+                    results_dict["solvestats"][i][j]["above_minblperant"] = results_dict["solvestats"][i][j]["data_unflagged"]
+    return results_dict
 
 def reportsolvestats(rec):
     if (list(rec.keys()).count('origin')==1 and

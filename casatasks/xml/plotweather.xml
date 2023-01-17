@@ -2,7 +2,7 @@
 
 
 <task type="function" name="plotweather" category="visualization">
-<shortdescription>Plot elements of the weather table; estimate opacity.</shortdescription>
+<shortdescription>Plot elements of the weather table; estimate opacity</shortdescription>
 
 <input>
 

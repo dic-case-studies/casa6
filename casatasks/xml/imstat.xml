@@ -4,7 +4,7 @@
 
 
 <task type="function" name="imstat" category="information, analysis">
-<shortdescription>Displays statistical information from an image or image region</shortdescription>
+<shortdescription>Calculates statistical information from an image or image region</shortdescription>
 
 <input>
     <param type="path" name="imagename" kind="image" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>

@@ -4137,6 +4137,9 @@ Date/Time:                         RR:                      RL:                 
   </input>
   <returns type="bool"/>
   <description>
+    DEPRECATED: This function is deprecated and will be removed in an
+    upcoming release.
+
     NOT FULLY IMPLEMENTED YET.  uvcontsub uses the cb tool for now.
     (The only reason to implement it in ms is to save time and disk
     space.)
@@ -4212,6 +4215,9 @@ Date/Time:                         RR:                      RL:                 
   </input>
   <returns type="bool"/>
   <description> 
+    DEPRECATED: This function is deprecated and will be removed in an
+    upcoming release.
+
     This function provides a means of continuum determination and
     subtraction by fitting a polynomial of desired order to a subset of
     channels in each time-averaged uv spectrum.  The fit is used to
@@ -5634,8 +5640,8 @@ Date/Time:                         RR:                      RL:                 
   </input>
   <returns type="bool"/>
   <description> 
-    DEPRECATED: Please use the ms::continuumsub() function in place
-    of ms::continuumsubold().
+    DEPRECATED: This function is deprecated and will be removed in an
+    upcoming release.
 
     This function provides a means of continuum determination and
     subtraction by fitting a polynomial of desired order to a subset
