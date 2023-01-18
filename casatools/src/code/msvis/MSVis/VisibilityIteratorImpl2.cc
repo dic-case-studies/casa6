@@ -581,7 +581,7 @@ public:
             // reference at a time.
 
             flush();
-    
+
             msId_p = entry->msId;
             frameOfReference_p = frameOfReference;
         }
@@ -604,7 +604,7 @@ public:
         cache_p[Key(time, entry->spectralWindowId)] = entry;
     }
 
-    std::shared_ptr<ChannelSelector> 
+    std::shared_ptr<ChannelSelector>
     find(Double time, Int msId, Int frameOfReference,
          Int spectralWindowId) const {
 
@@ -1212,13 +1212,13 @@ VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
         delete frequencySelections_p;
     frequencySelections_p = vii.frequencySelections_p->clone();
 
-    // copy channelSelectors_p. 
+    // copy channelSelectors_p.
     channelSelectors_p.clear();
     for (auto chSel : vii.channelSelectors_p)
     {
         channelSelectors_p.push_back(std::shared_ptr<ChannelSelector>
-            (new ChannelSelector(chSel->timeStamp, chSel->msId, 
-                                 chSel->spectralWindowId, chSel->polarizationId, 
+            (new ChannelSelector(chSel->timeStamp, chSel->msId,
+                                 chSel->spectralWindowId, chSel->polarizationId,
                                  chSel->getSlicer())));
     }
 
@@ -1304,17 +1304,17 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     tileCacheIsSet_p = std::move(vii.tileCacheIsSet_p);
 
     // move frequencySelections_p
-    if (frequencySelections_p) 
+    if (frequencySelections_p)
         delete frequencySelections_p;
     frequencySelections_p = vii.frequencySelections_p;
     vii.frequencySelections_p = nullptr;
 
-    // move channelSelectors_p. Owned by channelSelectorCache_p 
+    // move channelSelectors_p. Owned by channelSelectorCache_p
     // so don't delete initial destination value or source value
     channelSelectors_p = std::move(vii.channelSelectors_p);
 
     // move channelSelectorCache_p
-    if (channelSelectorCache_p) 
+    if (channelSelectorCache_p)
         delete channelSelectorCache_p;
     channelSelectorCache_p = vii.channelSelectorCache_p;
     vii.channelSelectorCache_p = nullptr;
@@ -1347,7 +1347,7 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     subchunkSortColumns_p = vii.subchunkSortColumns_p;
 
     // move modelDataGenerator_p
-    if (modelDataGenerator_p) 
+    if (modelDataGenerator_p)
         delete modelDataGenerator_p;
     modelDataGenerator_p = vii.modelDataGenerator_p;
     vii.modelDataGenerator_p = nullptr;
@@ -1361,14 +1361,14 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     pendingChanges_p = std::move(vii.pendingChanges_p);
 
     // initialize subtableColumns_p
-    if (subtableColumns_p) 
+    if (subtableColumns_p)
         delete subtableColumns_p;
     subtableColumns_p = vii.subtableColumns_p;
     vii.subtableColumns_p = nullptr;
 
     // initialize vb_p...can't steal VisBuffer2 instance since it is attached to
     // vii
-    if (vb_p) 
+    if (vb_p)
         delete vb_p;
     vb_p = createAttachedVisBuffer(writable_p ? VbWritable : VbNoOptions);
     // TODO: again, it would be better were vb_p a shared_ptr
@@ -1748,7 +1748,7 @@ VisibilityIteratorImpl2::getChanWidths(Double time, Int frameOfReference,
 				       Int spectralWindowId, Int msId) const
 {
   // This gets the native frame channel widths (no frame conversions performed, for now)
-  
+
 	const SpectralWindowChannels & spectralWindowChannels =
 		getSpectralWindowChannels(msId, spectralWindowId);
 
@@ -1766,7 +1766,7 @@ VisibilityIteratorImpl2::getChanWidths(Double time, Int frameOfReference,
 	  Int channelNumber = channels[i];
 
 	  widths[i] = spectralWindowChannels.getWidth(channelNumber);
-	
+
 	}
 
 	return widths;
@@ -2116,7 +2116,7 @@ VisibilityIteratorImpl2::existsColumn(VisBufferComponent2 id) const
   case VisBufferComponent2::VisibilityModel:
   case VisBufferComponent2::VisibilityCubeModel:
 
-    result = 
+    result =
         (!columns_p.modelVis_p.isNull() && columns_p.modelVis_p.isDefined(0)) ||
         modelDataGenerator_p != nullptr;
     break;
@@ -2551,9 +2551,9 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             }
         }
         // The remaining case is that scope of frequency selections is chunk.
-        // In this case the channelSelector is constant for a chunk 
-        // and has already been computed in configureNewChunk. 
-        // The number of rows still needs to be updated 
+        // In this case the channelSelector is constant for a chunk
+        // and has already been computed in configureNewChunk.
+        // The number of rows still needs to be updated
         // to account for the the number of rows in this subchunk
         else
         {
@@ -2590,7 +2590,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
     vb_p->configureNewSubchunk(
             msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
-            isNewSpectralWindow(), subchunk_p, 
+            isNewSpectralWindow(), subchunk_p,
             nRowsPerShape_p,
             nChannPerShape_p,
             nCorrsPerShape_p,
@@ -2691,7 +2691,7 @@ VisibilityIteratorImpl2::getPolarizationId(Int spectralWindowId, Int msId) const
     if(spectralWindowId < (Int)nSpw)
         return polID;
 
-    // spectralWindowId is not present in subtables 
+    // spectralWindowId is not present in subtables
     ThrowIf(true, String::format(
             "Could not find entry for spectral window id"
             "%d in spectral_window in MS #%d", spectralWindowId, msId));
@@ -2890,10 +2890,10 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 	MEpoch epoch(MVEpoch(Quantity(time, "s")), timeFrameOfReference_p);
 
-	MPosition position = getObservatoryPosition();
-	MDirection direction = phaseCenter();
+	const auto &telescopePosition = msIter_p->telescopePosition();
+	const auto &currentDirection = msIter_p->phaseCenter();
 
-	MeasFrame measFrame(epoch, position, direction);
+	MeasFrame measFrame(epoch, telescopePosition, currentDirection);
 
 	MFrequency::Ref observedFrame(measurementFrequencyType, measFrame);
 
@@ -2936,11 +2936,10 @@ VisibilityIteratorImpl2::getNMs() const
 MFrequency::Types
 VisibilityIteratorImpl2::getObservatoryFrequencyType() const
 {
-	const MFrequency & f0 = msIter_p->frequency0();
-
-	MFrequency::Types t = MFrequency::castType(f0.getRef().getType());
-
-	return t;
+    Int const spwId = msIter_p->spectralWindowId();
+    Int const measFreqRef = getMeasurementFrame(spwId);
+    return (measFreqRef >= 0) ? MFrequency::castType((uInt)measFreqRef)
+                              : MFrequency::DEFAULT;
 }
 
 MPosition
@@ -4300,7 +4299,7 @@ VisibilityIteratorImpl2::writeModel(
 		channelIncrement, iscomponentlist, incremental);*/
 	//Version 2 interface to keep state and scan number in track
 	 visModelData->putModelI (ms(), rec, combiIndex, chansel, iscomponentlist, incremental);
-	
+
 }
 
 VisibilityIteratorImpl2::ChannelInfo
@@ -4340,7 +4339,7 @@ VisibilityIteratorImpl2::getChannelInformationUsingFrequency() const
 
             ++i;
         }
-       
+
     }
 
     return std::make_tuple(spectralWindow, nChannels, firstChannel,
@@ -4419,7 +4418,7 @@ VisibilityIteratorImpl2::getChannelInformation() const
 }
 
 Vector<casacore::Vector<Int> > VisibilityIteratorImpl2::getAllSelectedSpws() const{
-	
+
 	Vector<Vector<Int> > retval(	 frequencySelections_p->size());
 	for (uInt k=0; k < retval.nelements(); ++k){
 		std::set<Int> spw=(frequencySelections_p->get(k)).getSelectedWindows();

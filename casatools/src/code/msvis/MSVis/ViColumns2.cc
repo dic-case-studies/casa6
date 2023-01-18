@@ -46,6 +46,7 @@ ViColumns2::attachColumns (const Table & t, bool attachSpecialColumns)
     antenna1_p.attach (t, MS::columnName (MS::ANTENNA1));
     antenna2_p.attach (t, MS::columnName (MS::ANTENNA2));
 
+    corrVis_p = ArrayColumn<Complex>();
     if (cds.isDefined ("CORRECTED_DATA")) {
         corrVis_p.attach (t, "CORRECTED_DATA");
     }
@@ -57,6 +58,7 @@ ViColumns2::attachColumns (const Table & t, bool attachSpecialColumns)
     flagCategory_p.attach (t, MS::columnName (MS::FLAG_CATEGORY));
     flagRow_p.attach (t, MS::columnName (MS::FLAG_ROW));
 
+    floatVis_p = ArrayColumn<Float>();
     if (cds.isDefined (MS::columnName (MS::FLOAT_DATA))) {
         floatVis_p.attach (t, MS::columnName (MS::FLOAT_DATA));
         floatDataFound_p = true;
@@ -64,6 +66,7 @@ ViColumns2::attachColumns (const Table & t, bool attachSpecialColumns)
         floatDataFound_p = false;
     }
 
+    modelVis_p = ArrayColumn<Complex>();
     if (cds.isDefined ("MODEL_DATA")) {
         modelVis_p.attach (t, "MODEL_DATA");
     }
@@ -78,16 +81,19 @@ ViColumns2::attachColumns (const Table & t, bool attachSpecialColumns)
     timeInterval_p.attach (t, MS::columnName (MS::INTERVAL));
     uvw_p.attach (t, MS::columnName (MS::UVW));
 
+    vis_p = ArrayColumn<Complex>();
     if (cds.isDefined (MS::columnName (MS::DATA))) {
         vis_p.attach (t, MS::columnName (MS::DATA));
     }
 
     weight_p.attach (t, MS::columnName (MS::WEIGHT));
 
+    weightSpectrum_p = ArrayColumn<Float>();
     if (cds.isDefined (MS::columnName (MS::WEIGHT_SPECTRUM))) {
         weightSpectrum_p.attach (t, MS::columnName (MS::WEIGHT_SPECTRUM));
     }
 
+    sigmaSpectrum_p = ArrayColumn<Float>();
     if (cds.isDefined (MS::columnName (MS::SIGMA_SPECTRUM))) {
     	sigmaSpectrum_p.attach (t, MS::columnName (MS::SIGMA_SPECTRUM));
     }
