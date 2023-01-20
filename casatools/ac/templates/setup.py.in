@@ -105,6 +105,7 @@ parser.add_argument('--tests', help="Test name prefix(es) to search for. For use
 parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('--relwithdebinfo', help='Release build with debug and optimization flags', action='store_true')
 parser.add_argument('--stripsyms', help='Strip debug info out of the executable files from --relwithdebinfo. Used with release builds.', action='store_true')
+parser.add_argument('--march', help='Tune the code for this architecture(binary becomes not portable)', dest='march')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
@@ -112,12 +113,17 @@ _tests_ = args.TESTS
 _debug_build_ = args.debug
 _rel_with_deb_info_ = args.relwithdebinfo
 _strip_syms_ = args.stripsyms
+_march_ = args.march
 print("_debug_build_: " + str(_debug_build_))
 print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 print("_strip_syms_: " + str(_strip_syms_))
+print("_march_:" + str(_march_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
 argv_to_remove = list(filter(lambda x: x.startswith("--tests="), sys.argv))
+for v in argv_to_remove:
+    sys.argv.remove(v)
+argv_to_remove = list(filter(lambda x: x.startswith("--march="), sys.argv))
 for v in argv_to_remove:
     sys.argv.remove(v)
 if "--version" in sys.argv:
@@ -1063,11 +1069,16 @@ def relwithdebinfo_build():
 def stripsyms_build():
     return _strip_syms_
 
+def tune_arch():
+    return _march_
+
 def get_optimization_flags():
     if debug_build( ):
         return ['-g']
     elif relwithdebinfo_build():
         return ['-g', '-O2']
+    elif tune_arch():
+        return ['-O2', f'-march={_march_}']
     else:
         return ['-O2']
 
