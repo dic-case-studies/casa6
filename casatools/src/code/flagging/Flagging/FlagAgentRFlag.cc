@@ -21,6 +21,7 @@
 //# $Id: $
 
 #include <flagging/Flagging/FlagAgentRFlag.h>
+#include <algorithm>
 
 using std::pair;
 using namespace casacore;
