@@ -436,26 +436,22 @@ void FlagAgentRFlag::noiseVsRef(vector<Double> &data, Double ref)
 	return;
 }
 
-Double FlagAgentRFlag::median(vector<Double> &data)
-{
-	Double med;
-	vector<Double> datacopy = data;
-	sort(data.begin(),data.end());
+Double FlagAgentRFlag::median(vector<Double> &data) {
+  Double med;
+  if (data.size() == 0) {
+    med = 0;
+  } else if (data.size() % 2 == 1) {
+    int midpoint = data.size() / 2;
+    std::nth_element(data.begin(), data.begin() + midpoint, data.end());
+    med = data[midpoint];
+  } else {
+    int midpoint = data.size() / 2;
+    std::nth_element(data.begin(), data.begin() + midpoint - 1, data.end());
+    std::nth_element(data.begin(), data.begin() + midpoint, data.end());
+    med = 0.5 * (data[midpoint - 1] + data[midpoint]);
+  }
 
-	if (data.size() == 0)
-	{
-		med = 0;
-	}
-	else if (data.size() % 2 == 1)
-	{
-		med = data[(data.size()-1)/2];
-	}
-	else
-	{
-		med = 0.5*(data[data.size()/2] + data[(data.size()/2)-1]);
-	}
-
-	return med;
+  return med;
 }
 
 Double FlagAgentRFlag::computeThreshold(vector<Double> &data,vector<Double> &/*dataSquared*/,vector<Double> &counts)
